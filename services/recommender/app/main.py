@@ -1,24 +1,28 @@
-"""Perkly recommendation service.
+"""Perkly AI service: the moment engine, Perkly's Pilot and the insights report.
 
 Internal API called by the Node backend only. When RECOMMENDER_SERVICE_KEY is
-set, every request must carry it in the X-Service-Key header.
+set, every request must carry it in the X-Service-Key header. Routes are served
+both at the root (local development) and under /api/ai (Vercel).
 """
 
 from __future__ import annotations
 
 import hmac
+import json
 import os
-from datetime import datetime, timezone
+from pathlib import Path
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException
 
-from . import copilot, scoring
-from .models import CopilotRequest, CopilotResponse, RecommendationRequest, RecommendationResponse
+from . import engine, pilot
+from .models import MomentRequest, MomentResponse, PilotRequest, PilotResponse
+
+REPORT = json.loads((Path(__file__).parent / "model" / "report.json").read_text())
 
 app = FastAPI(
-    title="Perkly recommendation service",
-    version="2.0.0",
-    description="Transparent rule-based ranking of partner rewards, with explanations, and a rule-based Copilot.",
+    title="Perkly AI service",
+    version="3.0.0",
+    description="Uplift-based moment engine, Perkly's Pilot and the lift report. Trained on synthetic data.",
 )
 
 
@@ -28,22 +32,28 @@ def require_service_key(x_service_key: str | None = Header(default=None)) -> Non
         raise HTTPException(status_code=401, detail="Invalid service key")
 
 
-@app.get("/health")
+router = APIRouter()
+
+
+@router.get("/health")
 def health() -> dict:
-    return {"status": "ok", "engine": "perkly-scorer-v1", "copilot": "rule-based-v1", "llm": False}
+    return {"status": "ok", "model": engine.MODEL["version"], "threshold": engine.THRESHOLD, "pilot": "perkly-pilot-v1", "synthetic": True}
 
 
-@app.post("/api/recommendations", response_model=RecommendationResponse, dependencies=[Depends(require_service_key)])
-def recommendations(req: RecommendationRequest) -> RecommendationResponse:
-    items = scoring.score_rewards(req.user, req.rewards, req.time, req.location)[: req.limit]
-    note = (
-        "Ranked by Perkly’s transparent scoring rules using only the data you’ve allowed."
-        if req.user.personalization
-        else "Personalization is off, so rewards are ranked by expiry and estimated value only."
-    )
-    return RecommendationResponse(items=items, generatedAt=datetime.now(timezone.utc).isoformat(), note=note)
+@router.post("/moments/evaluate", response_model=MomentResponse, dependencies=[Depends(require_service_key)])
+def moments(req: MomentRequest) -> MomentResponse:
+    return engine.evaluate(req)
 
 
-@app.post("/api/copilot", response_model=CopilotResponse, dependencies=[Depends(require_service_key)])
-def copilot_answer(req: CopilotRequest) -> CopilotResponse:
-    return copilot.answer(req)
+@router.post("/pilot", response_model=PilotResponse, dependencies=[Depends(require_service_key)])
+def pilot_answer(req: PilotRequest) -> PilotResponse:
+    return pilot.answer(req)
+
+
+@router.get("/insights", dependencies=[Depends(require_service_key)])
+def insights() -> dict:
+    return REPORT
+
+
+app.include_router(router)
+app.include_router(router, prefix="/api/ai")

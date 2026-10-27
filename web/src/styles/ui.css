@@ -159,7 +159,9 @@
   color: var(--text-2);
   cursor: pointer;
 }
-.seg button[aria-pressed='true'] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(43, 33, 27, 0.12); }
+.seg button { display: inline-flex; align-items: center; gap: 6px; color: var(--text); }
+.seg button svg { width: 16px; height: 16px; }
+.seg button[aria-pressed='true'] { background: var(--text); color: var(--bg); }
 
 /* ── Switch ─────────────────────────────────────────────────────────── */
 .switch-row {
@@ -196,7 +198,7 @@
   box-shadow: 0 1px 3px rgba(43, 33, 27, 0.3);
   transition: transform var(--dur) var(--ease-out);
 }
-.switch[aria-checked='true'] { background: var(--forest); }
+.switch[aria-checked='true'] { background: var(--text); }
 .switch[aria-checked='true']::after { transform: translateX(20px); }
 .switch:disabled { opacity: 0.5; cursor: not-allowed; }
 :root[data-contrast='high'] .switch { outline: 2px solid var(--border-strong); outline-offset: 0; }
@@ -214,7 +216,7 @@
   padding: 0 var(--s-4);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-control);
-  background: var(--surface);
+  background: var(--glass-strong);
   font-size: var(--fs-md);
   transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
 }
@@ -223,8 +225,8 @@
 .field input:focus-visible,
 .select:focus-visible {
   outline: none;
-  border-color: var(--forest);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--forest) 22%, transparent);
+  border-color: var(--text);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text) 18%, transparent);
 }
 .field input[aria-invalid='true'] { border-color: var(--danger); }
 .field .control .icon-btn {
@@ -273,14 +275,14 @@
   cursor: pointer;
 }
 .checkbox input:checked {
-  background: var(--forest);
-  border-color: var(--forest);
+  background: var(--text);
+  border-color: var(--text);
 }
 .checkbox input:checked::after {
   content: '';
   width: 6px;
   height: 11px;
-  border: solid var(--forest-ink);
+  border: solid var(--bg);
   border-width: 0 2px 2px 0;
   transform: translateY(-1px) rotate(45deg);
 }
@@ -325,9 +327,8 @@
   border-radius: 50%;
   background: var(--surface-2);
   color: var(--espresso);
-  font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   letter-spacing: 0.02em;
   border: 1px solid var(--border);
 }
@@ -358,7 +359,7 @@
   padding: var(--s-6) 0;
   max-width: 46ch;
 }
-.empty h3 { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 500; }
+.empty h3 { font-size: var(--fs-2xl); font-weight: 700; letter-spacing: -0.02em; }
 .empty p { color: var(--text-2); }
 
 .skeleton {
@@ -376,14 +377,14 @@ dialog.sheet {
   padding: 0;
   border: 0;
   color: var(--text);
-  background: var(--surface);
+  background: var(--surface-solid);
   max-width: none;
   max-height: none;
   overflow: hidden;
 }
 dialog.sheet::backdrop {
-  background: rgba(30, 22, 17, 0.42);
-  backdrop-filter: blur(2px);
+  background: color-mix(in srgb, var(--text) 40%, transparent);
+  backdrop-filter: blur(3px);
 }
 dialog.sheet[open] { animation: sheet-in var(--dur-slow) var(--ease-out); }
 dialog.sheet[open]::backdrop { animation: fade-in var(--dur) var(--ease-out); }

@@ -1,197 +1,320 @@
+import { randomUUID } from 'node:crypto';
 import { Router, type Request } from 'express';
 import rateLimit from 'express-rate-limit';
-import { brandById } from '../../../shared/demo-data';
-import { mockPartner } from '../adapters';
-import { destroySession, requireUser } from '../auth';
-import type { DB } from '../db';
-import { nowIso } from '../db';
-import type { CatalogSource } from '../services/catalog';
-import { catalogMeta, toRewardInput } from '../services/catalog';
-import * as rec from '../services/recommender';
-import {
-  brandHistory,
-  getPreferences,
-  listActivity,
-  listFavorites,
-  listUses,
-  recordUse,
-  savePreferences,
-  spendingFor,
-  usageSummary,
-} from '../store';
-import { copilotSchema, firstIssue, preferencesSchema, timeQuery, useSchema } from '../validation';
+import { PROGRAMS, programById } from '../../../shared/demo-data.js';
+import type { CategoryId, Moment, Preferences, Rating } from '../../../shared/types.js';
+import { destroySession, requireUser } from '../auth.js';
+import type { DB } from '../db.js';
+import * as ai from '../services/recommender.js';
+import * as store from '../store.js';
+import { contextSchema, firstIssue, holdSchema, linkSchema, pilotSchema, preferencesSchema, programIds, rateSchema } from '../validation.js';
 
-export function meRoutes(db: DB, catalog: CatalogSource, opts: { rateLimit: boolean }) {
+const NOUN: Partial<Record<CategoryId, string>> = {
+  coffee: 'coffee',
+  food: 'dining',
+  groceries: 'grocery',
+  books: 'book',
+  entertainment: 'movie',
+  shopping: 'shopping',
+  transport: 'travel',
+  wellness: 'wellness',
+};
+
+/** What a rating changes, said back to the member. */
+export function ratingEffect(rating: Rating, key: string | null) {
+  const [cat, bucket] = (key ?? ':').split(':');
+  const noun = NOUN[cat as CategoryId] ?? 'these';
+  const when = bucket ? ` in the ${bucket}` : '';
+  if (rating === 'bad') return `Got it, fewer ${noun} reminders${when}.`;
+  if (rating === 'good') return `Got it, Perkly will keep sending ${noun} reminders like this${when}.`;
+  return `Noted. Your ${noun} reminders${when} stay as they are.`;
+}
+
+type Ctx = ReturnType<typeof contextSchema.parse>;
+
+/** Time comes from the member's device (local time); server clock otherwise. */
+function momentContext(c: Partial<Ctx> | undefined, prefs: Preferences): ai.MomentContext {
+  const now = new Date();
+  const located = prefs.privacy.location && c?.lat != null && c?.lng != null;
+  return {
+    now: now.toISOString(),
+    hour: c?.hour ?? now.getHours(),
+    minute: c?.minute ?? now.getMinutes(),
+    weekday: c?.weekday ?? (now.getDay() + 6) % 7,
+    lat: located ? c!.lat! : null,
+    lng: located ? c!.lng! : null,
+    source: c?.source ?? 'simulated',
+  };
+}
+
+export function meRoutes(getDb: () => Promise<DB>, opts: { rateLimit: boolean }) {
   const r = Router();
   r.use(requireUser);
   const uid = (req: Request) => req.user!.id;
-  const copilotLimiter = opts.rateLimit
-    ? rateLimit({ windowMs: 60_000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'You’re asking quickly. Wait a minute and try again.' } })
-    : (_q: unknown, _s: unknown, next: () => void) => next();
+  const limiter = (limit: number) =>
+    opts.rateLimit
+      ? rateLimit({ windowMs: 60_000, limit, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'That’s a lot of requests. Wait a minute and try again.' } })
+      : (_q: unknown, _s: unknown, next: () => void) => next();
 
-  function timeContext(weekday?: number, hour?: number): rec.TimeContext {
-    const now = new Date();
-    return { now: now.toISOString(), weekday: weekday ?? (now.getDay() + 6) % 7, hour: hour ?? now.getHours() };
-  }
-
-  /** Only the signals this user has allowed. */
-  function userSummary(userId: string): rec.UserSummary {
-    const prefs = getPreferences(db, userId);
-    const personal = prefs.privacy.personalization;
-    return {
-      categories: prefs.categories,
-      favoriteBrands: prefs.favoriteBrands,
-      spending: personal ? spendingFor(prefs) : null,
-      brandHistory: personal ? brandHistory(db, userId, (id) => catalog.get(id)?.brandId) : {},
-      personalization: personal,
+  async function engineInputs(db: DB, userId: string, prefs: Preferences, session: string) {
+    const [links, habits, ratings, sentToday] = await Promise.all([
+      store.listLinks(db, userId),
+      store.habitsFor(db, userId, prefs),
+      store.getRatings(db, userId),
+      store.sentInSession(db, userId, session),
+    ]);
+    let candidates = ai.buildCandidates(links);
+    if (!prefs.notifications.expirationReminders) candidates = candidates.map((c) => ({ ...c, expiringPoints: 0, daysToExpiry: null }));
+    const enginePrefs: ai.EnginePrefs = {
+      quietHours: prefs.notifications.quietHours,
+      dailyLimit: prefs.notifications.dailyLimit,
+      sentToday,
+      locationAllowed: prefs.privacy.location && prefs.notifications.locationAlerts,
+      personalization: prefs.privacy.personalization,
     };
+    return { links, habits, ratings: prefs.privacy.personalization ? ratings : {}, candidates, enginePrefs };
   }
 
-  // ── Catalog and member summary ────────────────────────────────────────
-  r.get('/catalog', (_req, res) => {
-    res.json({ offers: catalog.list(), ...catalogMeta() });
-  });
-
-  r.get('/wallet', (req, res) => {
-    const id = uid(req);
-    const recent = (db.prepare('SELECT offer_id FROM recently_viewed WHERE user_id = ? ORDER BY viewed_at DESC LIMIT 6').all(id) as { offer_id: string }[]).map((a) => a.offer_id);
+  // ── Overview ──────────────────────────────────────────────────────────
+  r.get('/summary', async (req, res) => {
+    const db = await getDb();
+    const prefs = await store.getPreferences(db, uid(req));
+    const { programs, habits } = await store.plansFor(db, uid(req), prefs);
+    const holds = (await store.listHolds(db, uid(req))).filter((h) => h.status === 'held');
+    const soon = Date.now() + 30 * 86400_000;
+    const atRisk = programs.flatMap(({ link, program }) =>
+      link.expiries.filter((e) => new Date(e.expiresAt).getTime() <= soon).map((e) => ({ programId: program.id, points: e.points, expiresAt: e.expiresAt })),
+    );
     res.json({
-      summary: usageSummary(db, id),
-      activity: listActivity(db, id),
-      favorites: listFavorites(db, id),
-      recentlyViewed: recent,
-      spendingSource: spendingFor(getPreferences(db, id))?.source ?? 'none',
+      programs,
+      habits,
+      holds,
+      atRisk,
+      totals: {
+        bestValue: Math.round(programs.reduce((n, p) => n + (p.plans[0]?.totalValue ?? 0), 0) * 100) / 100,
+        valueAtRisk: Math.round(programs.reduce((n, p) => n + (p.plans[0]?.valueAtRisk ?? 0), 0) * 100) / 100,
+      },
+      activity: await store.listActivity(db, uid(req)),
     });
   });
 
-  // ── Preferences ───────────────────────────────────────────────────────
-  r.get('/preferences', (req, res) => {
-    res.json(getPreferences(db, uid(req)));
+  // ── Programs (read-only links) ────────────────────────────────────────
+  r.get('/programs', async (req, res) => {
+    const links = await store.listLinks(await getDb(), uid(req));
+    res.json({ programs: PROGRAMS.map((p) => ({ program: p, link: links.find((l) => l.programId === p.id) ?? null })) });
   });
 
-  r.put('/preferences', (req, res) => {
+  r.post('/programs/:id/link', async (req, res) => {
+    const id = String(req.params.id);
+    if (!programIds.has(id)) {
+      res.status(404).json({ error: 'Program not found.' });
+      return;
+    }
+    const parsed = linkSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: firstIssue(parsed.error) });
+      return;
+    }
+    const db = await getDb();
+    // The synthetic history is seeded per member, so linking again gives the same data.
+    await store.linkProgram(db, uid(req), id, { history: parsed.data.shareHistory, visits: parsed.data.shareVisits }, uid(req));
+    res.status(201).json({ link: (await store.listLinks(db, uid(req))).find((l) => l.programId === id) });
+  });
+
+  r.delete('/programs/:id', async (req, res) => {
+    await store.unlinkProgram(await getDb(), uid(req), String(req.params.id));
+    res.json({ ok: true });
+  });
+
+  r.get('/purchases', async (req, res) => {
+    res.json({ purchases: await store.listPurchases(await getDb(), uid(req)), notice: 'Synthetic purchase history shared by sample programs.' });
+  });
+
+  // ── Plans (Explore) ───────────────────────────────────────────────────
+  r.get('/plans', async (req, res) => {
+    const db = await getDb();
+    const prefs = await store.getPreferences(db, uid(req));
+    res.json(await store.plansFor(db, uid(req), prefs));
+  });
+
+  // ── Holds ─────────────────────────────────────────────────────────────
+  r.get('/holds', async (req, res) => {
+    res.json({ holds: await store.listHolds(await getDb(), uid(req)) });
+  });
+
+  r.post('/holds', limiter(30), async (req, res) => {
+    const parsed = holdSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: firstIssue(parsed.error) });
+      return;
+    }
+    const { optionId, channel, idempotencyKey } = parsed.data;
+    const hold = await store.createHold(await getDb(), uid(req), optionId, channel, idempotencyKey);
+    res.status(201).json({ hold });
+  });
+
+  /** In the demo the member taps "the cashier scanned it" / completes the mock checkout. */
+  r.post('/holds/:id/confirm', async (req, res) => {
+    res.json({ hold: await store.confirmHold(await getDb(), uid(req), String(req.params.id)) });
+  });
+
+  r.post('/holds/:id/release', async (req, res) => {
+    res.json({ hold: await store.releaseHold(await getDb(), uid(req), String(req.params.id)) });
+  });
+
+  // ── Moments ───────────────────────────────────────────────────────────
+  r.post('/moments/evaluate', limiter(60), async (req, res) => {
+    const parsed = contextSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      res.status(400).json({ error: firstIssue(parsed.error) });
+      return;
+    }
+    const db = await getDb();
+    const prefs = await store.getPreferences(db, uid(req));
+    const context = momentContext(parsed.data, prefs);
+    const inputs = await engineInputs(db, uid(req), prefs, parsed.data.session);
+    // Don't repeat a reward already sent in this session.
+    const sentBefore = await store.sentOptionsInSession(db, uid(req), parsed.data.session);
+    const fresh = inputs.candidates.filter((c) => !sentBefore.has(c.optionId));
+    const result = await ai.evaluateMoment({ context, prefs: inputs.enginePrefs, habits: inputs.habits, ratings: inputs.ratings, candidates: fresh });
+    const d = result.decision;
+    let moment: Moment | null = null;
+    if (d.optionId) {
+      moment = {
+        id: randomUUID(),
+        optionId: d.optionId,
+        merchantId: d.merchantId,
+        sent: d.sent,
+        title: d.title,
+        body: d.body,
+        reasons: d.reasons,
+        suppressedBecause: d.suppressedBecause,
+        uplift: d.uplift,
+        pIfNotified: d.pIfNotified,
+        pIfNot: d.pIfNot,
+        distanceM: d.distanceM,
+        at: context.now,
+        context: context.source,
+        ratingKey: d.category ? `${d.category}:${d.bucket}` : null,
+        rating: null,
+        ratingMessage: null,
+        isDemo: true,
+      };
+      await store.saveMoment(db, uid(req), parsed.data.session, moment);
+    }
+    res.json({
+      moment,
+      decision: d,
+      considered: result.considered,
+      model: result.model,
+      threshold: result.threshold,
+      fallback: Boolean(result.fallback),
+      context: { hour: context.hour, minute: context.minute, located: context.lat != null },
+    });
+  });
+
+  r.get('/moments', async (req, res) => {
+    res.json({ moments: await store.listMoments(await getDb(), uid(req)) });
+  });
+
+  r.post('/moments/:id/rate', async (req, res) => {
+    const parsed = rateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'Choose Good, Fine or Bad.' });
+      return;
+    }
+    const db = await getDb();
+    const existing = (await store.listMoments(db, uid(req), 200)).find((m) => m.id === req.params.id);
+    if (!existing) {
+      res.status(404).json({ error: 'Notification not found.' });
+      return;
+    }
+    const message = ratingEffect(parsed.data.rating, existing.ratingKey);
+    const moment = await store.rateMoment(db, uid(req), existing.id, parsed.data.rating, existing.ratingKey ?? 'general:any', message);
+    res.json({ moment, message });
+  });
+
+  r.delete('/ratings', async (req, res) => {
+    await store.resetRatings(await getDb(), uid(req));
+    res.json({ ok: true });
+  });
+
+  // ── Perkly's Pilot ────────────────────────────────────────────────────
+  r.post('/pilot', limiter(20), async (req, res) => {
+    const parsed = pilotSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: firstIssue(parsed.error) });
+      return;
+    }
+    const db = await getDb();
+    const prefs = await store.getPreferences(db, uid(req));
+    const context = momentContext(parsed.data.context, prefs);
+    const inputs = await engineInputs(db, uid(req), prefs, parsed.data.context?.session ?? 'pilot');
+    const { programs } = await store.plansFor(db, uid(req), prefs);
+    const reply = await ai.askPilot({
+      message: parsed.data.message,
+      context,
+      prefs: inputs.enginePrefs,
+      habits: inputs.habits,
+      ratings: inputs.ratings,
+      candidates: inputs.candidates,
+      programs: ai.planPayload(programs),
+    });
+    res.json(reply);
+  });
+
+  // ── Preferences, data rights ──────────────────────────────────────────
+  r.get('/preferences', async (req, res) => {
+    res.json(await store.getPreferences(await getDb(), uid(req)));
+  });
+
+  r.put('/preferences', async (req, res) => {
     const parsed = preferencesSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: firstIssue(parsed.error) });
       return;
     }
-    savePreferences(db, uid(req), parsed.data as ReturnType<typeof getPreferences>);
-    res.json(getPreferences(db, uid(req)));
+    const db = await getDb();
+    await store.savePreferences(db, uid(req), parsed.data as Preferences);
+    res.json(await store.getPreferences(db, uid(req)));
   });
 
-  // ── Favorites and recently viewed ─────────────────────────────────────
-  r.put('/favorites/:offerId', (req, res) => {
-    if (!catalog.get(req.params.offerId)) {
-      res.status(404).json({ error: 'Reward not found.' });
-      return;
-    }
-    db.prepare('INSERT OR IGNORE INTO favorites (user_id, offer_id, created_at) VALUES (?, ?, ?)').run(uid(req), req.params.offerId, nowIso());
-    res.json({ favorites: listFavorites(db, uid(req)) });
+  r.get('/activity', async (req, res) => {
+    res.json({ activity: await store.listActivity(await getDb(), uid(req)) });
   });
 
-  r.delete('/favorites/:offerId', (req, res) => {
-    db.prepare('DELETE FROM favorites WHERE user_id = ? AND offer_id = ?').run(uid(req), req.params.offerId);
-    res.json({ favorites: listFavorites(db, uid(req)) });
-  });
-
-  r.post('/viewed/:offerId', (req, res) => {
-    if (catalog.get(req.params.offerId)) {
-      db.prepare(
-        `INSERT INTO recently_viewed (user_id, offer_id, viewed_at) VALUES (?, ?, ?)
-         ON CONFLICT(user_id, offer_id) DO UPDATE SET viewed_at = excluded.viewed_at`,
-      ).run(uid(req), req.params.offerId, nowIso());
-    }
-    res.json({ ok: true });
-  });
-
-  // ── Recommendations and Copilot ───────────────────────────────────────
-  r.get('/recommendations', async (req, res) => {
-    const q = timeQuery.safeParse(req.query);
-    const t = timeContext(q.success ? q.data.weekday : undefined, q.success ? q.data.hour : undefined);
-    const prefs = getPreferences(db, uid(req));
-    const result = await rec.recommend(userSummary(uid(req)), catalog.list(), t, prefs.privacy.location, 30);
-    res.json({ ...result, location: prefs.privacy.location ? 'Demo location: SoHo, New York' : null });
-  });
-
-  r.post('/copilot', copilotLimiter, async (req, res) => {
-    const parsed = copilotSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: firstIssue(parsed.error) });
-      return;
-    }
-    const prefs = getPreferences(db, uid(req));
-    try {
-      const out = await rec.copilot({
-        message: parsed.data.message,
-        user: userSummary(uid(req)),
-        rewards: catalog.list().map(toRewardInput),
-        time: timeContext(parsed.data.weekday, parsed.data.hour),
-        location: { permitted: prefs.privacy.location },
-      });
-      res.json(out);
-    } catch {
-      res.status(503).json({ error: 'The Copilot service isn’t responding. Try again in a moment, or browse rewards in Explore.' });
-    }
-  });
-
-  // ── Using a reward ────────────────────────────────────────────────────
-  // The member uses the reward on the partner's site or in store; the partner
-  // reports the purchase back. Here the partner report is simulated.
-  r.post('/rewards/:offerId/use', (req, res) => {
-    const parsed = useSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: 'Choose online or in store.' });
-      return;
-    }
-    const offer = catalog.get(req.params.offerId);
-    if (!offer) {
-      res.status(404).json({ error: 'This reward no longer exists.' });
-      return;
-    }
-    if (new Date(offer.expiresAt) < new Date()) {
-      res.status(409).json({ error: 'This reward has expired.' });
-      return;
-    }
-    if (!offer.valid.channels.includes(parsed.data.channel)) {
-      res.status(409).json({ error: `${brandById(offer.brandId)?.name} only accepts this reward ${offer.valid.channels.includes('online') ? 'online' : 'in store'}.` });
-      return;
-    }
-    const report = mockPartner.reportUse(offer, parsed.data.channel);
-    const use = recordUse(db, uid(req), offer, parsed.data.channel);
-    res.status(201).json({ use, simulated: report.simulated });
-  });
-
-  r.get('/history', (req, res) => {
-    res.json({ uses: listUses(db, uid(req)), activity: listActivity(db, uid(req)) });
-  });
-
-  // ── Data rights ───────────────────────────────────────────────────────
-  r.get('/export', (req, res) => {
+  r.get('/export', async (req, res) => {
+    const db = await getDb();
     const id = uid(req);
-    const user = db.prepare('SELECT email, is_demo, created_at FROM users WHERE id = ?').get(id);
-    const consents = db.prepare('SELECT terms_version, accepted_at, spending_data, location, marketing FROM consents WHERE user_id = ?').all(id);
-    res.setHeader('content-disposition', 'attachment; filename="perkly-data-export.json"');
+    const [preferences, links, purchases, holds, moments, ratings, activity] = await Promise.all([
+      store.getPreferences(db, id),
+      store.listLinks(db, id),
+      store.listPurchases(db, id),
+      store.listHolds(db, id),
+      store.listMoments(db, id, 500),
+      store.getRatings(db, id),
+      store.listActivity(db, id),
+    ]);
+    res.setHeader('content-disposition', 'attachment; filename="perkly-data.json"');
     res.json({
-      exportedAt: nowIso(),
-      account: user,
-      consents,
-      preferences: getPreferences(db, id),
-      favorites: listFavorites(db, id).map((o) => ({ offerId: o, brand: brandById(catalog.get(o)?.brandId ?? '')?.name })),
-      rewardsUsed: listUses(db, id),
-      activity: listActivity(db, id),
-      note: 'Passwords are stored only as bcrypt hashes and are not included. Perkly holds no payment details.',
+      exportedAt: new Date().toISOString(),
+      account: { isDemo: req.user!.isDemo },
+      preferences,
+      linkedPrograms: links.map((l) => ({ ...l, program: programById(l.programId)?.name })),
+      purchases,
+      holds,
+      notifications: moments,
+      ratings,
+      activity,
     });
   });
 
-  r.delete('/account', (req, res) => {
-    if (req.body?.confirm !== 'DELETE') {
-      res.status(400).json({ error: 'Type DELETE to confirm.' });
-      return;
-    }
+  r.delete('/account', async (req, res) => {
+    const db = await getDb();
     const id = uid(req);
-    destroySession(db, req, res);
-    db.prepare('DELETE FROM users WHERE id = ?').run(id);
-    res.json({ deleted: true });
+    await destroySession(db, req, res);
+    await store.deleteUser(db, id);
+    res.json({ ok: true });
   });
 
   return r;

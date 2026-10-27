@@ -1,23 +1,21 @@
 // Shared domain types for Perkly. Imported by the web app and the Node API.
 //
-// Perkly is a free membership network: partner brands offer rewards to Perkly
-// members. Members use a reward on the brand's own website, or in store with a
-// code. Perkly never takes payment and issues no points.
+// Perkly links, read-only, to the loyalty programs a member already has. It
+// reads balances, expiry dates and (with permission) purchase history, turns a
+// balance into specific rewards, and picks the right moment to suggest one.
+// Perkly never issues or holds points: redemptions are completed by the
+// program, and Perkly only places a short hold so the same points can't be
+// spent twice while a redemption is in progress.
 
 export type CategoryId =
-  | 'food'
   | 'coffee'
+  | 'food'
   | 'groceries'
-  | 'travel'
-  | 'hotels'
-  | 'fashion'
-  | 'watches'
-  | 'beauty'
-  | 'tech'
+  | 'books'
   | 'entertainment'
+  | 'shopping'
   | 'transport'
-  | 'wellness'
-  | 'other';
+  | 'wellness';
 
 export interface Category {
   id: CategoryId;
@@ -27,86 +25,168 @@ export interface Category {
 
 export type Channel = 'online' | 'in_store';
 
-export interface Brand {
+export type ProgramKind = 'bank_card' | 'stamp_card' | 'store_membership';
+
+export interface Program {
+  id: string;
+  name: string;
+  /** The business that runs the program. Fictional in the prototype. */
+  issuer: string;
+  kind: ProgramKind;
+  unit: 'points' | 'stars';
+  category: CategoryId | null;
+  monogram: string;
+  /** Plain-language summary of how points are earned. */
+  earnRule: string;
+  expiryRule: string;
+}
+
+export interface Merchant {
   id: string;
   name: string;
   category: CategoryId;
-  /** Two-letter monogram used instead of a logo. Brands are fictional. */
-  monogram: string;
-  /** The partner's website. Demo brands use reserved .example domains. */
+  subcategory: string;
+  address: string;
+  lat: number;
+  lng: number;
+  /** Opening hours, 24h clock. */
+  opens: number;
+  closes: number;
   website: string;
 }
 
-export type BenefitKind = 'amount_off' | 'percent_off' | 'freebie' | 'service';
-
-export interface Offer {
+/** One thing a balance can buy. */
+export interface RewardOption {
   id: string;
-  brandId: string;
-  category: CategoryId;
-  subcategory: string;
-  /** Editorial headline, e.g. "$2 off your morning flat white". */
-  headline: string;
-  benefit: {
-    kind: BenefitKind;
-    /** Dollars for amount_off, percent for percent_off. */
-    value: number | null;
-    summary: string;
-  };
-  valueEstimate: { amount: number | null; basis: string };
+  programId: string;
+  /** Where the reward can be used in person. Empty for online-only rewards like statement credit. */
+  merchantIds: string[];
+  title: string;
+  cost: number;
+  /** Dollar value of the reward. */
+  value: number;
+  valueBasis: string;
   minSpend: number | null;
-  maxBenefit: number | null;
-  youPay: { summary: string; knownFees: string[]; feesUnknown: boolean };
-  validFrom: string;
-  expiresAt: string;
-  valid: {
-    items: string[];
-    locations: string[];
-    channels: Channel[];
-    /** Who qualifies, e.g. "All Perkly members", "New customers only". */
-    who: string[];
-  };
-  notValid: {
-    exclusions: string[];
-    locations: string[];
-    transactions: string[];
-    stacking: string;
-  };
-  /** Plain-language steps for each channel the offer supports. */
-  howToUse: { online: string | null; inStore: string | null; whenYouGetIt: string };
-  redemption: {
-    /** Deep link to the partner's site. Demo links point at .example domains and are simulated. */
-    url: string | null;
-    /** Member code, shown for in-store use and applied automatically online when supported. */
-    code: string;
-    codeAutoAppliedOnline: boolean;
-  };
-  nearby: { label: string; distanceMeters: number } | null;
-  routine: Array<'weekday_morning' | 'evening' | 'weekend'>;
-  sponsored: boolean;
-  source: 'synthetic_demo';
-  verification: 'unverified_demo';
-  termsUrl: string | null;
+  channels: Channel[];
+  valid: string[];
+  notValid: string[];
+  stacking: string;
+  howToUse: { online: string | null; inStore: string | null };
+  /** Seller deep link. Demo links use reserved .example domains. */
+  url: string | null;
 }
 
-export interface SpendingSummary {
-  /** Share of spend by category over the last 90 days, 0–1. */
-  share: Partial<Record<CategoryId, number>>;
-  /** Typical transaction size by category, in dollars. */
-  typicalSpend: Partial<Record<CategoryId, number>>;
-  source: 'synthetic_demo' | 'none';
+export interface PointExpiry {
+  points: number;
+  expiresAt: string;
 }
+
+export interface LinkedProgram {
+  programId: string;
+  balance: number;
+  held: number;
+  available: number;
+  expiries: PointExpiry[];
+  linkedAt: string;
+  shares: { history: boolean; visits: boolean };
+  isDemo: true;
+}
+
+export interface Purchase {
+  id: string;
+  programId: string;
+  merchantId: string;
+  category: CategoryId;
+  amount: number;
+  at: string;
+}
+
+/** Spending habits derived from shared purchase history. */
+export interface Habits {
+  /** Visits per week by category. */
+  visitsPerWeek: Partial<Record<CategoryId, number>>;
+  /** Typical spend per visit by category. */
+  typicalSpend: Partial<Record<CategoryId, number>>;
+  /** Share of visits by hour of day (0–23) per category, each row sums to 1. */
+  hourShare: Partial<Record<CategoryId, number[]>>;
+  /** Spend in the last 14 days divided by the 14 days before, by category. */
+  spendVelocity: Partial<Record<CategoryId, number>>;
+  source: 'linked_history' | 'none';
+}
+
+export interface PlanStep {
+  optionId: string;
+  times: number;
+}
+
+/** A way to use a balance, e.g. "7 × $2 off" or "1 × $15 off". */
+export interface UsePlan {
+  id: string;
+  programId: string;
+  label: string;
+  steps: PlanStep[];
+  pointsUsed: number;
+  leftover: number;
+  totalValue: number;
+  valuePerPoint: number;
+  visits: number;
+  extraSpend: number;
+  valueAtRisk: number;
+  score: number;
+  reasons: string[];
+  warnings: string[];
+}
+
+export type HoldStatus = 'held' | 'confirmed' | 'released' | 'expired';
+
+export interface Hold {
+  id: string;
+  programId: string;
+  optionId: string;
+  points: number;
+  channel: Channel;
+  code: string;
+  status: HoldStatus;
+  createdAt: string;
+  expiresAt: string;
+  resolvedAt: string | null;
+  isDemo: true;
+}
+
+export type Rating = 'good' | 'fine' | 'bad';
+
+/** A notification the moment engine decided to send, or chose not to. */
+export interface Moment {
+  id: string;
+  optionId: string;
+  merchantId: string | null;
+  sent: boolean;
+  title: string;
+  body: string;
+  reasons: string[];
+  suppressedBecause: string | null;
+  uplift: number;
+  pIfNotified: number;
+  pIfNot: number;
+  distanceM: number | null;
+  at: string;
+  context: 'simulated' | 'device';
+  /** `category:time-of-day`, the bucket a rating tunes. */
+  ratingKey: string | null;
+  rating: Rating | null;
+  ratingMessage: string | null;
+  isDemo: true;
+}
+
+export type ThemeId = 'fresh-green' | 'ivory-silk' | 'sage-mist' | 'sandy-shore' | 'seafoam-sun';
 
 export interface NotificationPrefs {
   preset: 'essential' | 'balanced' | 'personalized';
   dailyLimit: number;
-  categories: CategoryId[];
-  favoriteBrandAlerts: boolean;
   expirationReminders: boolean;
   locationAlerts: boolean;
   quietHours: { enabled: boolean; start: string; end: string };
-  days: Array<'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'>;
   channels: Array<'push' | 'email'>;
-  routineAlerts: boolean;
 }
 
 export interface AccessibilityPrefs {
@@ -117,54 +197,24 @@ export interface AccessibilityPrefs {
 
 export interface PrivacyPrefs {
   personalization: boolean;
-  spendingData: boolean;
   location: boolean;
+  useHistory: boolean;
   marketing: boolean;
 }
 
 export interface Preferences {
   displayName: string;
   categories: CategoryId[];
-  subcategories: string[];
-  favoriteBrands: string[];
+  theme: ThemeId;
   notifications: NotificationPrefs;
   accessibility: AccessibilityPrefs;
   privacy: PrivacyPrefs;
-  onboarding: {
-    completed: boolean;
-    skipped: string[];
-  };
-}
-
-export interface Recommendation {
-  offerId: string;
-  score: number;
-  reasons: string[];
-  warnings: string[];
-}
-
-export interface RecommendationResult {
-  items: Recommendation[];
-  engine: 'perkly-scorer-v1' | 'local-fallback-v1';
-  generatedAt: string;
-  note: string;
-}
-
-/** A reward a member used. In the demo the partner's report is simulated. */
-export interface RewardUse {
-  id: string;
-  offerId: string;
-  channel: Channel;
-  createdAt: string;
-  /** Estimated saving from the offer's stated value, when one exists. */
-  estimatedSaving: number | null;
-  status: 'reported_demo';
-  isDemo: true;
+  onboarding: { completed: boolean; skipped: string[] };
 }
 
 export interface Activity {
   id: string;
-  kind: 'used' | 'saved' | 'expired';
+  kind: 'redeemed' | 'held' | 'released' | 'expired' | 'linked';
   label: string;
   amount: string;
   date: string;

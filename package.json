@@ -2,7 +2,7 @@
   "name": "perkly",
   "private": true,
   "version": "0.1.0",
-  "description": "Perkly: AI-powered reward discovery, optimization and redemption (student prototype).",
+  "description": "Perkly: spends the points you already have at the right moment (student prototype).",
   "workspaces": ["web", "server"],
   "scripts": {
     "dev": "concurrently -k -n ai,api,web -c green,blue,magenta \"npm:dev:ai\" \"npm:dev:api\" \"npm:dev:web\"",

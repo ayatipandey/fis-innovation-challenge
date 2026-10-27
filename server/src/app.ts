@@ -1,17 +1,16 @@
 import { existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import cookieParser from 'cookie-parser';
 import express, { type ErrorRequestHandler } from 'express';
 import helmet from 'helmet';
-import { loadSession, requireClientHeader } from './auth';
-import { config } from './config';
-import type { DB } from './db';
-import { authRoutes } from './routes/auth';
-import { meRoutes } from './routes/me';
-import { publicRoutes } from './routes/public';
-import type { CatalogSource } from './services/catalog';
+import { loadSession, requireClientHeader } from './auth.js';
+import { config } from './config.js';
+import type { DB } from './db.js';
+import { authRoutes } from './routes/auth.js';
+import { meRoutes } from './routes/me.js';
+import { publicRoutes } from './routes/public.js';
 
-export function createApp(db: DB, catalog: CatalogSource, opts = { rateLimit: true, logRequests: true }) {
+export function createApp(getDb: () => Promise<DB>, opts = { rateLimit: true, logRequests: true }) {
   const app = express();
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
@@ -44,17 +43,17 @@ export function createApp(db: DB, catalog: CatalogSource, opts = { rateLimit: tr
     });
   }
 
-  app.use('/api', requireClientHeader, loadSession(db));
-  app.use('/api', publicRoutes(catalog));
-  app.use('/api/auth', authRoutes(db, catalog, opts));
-  app.use('/api/me', meRoutes(db, catalog, opts));
+  app.use('/api', requireClientHeader, loadSession(getDb));
+  app.use('/api', publicRoutes(getDb));
+  app.use('/api/auth', authRoutes(getDb, opts));
+  app.use('/api/me', meRoutes(getDb, opts));
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'Not found.' });
   });
 
-  // In production the API also serves the built web app.
-  const dist = fileURLToPath(new URL('../../web/dist', import.meta.url));
-  if (config.isProduction && existsSync(dist)) {
+  // In production outside Vercel (npm start), the API also serves the built web app.
+  const dist = resolve(process.cwd(), '../web/dist');
+  if (config.isProduction && !process.env.VERCEL && existsSync(dist)) {
     app.use(express.static(dist, { index: false, maxAge: '1h' }));
     app.get('/{*splat}', (_req, res) => res.sendFile(`${dist}/index.html`));
   }
@@ -62,6 +61,11 @@ export function createApp(db: DB, catalog: CatalogSource, opts = { rateLimit: tr
   const onError: ErrorRequestHandler = (err, _req, res, _next) => {
     if (err?.type === 'entity.parse.failed' || err?.type === 'entity.too.large') {
       res.status(400).json({ error: 'The request couldn’t be read.' });
+      return;
+    }
+    // Expected errors (409 conflicts, 404s) carry a status and a member-facing message.
+    if (typeof err?.status === 'number' && err.status >= 400 && err.status < 500) {
+      res.status(err.status).json({ error: err.message });
       return;
     }
     console.error('Unhandled error:', err instanceof Error ? err.message : 'unknown');

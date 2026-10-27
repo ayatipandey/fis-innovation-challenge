@@ -42,8 +42,10 @@ export async function api<T>(path: string, opts: { method?: Method; body?: unkno
   return data as T;
 }
 
-/** Local weekday (0 = Monday) and hour, so recommendations match the user's own clock. */
-export function localTime() {
-  const d = new Date();
-  return { weekday: (d.getDay() + 6) % 7, hour: d.getHours() };
+/** Local weekday (0 = Monday), hour and minute, so moments match the member's own clock. */
+export function localTime(d = new Date()) {
+  return { weekday: (d.getDay() + 6) % 7, hour: d.getHours(), minute: d.getMinutes() };
 }
+
+/** A fresh key per tap-sequence so a double tap can't place two holds. */
+export const newKey = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);

@@ -1,12 +1,12 @@
 import { createHash, randomBytes } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import type { NextFunction, Request, Response } from 'express';
-import { config } from './config';
-import type { DB } from './db';
+import { config } from './config.js';
+import type { DB } from './db.js';
+
+export { EMAIL_RE, passwordProblems } from '../../shared/validation.js';
 
 export const SESSION_COOKIE = 'perkly_sid';
-
-export { EMAIL_RE, passwordProblems } from '../../shared/validation';
 
 export const hashPassword = (password: string) => bcrypt.hash(password, config.bcryptCost);
 
@@ -20,24 +20,16 @@ export async function verifyPassword(password: string, hash: string | undefined)
 
 const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
 
-export function createSession(db: DB, res: Response, userId: string) {
+export async function createSession(db: DB, res: Response, userId: string) {
   const token = randomBytes(32).toString('base64url');
   const expires = new Date(Date.now() + config.sessionTtlDays * 86400_000);
-  db.prepare('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)').run(
-    sha256(token), userId, expires.toISOString(),
-  );
-  res.cookie(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: config.isProduction,
-    expires,
-    path: '/',
-  });
+  await db.run('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)', [sha256(token), userId, expires.toISOString()]);
+  res.cookie(SESSION_COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: config.isProduction, expires, path: '/' });
 }
 
-export function destroySession(db: DB, req: Request, res: Response) {
+export async function destroySession(db: DB, req: Request, res: Response) {
   const token = req.cookies?.[SESSION_COOKIE];
-  if (token) db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(sha256(token));
+  if (token) await db.run('DELETE FROM sessions WHERE token_hash = ?', [sha256(token)]);
   res.clearCookie(SESSION_COOKIE, { path: '/' });
 }
 
@@ -56,21 +48,22 @@ declare global {
   }
 }
 
-export function loadSession(db: DB) {
-  return (req: Request, _res: Response, next: NextFunction) => {
-    const token = req.cookies?.[SESSION_COOKIE];
-    if (token) {
-      const row = db
-        .prepare(
-          `SELECT u.id, u.email, u.is_demo, s.expires_at FROM sessions s JOIN users u ON u.id = s.user_id
-           WHERE s.token_hash = ?`,
-        )
-        .get(sha256(token)) as { id: string; email: string; is_demo: number; expires_at: string } | undefined;
-      if (row && new Date(row.expires_at) > new Date()) {
-        req.user = { id: row.id, email: row.email, isDemo: Boolean(row.is_demo) };
+export function loadSession(getDb: () => Promise<DB>) {
+  return async (req: Request, _res: Response, next: NextFunction) => {
+    try {
+      const token = req.cookies?.[SESSION_COOKIE];
+      if (token) {
+        const db = await getDb();
+        const row = await db.get<{ id: string; email: string; is_demo: number; expires_at: string }>(
+          'SELECT u.id, u.email, u.is_demo, s.expires_at FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?',
+          [sha256(token)],
+        );
+        if (row && new Date(row.expires_at) > new Date()) req.user = { id: row.id, email: row.email, isDemo: Boolean(row.is_demo) };
       }
+      next();
+    } catch (err) {
+      next(err);
     }
-    next();
   };
 }
 

@@ -1,31 +1,30 @@
 import { randomUUID } from 'node:crypto';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { EMAIL_RE, createSession, destroySession, hashPassword, passwordProblems, verifyPassword } from '../auth';
-import { config } from '../config';
-import type { CatalogSource } from '../services/catalog';
-import type { DB } from '../db';
-import { nowIso } from '../db';
-import { defaultPreferences, getPreferences, savePreferences, seedDemoUser } from '../store';
-import { firstIssue, loginSchema, registerSchema } from '../validation';
+import { EMAIL_RE, createSession, destroySession, hashPassword, passwordProblems, verifyPassword } from '../auth.js';
+import { config } from '../config.js';
+import type { DB } from '../db.js';
+import { nowIso } from '../db.js';
+import { defaultPreferences, getPreferences, savePreferences, seedDemoUser } from '../store.js';
+import { firstIssue, loginSchema, registerSchema } from '../validation.js';
 
-export function authRoutes(db: DB, catalog: CatalogSource, opts: { rateLimit: boolean }) {
+export function authRoutes(getDb: () => Promise<DB>, opts: { rateLimit: boolean }) {
   const r = Router();
   const limiter = opts.rateLimit
     ? rateLimit({ windowMs: 15 * 60_000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Too many attempts. Wait 15 minutes and try again.' } })
     : (_req: unknown, _res: unknown, next: () => void) => next();
 
-  const sessionPayload = (userId: string, email: string, isDemo: boolean) => ({
-    user: { id: userId, email, isDemo },
-    preferences: getPreferences(db, userId),
+  const sessionPayload = async (db: DB, userId: string, isDemo: boolean) => ({
+    user: { id: userId, isDemo },
+    preferences: await getPreferences(db, userId),
   });
 
-  r.get('/session', (req, res) => {
+  r.get('/session', async (req, res) => {
     if (!req.user) {
       res.json({ user: null });
       return;
     }
-    res.json(sessionPayload(req.user.id, req.user.email, req.user.isDemo));
+    res.json(await sessionPayload(await getDb(), req.user.id, req.user.isDemo));
   });
 
   r.post('/register', limiter, async (req, res) => {
@@ -34,7 +33,7 @@ export function authRoutes(db: DB, catalog: CatalogSource, opts: { rateLimit: bo
       res.status(400).json({ error: firstIssue(parsed.error) });
       return;
     }
-    const { email, password, optional } = parsed.data;
+    const { email, password, firstName, optional } = parsed.data;
     if (!EMAIL_RE.test(email)) {
       res.status(400).json({ error: 'Enter an email address like name@example.com.', field: 'email' });
       return;
@@ -44,20 +43,23 @@ export function authRoutes(db: DB, catalog: CatalogSource, opts: { rateLimit: bo
       res.status(400).json({ error: problems[0], field: 'password', problems });
       return;
     }
-    if (db.prepare('SELECT 1 FROM users WHERE email = ?').get(email)) {
+    const db = await getDb();
+    if (await db.get('SELECT 1 FROM users WHERE email = ?', [email])) {
       res.status(409).json({ error: 'An account with this email already exists. Sign in instead.', field: 'email' });
       return;
     }
 
     const id = randomUUID();
     const hash = await hashPassword(password);
-    db.prepare('INSERT INTO users (id, email, password_hash, is_demo, created_at) VALUES (?, ?, ?, 0, ?)').run(id, email, hash, nowIso());
-    db.prepare('INSERT INTO consents (user_id, terms_version, accepted_at, spending_data, location, marketing) VALUES (?, ?, ?, ?, ?, ?)').run(
-      id, config.termsVersion, nowIso(), Number(optional.spendingData), Number(optional.location), Number(optional.marketing),
-    );
-    savePreferences(db, id, defaultPreferences({ personalization: true, spendingData: optional.spendingData, location: optional.location, marketing: optional.marketing }));
-    createSession(db, res, id);
-    res.status(201).json(sessionPayload(id, email, false));
+    await db.run('INSERT INTO users (id, email, password_hash, is_demo, created_at) VALUES (?, ?, ?, 0, ?)', [id, email, hash, nowIso()]);
+    await db.run('INSERT INTO consents (user_id, terms_version, accepted_at, location, history, marketing) VALUES (?, ?, ?, ?, ?, ?)', [
+      id, config.termsVersion, nowIso(), Number(optional.location), Number(optional.history), Number(optional.marketing),
+    ]);
+    const prefs = defaultPreferences({ location: optional.location, useHistory: optional.history, marketing: optional.marketing });
+    prefs.displayName = firstName;
+    await savePreferences(db, id, prefs);
+    await createSession(db, res, id);
+    res.status(201).json(await sessionPayload(db, id, false));
   });
 
   r.post('/login', limiter, async (req, res) => {
@@ -67,31 +69,31 @@ export function authRoutes(db: DB, catalog: CatalogSource, opts: { rateLimit: bo
       return;
     }
     const { email, password } = parsed.data;
-    const row = db.prepare('SELECT id, email, password_hash, is_demo FROM users WHERE email = ?').get(email) as
-      | { id: string; email: string; password_hash: string; is_demo: number }
-      | undefined;
+    const db = await getDb();
+    const row = await db.get<{ id: string; password_hash: string; is_demo: number }>('SELECT id, password_hash, is_demo FROM users WHERE email = ?', [email]);
     const ok = await verifyPassword(password, row?.password_hash);
     if (!row || !ok || row.is_demo) {
       res.status(401).json({ error: 'That email and password don’t match an account.' });
       return;
     }
-    createSession(db, res, row.id);
-    res.json(sessionPayload(row.id, row.email, false));
+    await createSession(db, res, row.id);
+    res.json(await sessionPayload(db, row.id, false));
   });
 
-  /** "Try the Demo": a fresh, fictional account per visitor, kept apart from real users. */
+  /** "Try the demo": a fresh, fictional account per visitor, kept apart from real users. */
   r.post('/demo', limiter, async (_req, res) => {
+    const db = await getDb();
     const id = randomUUID();
     const email = `demo-${id.slice(0, 8)}@demo.perkly.invalid`;
     // Unusable random password: demo accounts can't be signed into with credentials.
-    db.prepare('INSERT INTO users (id, email, password_hash, is_demo, created_at) VALUES (?, ?, ?, 1, ?)').run(id, email, `!demo:${randomUUID()}`, nowIso());
-    seedDemoUser(db, id, catalog.list());
-    createSession(db, res, id);
-    res.status(201).json(sessionPayload(id, email, true));
+    await db.run('INSERT INTO users (id, email, password_hash, is_demo, created_at) VALUES (?, ?, ?, 1, ?)', [id, email, `!demo:${randomUUID()}`, nowIso()]);
+    await seedDemoUser(db, id);
+    await createSession(db, res, id);
+    res.status(201).json(await sessionPayload(db, id, true));
   });
 
-  r.post('/logout', (req, res) => {
-    destroySession(db, req, res);
+  r.post('/logout', async (req, res) => {
+    await destroySession(await getDb(), req, res);
     res.json({ ok: true });
   });
 

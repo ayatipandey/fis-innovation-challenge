@@ -1,0 +1,3 @@
+# Python dependencies for the Vercel AI function (api/ai.py).
+fastapi>=0.115,<1
+pydantic>=2.7,<3

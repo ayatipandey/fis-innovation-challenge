@@ -1,140 +1,147 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
 
+from app import engine
+from app.features import FEATURES
 from app.main import app
 
 client = TestClient(app)
-NOW = datetime(2026, 10, 27, 8, 15, tzinfo=timezone.utc)  # a Tuesday morning
+NOW = datetime(2026, 10, 27, 8, 10, tzinfo=timezone.utc).isoformat()
 
+UNION = {"id": "cc-union", "name": "Campus Coffee, Student Union", "lat": 30.2722, "lng": -81.5079, "opens": 7, "closes": 20, "category": "coffee"}
+COFFEE_HOURS = [0.0] * 7 + [0.15, 0.3, 0.2, 0.05] + [0.0] * 3 + [0.05] * 6 + [0.0] * 4
 
-def iso(days: float) -> str:
-    return (NOW + timedelta(days=days)).isoformat()
-
-
-def reward(id, category, brand, **kw):
-    base = {
-        "id": id,
-        "brandId": brand,
-        "brandName": brand.title(),
-        "category": category,
-        "headline": id,
-        "benefit": {"kind": "amount_off", "value": 5, "summary": "$5 off"},
-        "valueEstimate": {"amount": 5, "basis": "fixed"},
-        "minSpend": None,
-        "validFrom": iso(-5),
-        "expiresAt": iso(20),
-        "redemption": {"url": None},
-        "valid": {"channels": ["online", "in_store"]},
-    }
-    base.update(kw)
-    return base
-
-
-COFFEE_USER = {
-    "categories": ["coffee", "groceries"],
-    "favoriteBrands": ["ember"],
-    "spending": {
-        "share": {"coffee": 0.3, "groceries": 0.4, "food": 0.2},
-        "typicalSpend": {"coffee": 6, "groceries": 48, "food": 30},
-        "source": "synthetic_demo",
-    },
+HABITS = {
+    "visitsPerWeek": {"coffee": 5.5, "food": 1.3},
+    "typicalSpend": {"coffee": 6.1, "food": 20},
+    "hourShare": {"coffee": COFFEE_HOURS},
+    "spendVelocity": {"coffee": 1.1},
 }
-TIME = {"now": NOW.isoformat(), "weekday": 1, "hour": 8}
 
 
-def rank(user, rewards, location=None):
-    res = client.post("/api/recommendations", json={"user": user, "rewards": rewards, "time": TIME, "location": location})
-    assert res.status_code == 200, res.text
-    return res.json()["items"]
+def latte(**kw):
+    c = {
+        "optionId": "cc-latte", "programId": "campus-coffee", "programName": "Campus Coffee Rewards", "title": "A free latte",
+        "cost": 25, "value": 5, "channels": ["in_store", "online"], "available": 70, "expiringPoints": 30, "daysToExpiry": 6,
+        "category": "coffee", "merchants": [UNION],
+    }
+    c.update(kw)
+    return c
 
 
-def test_relevant_categories_outrank_irrelevant_ones():
-    items = rank(COFFEE_USER, [
-        reward("watch", "watches", "horologe", valueEstimate={"amount": 50, "basis": "x"}),
-        reward("coffee", "coffee", "ember", routine=["weekday_morning"]),
-    ])
-    assert [i["offerId"] for i in items] == ["coffee", "watch"]
-    coffee = items[0]
-    assert any("frequently buy coffee" in r for r in coffee["reasons"])
-    assert any("favorite" in r for r in coffee["reasons"])
-
-
-def test_extra_spend_is_penalized_and_warned():
-    items = rank(COFFEE_USER, [
-        reward("big-min", "groceries", "greenleaf", minSpend=150, valueEstimate={"amount": 10, "basis": "x"}),
-        reward("no-min", "groceries", "harvest", valueEstimate={"amount": 4, "basis": "x"}),
-    ])
-    by_id = {i["offerId"]: i for i in items}
-    assert by_id["no-min"]["score"] > by_id["big-min"]["score"]
-    assert any("$150 minimum" in w for w in by_id["big-min"]["warnings"])
-
-
-def test_expired_and_future_offers_are_excluded():
-    items = rank(COFFEE_USER, [
-        reward("expired", "coffee", "ember", expiresAt=iso(-1)),
-        reward("future", "coffee", "ember", validFrom=iso(2)),
-        reward("live", "coffee", "ember"),
-    ])
-    assert [i["offerId"] for i in items] == ["live"]
-
-
-def test_location_only_counts_when_permitted():
-    near = reward("near", "coffee", "ember", nearby={"label": "Mercer St", "distanceMeters": 180})
-    off = rank(COFFEE_USER, [near], location={"permitted": False})[0]
-    on = rank(COFFEE_USER, [near], location={"permitted": True})[0]
-    assert on["score"] > off["score"]
-    assert not any("nearby" in r for r in off["reasons"])
-    assert any("nearby" in r for r in on["reasons"])
-
-
-def test_sponsorship_does_not_change_score():
-    a = rank(COFFEE_USER, [reward("x", "tech", "circuit", sponsored=False)])[0]["score"]
-    b = rank(COFFEE_USER, [reward("x", "tech", "circuit", sponsored=True)])[0]["score"]
-    assert a == b
-
-
-def test_personalization_off_ignores_spending_and_favorites():
-    user = {**COFFEE_USER, "personalization": False}
-    items = rank(user, [reward("coffee", "coffee", "ember")])
-    assert not any("favorite" in r or "coffee" in r for r in items[0]["reasons"])
-
-
-def copilot(message, rewards=(), user=COFFEE_USER):
-    res = client.post("/api/copilot", json={"message": message, "user": user, "rewards": list(rewards), "time": TIME})
+def moment(candidates, lat=30.2723, lng=-81.5081, hour=8, minute=10, prefs=None, ratings=None):
+    body = {
+        "context": {"now": NOW, "hour": hour, "minute": minute, "weekday": 1, "lat": lat, "lng": lng, "source": "simulated"},
+        "prefs": {"locationAllowed": True, "dailyLimit": 3, "sentToday": 0, "quietHours": {"enabled": True, "start": "21:00", "end": "08:00"}, **(prefs or {})},
+        "habits": HABITS,
+        "ratings": ratings or {},
+        "candidates": candidates,
+    }
+    res = client.post("/moments/evaluate", json=body)
     assert res.status_code == 200, res.text
     return res.json()
 
 
-def test_copilot_works_out_savings_for_a_given_amount():
-    rewards = [
-        reward("big", "groceries", "greenleaf", minSpend=75, benefit={"kind": "amount_off", "value": 10, "summary": "$10 off"}),
-        reward("pct", "groceries", "harvest", benefit={"kind": "percent_off", "value": 10, "summary": "10% off"}, maxBenefit=15),
-    ]
-    res = copilot("How much would I save on a $90 grocery shop?", rewards)
-    rows = {r[0]: r for r in res["table"]["rows"]}
-    assert rows["Greenleaf"][3] == "$10"
-    assert rows["Harvest"][3] == "$9"
-    below = copilot("How much would I save on a $50 grocery shop?", rewards)
-    rows = {r[0]: r for r in below["table"]["rows"]}
-    assert rows["Greenleaf"][3] == "$0" and "minimum" in rows["Greenleaf"][4]
-    assert any("estimates" in n for n in res["notes"])
+def test_model_file_matches_the_feature_definitions():
+    assert engine.MODEL["features"] == FEATURES
+    assert len(engine.MODEL["treated"]["coef"]) == len(FEATURES)
+    assert engine.MODEL["trainedOn"]["synthetic"] is True
 
 
-def test_copilot_is_honest_that_perkly_has_no_points():
-    res = copilot("Should I use miles for a seat upgrade?")
-    assert res["engine"] == "rule-based-v1"
-    assert "doesn’t hold or redeem points or miles" in res["reply"]
+def test_near_with_expiring_points_sends_a_specific_notification():
+    d = moment([latte()])["decision"]
+    assert d["sent"] is True
+    assert "m from Campus Coffee" in d["body"] and "expires in 6 days" in d["body"]
+    assert d["uplift"] >= engine.THRESHOLD
+    assert d["pIfNotified"] > d["pIfNot"]
 
 
-def test_copilot_minimum_spend_uses_usual_spend():
-    rewards = [reward("big", "groceries", "greenleaf", minSpend=150, valueEstimate={"amount": 10, "basis": "Fixed discount."})]
-    res = copilot("Is the Greenleaf offer worth the minimum spend?", rewards)
-    assert "$102" in res["reply"] and res["cards"] == ["big"]
+def test_quiet_hours_and_daily_limit_hold_it_back():
+    quiet = moment([latte(merchants=[{**UNION, "closes": 24}])], hour=22, minute=40)["decision"]
+    assert quiet["sent"] is False and "quiet hours" in quiet["suppressedBecause"]
+    capped = moment([latte()], prefs={"sentToday": 3})["decision"]
+    assert capped["sent"] is False and "limit" in capped["suppressedBecause"]
+
+
+def test_in_store_rewards_need_the_member_nearby():
+    far = moment([latte(channels=["in_store"])], lat=30.32, lng=-81.45)["decision"]
+    assert far["sent"] is False and far["optionId"] is None
+
+
+def test_bad_ratings_lower_the_uplift():
+    base = moment([latte()])["decision"]["uplift"]
+    rated = moment([latte()], ratings={"coffee:morning": {"bad": 3}})["decision"]
+    assert rated["uplift"] < base
+
+
+def test_unaffordable_rewards_are_skipped():
+    res = moment([latte(cost=500)])
+    assert res["decision"]["optionId"] is None and res["considered"] == []
+
+
+def test_location_off_means_no_distance():
+    d = moment([latte()], prefs={"locationAllowed": False})["decision"]
+    assert d["distanceM"] is None and "m from" not in d["body"]
+
+
+def pilot(message, **extra):
+    body = {
+        "message": message,
+        "context": {"now": NOW, "hour": 8, "minute": 10, "weekday": 1, "lat": 30.2723, "lng": -81.5081},
+        "prefs": {"locationAllowed": True},
+        "habits": HABITS,
+        "programs": [
+            {
+                "programId": "campus-coffee", "name": "Campus Coffee Rewards", "available": 70,
+                "expiries": [{"points": 30, "days": 6}],
+                "plans": [
+                    {"label": "7 × $2 off any drink", "totalValue": 14, "pointsUsed": 70, "leftover": 0, "visits": 7, "extraSpend": 0, "valueAtRisk": 0, "score": 12.95, "reasons": ["$14.00 of value", "No minimum spend."], "warnings": [], "optionIds": ["cc-2off"]},
+                    {"label": "$15 off an order of $20 or more", "totalValue": 15, "pointsUsed": 70, "leftover": 0, "visits": 1, "extraSpend": 13.9, "valueAtRisk": 0, "score": 11.37, "reasons": ["$15.00 of value"], "warnings": ["Needs a $20.00 order; you usually spend about $6.10."], "optionIds": ["cc-15off"]},
+                ],
+            }
+        ],
+        "candidates": [latte()],
+        **extra,
+    }
+    res = client.post("/pilot", json=body)
+    assert res.status_code == 200, res.text
+    return res.json()
+
+
+def test_pilot_best_use_ranks_plans():
+    res = pilot("What’s the best use of my coffee points?")
+    assert "7 × $2 off" in res["reply"]
+    assert res["table"]["rows"][0][1] == "7 × $2 off any drink"
+
+
+def test_pilot_explains_the_minimum_spend():
+    res = pilot("Is the $15 coffee reward worth the minimum spend?")
+    assert "$15 off" in res["reply"] and "more than usual" in res["reply"]
+
+
+def test_pilot_lists_expiring_points():
+    res = pilot("Which points expire soon?")
+    assert res["table"]["rows"][0][2] == "6 days"
+
+
+def test_pilot_uses_the_moment_engine_for_right_now():
+    res = pilot("What should I use near me right now?")
+    assert "Campus Coffee" in res["reply"] and res["cards"] == ["cc-latte"]
+
+
+def test_insights_report_is_synthetic_and_has_a_control_group():
+    r = client.get("/insights").json()
+    assert r["synthetic"] is True
+    assert r["overall"]["notifiedRate"] > r["overall"]["controlRate"]
+    assert len(r["deciles"]) == 10
+
+
+def test_routes_are_also_served_under_api_ai():
+    assert client.get("/api/ai/health").status_code == 200
 
 
 def test_service_key_is_enforced(monkeypatch):
     monkeypatch.setenv("RECOMMENDER_SERVICE_KEY", "secret")
-    body = {"user": COFFEE_USER, "rewards": [], "time": TIME}
-    assert client.post("/api/recommendations", json=body).status_code == 401
-    assert client.post("/api/recommendations", json=body, headers={"X-Service-Key": "secret"}).status_code == 200
+    assert client.get("/insights").status_code == 401
+    assert client.get("/insights", headers={"X-Service-Key": "secret"}).status_code == 200

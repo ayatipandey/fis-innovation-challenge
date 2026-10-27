@@ -1,10 +1,10 @@
+import { DEFAULT_THEME } from '@shared/themes';
 import type { Preferences } from '@shared/types';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api } from '../lib/api';
 
 export interface SessionUser {
   id: string;
-  email: string;
   isDemo: boolean;
 }
 
@@ -24,9 +24,27 @@ interface SessionState {
 
 const SessionContext = createContext<SessionState | null>(null);
 
-function applyAccessibility(p: Preferences | null) {
+const THEME_KEY = 'perkly-theme';
+
+/** Theme and accessibility live on <html>. The theme is also remembered locally so it doesn't flash on reload. */
+function applyPreferences(p: Preferences | null) {
   const root = document.documentElement;
   const a = p?.accessibility;
+  let theme: string = p?.theme ?? DEFAULT_THEME;
+  if (!p) {
+    try {
+      theme = localStorage.getItem(THEME_KEY) ?? DEFAULT_THEME;
+    } catch {
+      /* storage blocked */
+    }
+  } else {
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* storage blocked */
+    }
+  }
+  root.dataset.theme = theme;
   root.dataset.text = a?.textSize ?? 'default';
   root.dataset.contrast = a?.highContrast ? 'high' : 'default';
   root.dataset.motion = a?.reducedMotion ? 'reduced' : 'default';
@@ -51,7 +69,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       .finally(() => setStatus('ready'));
   }, [setSession]);
 
-  useEffect(() => applyAccessibility(preferences), [preferences]);
+  useEffect(() => applyPreferences(preferences), [preferences]);
 
   const updatePreferences = useCallback(async (fn: (p: Preferences) => Preferences) => {
     const prev = latest.current;

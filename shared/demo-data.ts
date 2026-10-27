@@ -1,786 +1,305 @@
-// Synthetic demo catalog. Every partner brand, offer and transaction below is
-// fictional and exists only to demonstrate the product. No real brand has
-// partnered with Perkly, and none of these offers is live. Websites use the
-// reserved .example domain so no demo link can reach a real site.
+// Synthetic demo data. Every program, merchant, balance and purchase below is
+// fictional and exists only to demonstrate the product. In production these
+// would come from the member's own programs through bank or loyalty APIs.
 
-import type { Brand, Category, CategoryId, Channel, Offer, SpendingSummary } from './types';
+import type { Category, CategoryId, Merchant, Program, Purchase, RewardOption } from './types.js';
 
-export const DEMO_NOTICE =
-  'Demo content. Partner brands and offers are fictional and for illustration only.';
-
-export const COMMISSION_NOTICE = 'Perkly may earn a commission from partner brands when you use a reward. It never changes how rewards are ranked.';
+export const DEMO_NOTICE = 'Sample programs and merchants. Balances and purchases are synthetic.';
 
 export const CATEGORIES: Category[] = [
-  { id: 'food', label: 'Food and restaurants', subcategories: ['Casual dining', 'Fine dining', 'Takeout', 'Bakeries'] },
-  { id: 'coffee', label: 'Coffee and beverages', subcategories: ['Coffee shops', 'Tea', 'Juice bars'] },
-  { id: 'groceries', label: 'Groceries', subcategories: ['Supermarkets', 'Produce', 'Specialty food'] },
-  { id: 'travel', label: 'Travel and airlines', subcategories: ['Flights', 'Seat upgrades', 'Lounges'] },
-  { id: 'hotels', label: 'Hotels', subcategories: ['City hotels', 'Resorts', 'Hotel dining'] },
-  { id: 'fashion', label: 'Clothing and accessories', subcategories: ['Outerwear', 'Basics', 'Shoes', 'Bags'] },
-  { id: 'watches', label: 'Watches and jewelry', subcategories: ['Watches', 'Fine jewelry', 'Engraving'] },
-  { id: 'beauty', label: 'Beauty and perfumes', subcategories: ['Fragrance', 'Skincare', 'Makeup'] },
-  { id: 'tech', label: 'Technology and electronics', subcategories: ['Audio', 'Phones', 'Computers', 'Smart home'] },
-  { id: 'entertainment', label: 'Entertainment', subcategories: ['Cinema', 'Live music', 'Streaming'] },
-  { id: 'transport', label: 'Transportation', subcategories: ['Rideshare', 'Transit', 'Bike share'] },
-  { id: 'wellness', label: 'Health and wellness', subcategories: ['Yoga and fitness', 'Pharmacy', 'Spa'] },
-  { id: 'other', label: 'Other interests', subcategories: ['Books', 'Pets', 'Home'] },
+  { id: 'coffee', label: 'Coffee', subcategories: ['Coffee shops', 'Tea', 'Smoothies'] },
+  { id: 'food', label: 'Food and restaurants', subcategories: ['Lunch spots', 'Dinner', 'Takeout'] },
+  { id: 'groceries', label: 'Groceries', subcategories: ['Supermarket', 'Snacks', 'Produce'] },
+  { id: 'books', label: 'Books and supplies', subcategories: ['Textbooks', 'Fiction', 'Stationery'] },
+  { id: 'entertainment', label: 'Entertainment', subcategories: ['Cinema', 'Live events', 'Games'] },
+  { id: 'shopping', label: 'Shopping', subcategories: ['Clothing', 'Tech', 'Gifts'] },
+  { id: 'transport', label: 'Transport', subcategories: ['Rideshare', 'Transit', 'Fuel'] },
+  { id: 'wellness', label: 'Health and fitness', subcategories: ['Gym', 'Pharmacy', 'Yoga'] },
 ];
 
 export const categoryLabel = (id: CategoryId) => CATEGORIES.find((c) => c.id === id)?.label ?? id;
 
-const b = (id: string, name: string, category: CategoryId, monogram: string): Brand => ({
-  id,
-  name,
-  category,
-  monogram,
-  website: `https://${id}.example`,
-});
-
-export const BRANDS: Brand[] = [
-  b('ember-oak', 'Ember & Oak Coffee', 'coffee', 'EO'),
-  b('morning-standard', 'Morning Standard Café', 'coffee', 'MS'),
-  b('greenleaf', 'Greenleaf Market', 'groceries', 'GM'),
-  b('harvest-lane', 'Harvest Lane Grocers', 'groceries', 'HL'),
-  b('osteria-lume', 'Osteria Lume', 'food', 'OL'),
-  b('kin-noodle', 'Kin Noodle Bar', 'food', 'KN'),
-  b('northwind', 'Northwind Airways', 'travel', 'NW'),
-  b('halcyon', 'Halcyon Hotels', 'hotels', 'HH'),
-  b('the-lindley', 'The Lindley', 'hotels', 'TL'),
-  b('atelier-rowe', 'Atelier Rowe', 'fashion', 'AR'),
-  b('common-thread', 'Common Thread', 'fashion', 'CT'),
-  b('horologe', 'Horologe & Co.', 'watches', 'H&'),
-  b('vale', 'Vale Jewelers', 'watches', 'VJ'),
-  b('maison-ambre', 'Maison Ambre', 'beauty', 'MA'),
-  b('bloom', 'Bloom Apothecary', 'beauty', 'BA'),
-  b('circuit-house', 'Circuit House', 'tech', 'CH'),
-  b('lumen-audio', 'Lumen Audio', 'tech', 'LA'),
-  b('paragon', 'Paragon Cinemas', 'entertainment', 'PC'),
-  b('glide', 'Glide Rides', 'transport', 'GR'),
-  b('tidewater', 'Tidewater Yoga', 'wellness', 'TY'),
+export const PROGRAMS: Program[] = [
+  {
+    id: 'campus-coffee',
+    name: 'Campus Coffee Rewards',
+    issuer: 'Campus Coffee',
+    kind: 'stamp_card',
+    unit: 'points',
+    category: 'coffee',
+    monogram: 'CC',
+    earnRule: '1 point per $1 spent at Campus Coffee.',
+    expiryRule: 'Points expire 90 days after they are earned.',
+  },
+  {
+    id: 'northline-card',
+    name: 'Northline Rewards Card',
+    issuer: 'Northline Bank',
+    kind: 'bank_card',
+    unit: 'points',
+    category: null,
+    monogram: 'NB',
+    earnRule: '2 points per $1 on dining and coffee, 1 point per $1 on everything else.',
+    expiryRule: 'Points expire 12 months after they are earned.',
+  },
+  {
+    id: 'pageturn-books',
+    name: 'Pageturn Books Membership',
+    issuer: 'Pageturn Books',
+    kind: 'store_membership',
+    unit: 'points',
+    category: 'books',
+    monogram: 'PB',
+    earnRule: '10 points per $1 spent at Pageturn Books.',
+    expiryRule: 'Points expire at the end of each semester.',
+  },
+  {
+    id: 'freshcart',
+    name: 'FreshCart Points',
+    issuer: 'FreshCart Market',
+    kind: 'store_membership',
+    unit: 'points',
+    category: 'groceries',
+    monogram: 'FC',
+    earnRule: '10 points per $1 spent at FreshCart.',
+    expiryRule: 'Points expire 6 months after they are earned.',
+  },
+  {
+    id: 'reel-stars',
+    name: 'Reel Cinemas Stars',
+    issuer: 'Reel Cinemas',
+    kind: 'stamp_card',
+    unit: 'stars',
+    category: 'entertainment',
+    monogram: 'RC',
+    earnRule: '1 star per ticket.',
+    expiryRule: 'Stars expire 60 days after they are earned.',
+  },
 ];
 
-export const brandById = (id: string) => BRANDS.find((x) => x.id === id);
+export const programById = (id: string) => PROGRAMS.find((p) => p.id === id);
 
-function day(now: Date, offset: number, hour = 23, minute = 59) {
-  const d = new Date(now);
-  d.setDate(d.getDate() + offset);
-  d.setHours(hour, minute, 0, 0);
-  return d.toISOString();
-}
+/** A fictional campus neighbourhood. Coordinates are only used for distance. */
+export const CAMPUS = { lat: 30.2716, lng: -81.5076, label: 'Campus' };
 
-const base = {
-  source: 'synthetic_demo' as const,
-  verification: 'unverified_demo' as const,
-  termsUrl: null,
-  sponsored: false,
-  nearby: null,
-  routine: [] as Offer['routine'],
-  maxBenefit: null,
+export const MERCHANTS: Merchant[] = [
+  { id: 'cc-union', name: 'Campus Coffee, Student Union', category: 'coffee', subcategory: 'Coffee shops', address: 'Student Union, ground floor', lat: 30.2722, lng: -81.5079, opens: 7, closes: 20, website: 'https://campus-coffee.example' },
+  { id: 'cc-library', name: 'Campus Coffee, Library', category: 'coffee', subcategory: 'Coffee shops', address: 'Main Library, level 1', lat: 30.2697, lng: -81.5098, opens: 8, closes: 22, website: 'https://campus-coffee.example' },
+  { id: 'olive-ash', name: 'Olive & Ash Kitchen', category: 'food', subcategory: 'Dinner', address: '12 College Row', lat: 30.278, lng: -81.5005, opens: 11, closes: 22, website: 'https://olive-ash.example' },
+  { id: 'pageturn', name: 'Pageturn Books', category: 'books', subcategory: 'Textbooks', address: '4 Campus Walk', lat: 30.2745, lng: -81.504, opens: 9, closes: 20, website: 'https://pageturn-books.example' },
+  { id: 'freshcart', name: 'FreshCart Market', category: 'groceries', subcategory: 'Supermarket', address: '220 Beach Parkway', lat: 30.2808, lng: -81.4987, opens: 7, closes: 23, website: 'https://freshcart.example' },
+  { id: 'reel', name: 'Reel Cinemas', category: 'entertainment', subcategory: 'Cinema', address: '300 Beach Parkway', lat: 30.284, lng: -81.495, opens: 12, closes: 24, website: 'https://reel-cinemas.example' },
+];
+
+export const merchantById = (id: string | null) => (id ? MERCHANTS.find((m) => m.id === id) : undefined);
+
+const both: RewardOption['channels'] = ['in_store', 'online'];
+
+export const OPTIONS: RewardOption[] = [
+  // Campus Coffee: the 70-point example. Small, frequent rewards vs one big one with a minimum.
+  {
+    id: 'cc-2off', programId: 'campus-coffee', merchantIds: ['cc-union', 'cc-library'], title: '$2 off any drink', cost: 10, value: 2,
+    valueBasis: 'Fixed $2.00 discount.', minSpend: null, channels: both,
+    valid: ['Any drink, any size', 'All Campus Coffee locations and the order-ahead site'],
+    notValid: ['Bags of coffee beans and merchandise', 'Gift cards'], stacking: 'One reward per order.',
+    howToUse: { online: 'Order ahead on Campus Coffee’s site with the points already applied.', inStore: 'Show your code at the counter before you pay.' },
+    url: 'https://campus-coffee.example/order',
+  },
+  {
+    id: 'cc-latte', programId: 'campus-coffee', merchantIds: ['cc-union', 'cc-library'], title: 'A free latte', cost: 25, value: 5,
+    valueBasis: 'Menu price of a regular latte.', minSpend: null, channels: both,
+    valid: ['Regular latte, any milk', 'All Campus Coffee locations'],
+    notValid: ['Large size upgrades are charged', 'Gift cards'], stacking: 'One reward per order.',
+    howToUse: { online: 'Order ahead with the points already applied.', inStore: 'Show your code at the counter.' },
+    url: 'https://campus-coffee.example/order',
+  },
+  {
+    id: 'cc-15off', programId: 'campus-coffee', merchantIds: ['cc-union', 'cc-library'], title: '$15 off an order of $20 or more', cost: 70, value: 15,
+    valueBasis: 'Fixed $15.00 discount on orders of $20.00 or more.', minSpend: 20, channels: both,
+    valid: ['Drinks, food and catering trays'],
+    notValid: ['Gift cards', 'Merchandise'], stacking: 'One reward per order.',
+    howToUse: { online: 'Order ahead with the points already applied.', inStore: 'Show your code at the counter.' },
+    url: 'https://campus-coffee.example/order',
+  },
+
+  // Northline bank card points, spendable at participating merchants.
+  {
+    id: 'nl-latte', programId: 'northline-card', merchantIds: ['cc-union', 'cc-library'], title: 'A free latte at Campus Coffee', cost: 800, value: 5,
+    valueBasis: 'Menu price of a regular latte.', minSpend: null, channels: ['in_store'],
+    valid: ['Regular latte at any Campus Coffee'],
+    notValid: ['Order-ahead orders'], stacking: 'Can’t be combined with Campus Coffee Rewards on the same order.',
+    howToUse: { online: null, inStore: 'Show your code at the counter, then pay with your Northline card.' },
+    url: null,
+  },
+  {
+    id: 'nl-dinner', programId: 'northline-card', merchantIds: ['olive-ash'], title: '$24 off dinner at Olive & Ash', cost: 2400, value: 24,
+    valueBasis: 'Fixed $24.00 discount on a dinner bill of $40.00 or more.', minSpend: 40, channels: ['in_store'],
+    valid: ['Dinner menu, from 5 pm', 'Olive & Ash Kitchen'],
+    notValid: ['Alcohol', 'Lunch menu'], stacking: 'One per table.',
+    howToUse: { online: null, inStore: 'Show your code when you ask for the bill.' },
+    url: null,
+  },
+  {
+    id: 'nl-books', programId: 'northline-card', merchantIds: ['pageturn'], title: '$5 off at Pageturn Books', cost: 500, value: 5,
+    valueBasis: 'Fixed $5.00 discount.', minSpend: null, channels: both,
+    valid: ['Any purchase at Pageturn Books'],
+    notValid: ['Gift cards'], stacking: 'Combines with Pageturn membership rewards.',
+    howToUse: { online: 'Shop on Pageturn’s site with the points already applied.', inStore: 'Show your code at the register.' },
+    url: 'https://pageturn-books.example/shop',
+  },
+  {
+    id: 'nl-credit', programId: 'northline-card', merchantIds: [], title: '$10 statement credit', cost: 1000, value: 10,
+    valueBasis: '1 cent per point, credited to your card.', minSpend: null, channels: ['online'],
+    valid: ['Any Northline Rewards Card account'],
+    notValid: [], stacking: 'Not applicable.',
+    howToUse: { online: 'Northline applies the credit to your next statement.', inStore: null },
+    url: 'https://northline-bank.example/rewards',
+  },
+
+  // Pageturn Books membership.
+  {
+    id: 'pt-5off', programId: 'pageturn-books', merchantIds: ['pageturn'], title: '$5 off any purchase', cost: 250, value: 5,
+    valueBasis: 'Fixed $5.00 discount.', minSpend: null, channels: both,
+    valid: ['Books, stationery and campus merchandise'],
+    notValid: ['Gift cards', 'Textbook rentals'], stacking: 'One reward per order.',
+    howToUse: { online: 'Shop on Pageturn’s site with the points already applied.', inStore: 'Show your code at the register.' },
+    url: 'https://pageturn-books.example/shop',
+  },
+  {
+    id: 'pt-15off', programId: 'pageturn-books', merchantIds: ['pageturn'], title: '$15 off textbooks over $50', cost: 600, value: 15,
+    valueBasis: 'Fixed $15.00 discount on textbooks totalling $50.00 or more.', minSpend: 50, channels: both,
+    valid: ['New and used textbooks'],
+    notValid: ['Textbook rentals', 'Digital access codes'], stacking: 'One reward per order.',
+    howToUse: { online: 'Shop on Pageturn’s site with the points already applied.', inStore: 'Show your code at the register.' },
+    url: 'https://pageturn-books.example/textbooks',
+  },
+
+  // FreshCart grocery points.
+  {
+    id: 'fc-5off', programId: 'freshcart', merchantIds: ['freshcart'], title: '$5 off your shop', cost: 500, value: 5,
+    valueBasis: 'Fixed $5.00 discount.', minSpend: null, channels: both,
+    valid: ['Groceries and household items'],
+    notValid: ['Alcohol and tobacco', 'Gift cards'], stacking: 'One reward per shop.',
+    howToUse: { online: 'Shop on FreshCart’s site with the points already applied.', inStore: 'Scan your code at the register.' },
+    url: 'https://freshcart.example/shop',
+  },
+  {
+    id: 'fc-12off', programId: 'freshcart', merchantIds: ['freshcart'], title: '$12 off a shop of $40 or more', cost: 1000, value: 12,
+    valueBasis: 'Fixed $12.00 discount on shops of $40.00 or more.', minSpend: 40, channels: both,
+    valid: ['Groceries and household items'],
+    notValid: ['Alcohol and tobacco', 'Gift cards', 'Delivery fees'], stacking: 'One reward per shop.',
+    howToUse: { online: 'Shop on FreshCart’s site with the points already applied.', inStore: 'Scan your code at the register.' },
+    url: 'https://freshcart.example/shop',
+  },
+
+  // Reel Cinemas stars.
+  {
+    id: 'rc-popcorn', programId: 'reel-stars', merchantIds: ['reel'], title: 'Free medium popcorn', cost: 5, value: 6.5,
+    valueBasis: 'Menu price of a medium popcorn.', minSpend: null, channels: ['in_store'],
+    valid: ['Medium popcorn, any flavor'],
+    notValid: ['Combo meals'], stacking: 'One per visit.',
+    howToUse: { online: null, inStore: 'Show your code at the concession stand.' },
+    url: null,
+  },
+  {
+    id: 'rc-ticket', programId: 'reel-stars', merchantIds: ['reel'], title: 'A free standard ticket', cost: 12, value: 13,
+    valueBasis: 'Price of a standard evening ticket.', minSpend: null, channels: both,
+    valid: ['Standard 2D screenings'],
+    notValid: ['IMAX, 3D and special events'], stacking: 'One per booking.',
+    howToUse: { online: 'Book on Reel’s site with the stars already applied.', inStore: 'Show your code at the box office.' },
+    url: 'https://reel-cinemas.example/book',
+  },
+];
+
+export const optionById = (id: string) => OPTIONS.find((o) => o.id === id);
+export const optionsFor = (programId: string) => OPTIONS.filter((o) => o.programId === programId);
+
+/** Starting balances and expiring batches granted when a sample program is linked. */
+export const DEMO_BALANCES: Record<string, { balance: number; expiring: { points: number; inDays: number }[] }> = {
+  'campus-coffee': { balance: 70, expiring: [{ points: 30, inDays: 6 }, { points: 40, inDays: 52 }] },
+  'northline-card': { balance: 3150, expiring: [{ points: 1200, inDays: 21 }, { points: 1950, inDays: 240 }] },
+  'pageturn-books': { balance: 420, expiring: [{ points: 200, inDays: 12 }, { points: 220, inDays: 95 }] },
+  freshcart: { balance: 1350, expiring: [{ points: 1350, inDays: 140 }] },
+  'reel-stars': { balance: 9, expiring: [{ points: 9, inDays: 4 }] },
 };
 
-const MEMBERS = ['All Perkly members'];
-
-/** Short helper so each offer reads as its conditions rather than boilerplate. */
-function link(brandId: string, path: string) {
-  return `https://${brandId}.example/${path}`;
-}
-
-export const channelLabel = (c: Channel) => (c === 'online' ? 'Online' : 'In store');
-
-/**
- * Builds the demo catalog with expiry dates relative to `now`, so the demo
- * never shows a wall of expired offers. Dates are exact once built.
- */
-export function buildCatalog(now: Date = new Date()): Offer[] {
-  return [
-    {
-      ...base,
-      id: 'ember-flat-white',
-      brandId: 'ember-oak',
-      category: 'coffee',
-      subcategory: 'Coffee shops',
-      headline: '$2 off your morning flat white',
-      benefit: { kind: 'amount_off', value: 2, summary: '$2.00 off any handcrafted drink' },
-      valueEstimate: { amount: 2, basis: 'Fixed discount stated by Ember & Oak.' },
-      minSpend: null,
-      youPay: { summary: 'The menu price of your drink, minus $2.00.', knownFees: [], feesUnknown: false },
-      validFrom: day(now, -30, 0, 0),
-      expiresAt: day(now, 4),
-      valid: {
-        items: ['Any handcrafted drink, any size'],
-        locations: ['All Ember & Oak cafés', 'Ember & Oak online ordering'],
-        channels: ['in_store', 'online'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Retail coffee bags and merchandise', 'Gift cards'],
-        locations: ['Airport kiosks run by third parties'],
-        transactions: ['Delivery-app orders'],
-        stacking: 'One Perkly reward per order. Can’t be combined with other Ember & Oak promotions.',
-      },
-      howToUse: {
-        online: 'Order on Ember & Oak’s site. The code is already applied when you arrive.',
-        inStore: 'Show your code or QR at the counter before you pay.',
-        whenYouGetIt: 'Immediately, taken off the price.',
-      },
-      redemption: { url: link('ember-oak', 'order'), code: 'PERKLY-EO-2OFF', codeAutoAppliedOnline: true },
-      nearby: { label: 'Ember & Oak, Mercer St', distanceMeters: 180 },
-      routine: ['weekday_morning'],
-    },
-    {
-      ...base,
-      id: 'morning-standard-pastry',
-      brandId: 'morning-standard',
-      category: 'coffee',
-      subcategory: 'Coffee shops',
-      headline: 'A free pastry with any drink over $4',
-      benefit: { kind: 'freebie', value: null, summary: 'One pastry from the counter, free' },
-      valueEstimate: { amount: 3.5, basis: 'Typical counter pastry price on Morning Standard’s menu.' },
-      minSpend: 4,
-      youPay: { summary: 'The price of a drink costing $4.00 or more.', knownFees: [], feesUnknown: false },
-      validFrom: day(now, -7, 0, 0),
-      expiresAt: day(now, 2),
-      valid: {
-        items: ['Any pastry from the counter display', 'With any drink $4.00 or more'],
-        locations: ['Morning Standard, Bleecker St', 'Morning Standard, 5th Ave'],
-        channels: ['in_store'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Whole cakes and pre-orders'],
-        locations: ['Catering orders'],
-        transactions: ['Orders paid entirely with gift cards'],
-        stacking: 'One per visit. Can’t be combined with other café offers.',
-      },
-      howToUse: { online: null, inStore: 'Show your code or QR to the barista before you pay.', whenYouGetIt: 'Immediately, at the counter.' },
-      redemption: { url: null, code: 'PERKLY-MS-PASTRY', codeAutoAppliedOnline: false },
-      nearby: { label: 'Morning Standard, Bleecker St', distanceMeters: 420 },
-      routine: ['weekday_morning'],
-    },
-    {
-      ...base,
-      id: 'greenleaf-10-off-75',
-      brandId: 'greenleaf',
-      category: 'groceries',
-      subcategory: 'Supermarkets',
-      headline: '$10 off a grocery shop of $75 or more',
-      benefit: { kind: 'amount_off', value: 10, summary: '$10.00 off your basket' },
-      valueEstimate: { amount: 10, basis: 'Fixed discount stated by Greenleaf Market.' },
-      minSpend: 75,
-      youPay: { summary: 'At least $75.00 in qualifying groceries, minus $10.00.', knownFees: ['Delivery fee $5.99 on online orders under $100'], feesUnknown: false },
-      validFrom: day(now, -3, 0, 0),
-      expiresAt: day(now, 6),
-      valid: {
-        items: ['Groceries, produce, bakery and household items'],
-        locations: ['All Greenleaf Market stores', 'Greenleaf online delivery'],
-        channels: ['in_store', 'online'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Alcohol, tobacco and lottery', 'Gift cards', 'Pharmacy prescriptions'],
-        locations: ['Greenleaf Express kiosks'],
-        transactions: ['Delivery fees and tips don’t count toward the $75'],
-        stacking: 'Can be combined with Greenleaf’s weekly in-store specials.',
-      },
-      howToUse: {
-        online: 'Shop on Greenleaf’s site. The code is applied at checkout once your basket reaches $75.',
-        inStore: 'Scan your QR at the register before paying.',
-        whenYouGetIt: 'Immediately, taken off the total.',
-      },
-      redemption: { url: link('greenleaf', 'shop'), code: 'PERKLY-GM-10OFF75', codeAutoAppliedOnline: true },
-      nearby: { label: 'Greenleaf Market, Houston St', distanceMeters: 650 },
-    },
-    {
-      ...base,
-      id: 'harvest-produce',
-      brandId: 'harvest-lane',
-      category: 'groceries',
-      subcategory: 'Produce',
-      headline: '10% off fresh fruit and vegetables',
-      benefit: { kind: 'percent_off', value: 10, summary: '10% off fresh produce, up to $15 off' },
-      valueEstimate: { amount: 4, basis: '10% of a $40 produce shop, the demo average.' },
-      minSpend: null,
-      maxBenefit: 15,
-      youPay: { summary: 'Your produce total, minus 10% (up to $15.00 off).', knownFees: [], feesUnknown: false },
-      validFrom: day(now, -14, 0, 0),
-      expiresAt: day(now, 23),
-      valid: {
-        items: ['Fresh fruit and vegetables'],
-        locations: ['All Harvest Lane stores'],
-        channels: ['in_store'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Packaged salads and juices', 'Flowers'],
-        locations: ['Harvest Lane marketplace sellers'],
-        transactions: [],
-        stacking: 'Stacks with in-store promotions.',
-      },
-      howToUse: { online: null, inStore: 'Scan your QR at the register before paying.', whenYouGetIt: 'Immediately, at the register.' },
-      redemption: { url: null, code: 'PERKLY-HL-PRODUCE', codeAutoAppliedOnline: false },
-    },
-    {
-      ...base,
-      id: 'osteria-dinner',
-      brandId: 'osteria-lume',
-      category: 'food',
-      subcategory: 'Fine dining',
-      headline: '15% off dinner for two, Sunday to Thursday',
-      benefit: { kind: 'percent_off', value: 15, summary: '15% off the food bill, up to $30 off' },
-      valueEstimate: { amount: 13.5, basis: '15% of a typical $90 dinner for two.' },
-      minSpend: 60,
-      maxBenefit: 30,
-      youPay: {
-        summary: 'A food bill of $60.00 or more, minus 15% (up to $30.00 off).',
-        knownFees: ['20% service charge for tables of six or more'],
-        feesUnknown: false,
-      },
-      validFrom: day(now, -10, 0, 0),
-      expiresAt: day(now, 12),
-      valid: {
-        items: ['À la carte food'],
-        locations: ['Osteria Lume, Greenwich Village'],
-        channels: ['in_store'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Wine, cocktails and other alcohol', 'Tasting menu'],
-        locations: ['Private dining room'],
-        transactions: ['Friday and Saturday', 'Public holidays'],
-        stacking: 'Can’t be combined with other restaurant offers.',
-      },
-      howToUse: { online: null, inStore: 'Show your code when you ask for the bill.', whenYouGetIt: 'Immediately, taken off the bill.' },
-      redemption: { url: null, code: 'PERKLY-OL-SUNTHU', codeAutoAppliedOnline: false },
-      routine: ['evening'],
-      nearby: { label: 'Osteria Lume, Greenwich Village', distanceMeters: 900 },
-    },
-    {
-      ...base,
-      id: 'kin-noodle-online',
-      brandId: 'kin-noodle',
-      category: 'food',
-      subcategory: 'Takeout',
-      headline: '$5 off online orders over $25',
-      benefit: { kind: 'amount_off', value: 5, summary: '$5.00 off your order' },
-      valueEstimate: { amount: 5, basis: 'Fixed discount stated by Kin Noodle Bar.' },
-      minSpend: 25,
-      youPay: { summary: 'An order of $25.00 or more, minus $5.00.', knownFees: ['Delivery fee set by Kin Noodle Bar'], feesUnknown: false },
-      validFrom: day(now, -5, 0, 0),
-      expiresAt: day(now, 9),
-      valid: {
-        items: ['Any menu item ordered online'],
-        locations: ['Kin Noodle Bar online ordering'],
-        channels: ['online'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Gift cards'],
-        locations: ['Third-party delivery apps'],
-        transactions: ['Delivery fees and tips don’t count toward the $25'],
-        stacking: 'One per week.',
-      },
-      howToUse: { online: 'Order on Kin Noodle Bar’s site. The code is applied when you arrive.', inStore: null, whenYouGetIt: 'Immediately, taken off the order.' },
-      redemption: { url: link('kin-noodle', 'order'), code: 'PERKLY-KN-5OFF', codeAutoAppliedOnline: true },
-      routine: ['evening'],
-    },
-    {
-      ...base,
-      id: 'northwind-fares',
-      brandId: 'northwind',
-      category: 'travel',
-      subcategory: 'Flights',
-      headline: '10% off domestic fares booked online',
-      benefit: { kind: 'percent_off', value: 10, summary: '10% off the base fare, up to $60 off' },
-      valueEstimate: { amount: 26, basis: '10% of a $260 domestic fare, the demo average.' },
-      minSpend: null,
-      maxBenefit: 60,
-      youPay: { summary: 'The fare minus 10%, plus taxes and fees.', knownFees: ['Government taxes and fees aren’t discounted'], feesUnknown: false },
-      validFrom: day(now, -20, 0, 0),
-      expiresAt: day(now, 45),
-      valid: {
-        items: ['Economy and Premium Economy, Northwind-operated domestic flights'],
-        locations: ['Northwind’s website and app'],
-        channels: ['online'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Basic Economy', 'Partner-operated flights', 'Award tickets'],
-        locations: ['Travel agents and airport counters'],
-        transactions: ['Changes to existing bookings'],
-        stacking: 'Can’t be combined with other Northwind promo codes.',
-      },
-      howToUse: { online: 'Book on Northwind’s site. The code is applied on the payment page.', inStore: null, whenYouGetIt: 'Immediately, in the booking total.' },
-      redemption: { url: link('northwind', 'book'), code: 'PERKLY-NW-10', codeAutoAppliedOnline: true },
-    },
-    {
-      ...base,
-      id: 'halcyon-fourth-night',
-      brandId: 'halcyon',
-      category: 'hotels',
-      subcategory: 'City hotels',
-      headline: 'Stay three nights, get the fourth free',
-      benefit: { kind: 'freebie', value: null, summary: 'Fourth consecutive night at no charge' },
-      valueEstimate: { amount: null, basis: 'Equal to one night’s rate, which varies by hotel and date.' },
-      minSpend: null,
-      youPay: { summary: 'Three nights at the standard rate. Resort fees, where they apply, are charged for all four nights.', knownFees: [], feesUnknown: true },
-      validFrom: day(now, -60, 0, 0),
-      expiresAt: day(now, 90),
-      valid: {
-        items: ['Standard rooms, four consecutive nights'],
-        locations: ['Participating Halcyon hotels'],
-        channels: ['online'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Suites', 'Non-refundable rates'],
-        locations: [],
-        transactions: ['Bookings through travel agencies'],
-        stacking: 'Can’t be combined with other Halcyon promotions.',
-      },
-      howToUse: { online: 'Book four nights on Halcyon’s site. The free night appears in the total.', inStore: null, whenYouGetIt: 'Shown in the booking total.' },
-      redemption: { url: link('halcyon', 'stay'), code: 'PERKLY-HH-4TH', codeAutoAppliedOnline: true },
-    },
-    {
-      ...base,
-      id: 'lindley-dining-credit',
-      brandId: 'the-lindley',
-      category: 'hotels',
-      subcategory: 'Hotel dining',
-      headline: 'A $40 dining credit on stays of two nights or more',
-      benefit: { kind: 'amount_off', value: 40, summary: '$40.00 to spend at the hotel restaurant' },
-      valueEstimate: { amount: 40, basis: 'Fixed credit, usable only at the hotel restaurant.' },
-      minSpend: null,
-      youPay: { summary: 'Your room rate for two or more nights, booked direct.', knownFees: ['Local occupancy taxes'], feesUnknown: true },
-      validFrom: day(now, -2, 0, 0),
-      expiresAt: day(now, 34),
-      valid: {
-        items: ['Food and drink at Lindley Dining Room'],
-        locations: ['The Lindley, Chelsea'],
-        channels: ['online'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Minibar and room service'],
-        locations: [],
-        transactions: ['Bookings through third-party sites'],
-        stacking: 'One credit per stay. Unused credit doesn’t carry over.',
-      },
-      howToUse: { online: 'Book on The Lindley’s site. The credit is added to your room bill.', inStore: null, whenYouGetIt: 'During your stay.' },
-      redemption: { url: link('the-lindley', 'book'), code: 'PERKLY-TL-DINE', codeAutoAppliedOnline: true },
-    },
-    {
-      ...base,
-      id: 'atelier-outerwear',
-      brandId: 'atelier-rowe',
-      category: 'fashion',
-      subcategory: 'Outerwear',
-      headline: '20% off new-season outerwear over $150',
-      benefit: { kind: 'percent_off', value: 20, summary: '20% off qualifying coats and jackets, up to $100 off' },
-      valueEstimate: { amount: 36, basis: '20% of a $180 jacket, the demo median price.' },
-      minSpend: 150,
-      maxBenefit: 100,
-      youPay: { summary: '$150.00 or more in outerwear, minus 20% (up to $100.00 off).', knownFees: ['Shipping $8.00 on online orders under $200'], feesUnknown: false },
-      validFrom: day(now, -1, 0, 0),
-      expiresAt: day(now, 18),
-      valid: {
-        items: ['Full-price coats and jackets'],
-        locations: ['Atelier Rowe online', 'Atelier Rowe, SoHo'],
-        channels: ['online', 'in_store'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Sale items', 'Accessories and knitwear', 'Gift cards'],
-        locations: ['Outlet stores'],
-        transactions: ['Price adjustments on past orders'],
-        stacking: 'Can’t be combined with other discount codes.',
-      },
-      howToUse: {
-        online: 'Shop on Atelier Rowe’s site. The code is applied at checkout.',
-        inStore: 'Show your code at the register.',
-        whenYouGetIt: 'Immediately, at checkout.',
-      },
-      redemption: { url: link('atelier-rowe', 'outerwear'), code: 'PERKLY-AR-OUTER20', codeAutoAppliedOnline: true },
-    },
-    {
-      ...base,
-      id: 'common-thread-15',
-      brandId: 'common-thread',
-      category: 'fashion',
-      subcategory: 'Basics',
-      headline: '$15 off when you spend $100 in store',
-      benefit: { kind: 'amount_off', value: 15, summary: '$15.00 off' },
-      valueEstimate: { amount: 15, basis: 'Fixed discount stated by Common Thread.' },
-      minSpend: 100,
-      youPay: { summary: '$100.00 or more, minus $15.00.', knownFees: [], feesUnknown: false },
-      validFrom: day(now, -9, 0, 0),
-      expiresAt: day(now, 3),
-      valid: {
-        items: ['All full-price clothing'],
-        locations: ['Common Thread stores'],
-        channels: ['in_store'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Sale items', 'Alterations'],
-        locations: ['Common Thread online store'],
-        transactions: ['Returns refund the discounted price'],
-        stacking: 'One per transaction.',
-      },
-      howToUse: { online: null, inStore: 'Show your code at the register.', whenYouGetIt: 'Immediately, at the register.' },
-      redemption: { url: null, code: 'PERKLY-CT-15', codeAutoAppliedOnline: false },
-    },
-    {
-      ...base,
-      id: 'horologe-strap',
-      brandId: 'horologe',
-      category: 'watches',
-      subcategory: 'Watches',
-      headline: 'A complimentary leather strap with a new watch',
-      benefit: { kind: 'freebie', value: null, summary: 'One leather strap of your choice' },
-      valueEstimate: { amount: null, basis: 'Strap prices weren’t provided, so no estimate is shown.' },
-      minSpend: null,
-      youPay: { summary: 'The price of a qualifying watch. Qualifying models weren’t listed.', knownFees: [], feesUnknown: true },
-      validFrom: day(now, -15, 0, 0),
-      expiresAt: day(now, 40),
-      valid: {
-        items: ['New watches (qualifying models not listed)'],
-        locations: ['Horologe & Co., Madison Ave'],
-        channels: ['in_store'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Pre-owned watches', 'Metal bracelets'],
-        locations: [],
-        transactions: [],
-        stacking: 'Not stated. Ask in store.',
-      },
-      howToUse: { online: null, inStore: 'Show your code when you buy.', whenYouGetIt: 'Fitted in store.' },
-      redemption: { url: null, code: 'PERKLY-HCO-STRAP', codeAutoAppliedOnline: false },
-    },
-    {
-      ...base,
-      id: 'vale-engraving',
-      brandId: 'vale',
-      category: 'watches',
-      subcategory: 'Engraving',
-      headline: 'Free engraving on any piece, no minimum',
-      benefit: { kind: 'service', value: null, summary: 'Up to 20 characters of engraving' },
-      valueEstimate: { amount: 25, basis: 'Vale’s standard engraving price.' },
-      minSpend: null,
-      youPay: { summary: 'Nothing extra for the engraving.', knownFees: [], feesUnknown: false },
-      validFrom: day(now, -15, 0, 0),
-      expiresAt: day(now, 27),
-      valid: {
-        items: ['Rings, pendants, bracelets and watch casebacks'],
-        locations: ['All Vale Jewelers stores'],
-        channels: ['in_store'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Hand engraving and script fonts'],
-        locations: [],
-        transactions: [],
-        stacking: 'Combines with any purchase offer.',
-      },
-      howToUse: { online: null, inStore: 'Show your code at the engraving desk.', whenYouGetIt: 'Engraving takes about 3 days.' },
-      redemption: { url: null, code: 'PERKLY-VJ-ENGRAVE', codeAutoAppliedOnline: false },
-    },
-    {
-      ...base,
-      id: 'maison-fragrance',
-      brandId: 'maison-ambre',
-      category: 'beauty',
-      subcategory: 'Fragrance',
-      headline: 'A deluxe sample set with any fragrance over $65',
-      benefit: { kind: 'freebie', value: null, summary: 'Five 2 ml discovery vials' },
-      valueEstimate: { amount: 18, basis: 'Retail price of the discovery set.' },
-      minSpend: 65,
-      youPay: { summary: 'A fragrance costing $65.00 or more.', knownFees: [], feesUnknown: false },
-      validFrom: day(now, -4, 0, 0),
-      expiresAt: day(now, 8),
-      valid: {
-        items: ['Eau de parfum and eau de toilette, 50 ml and up'],
-        locations: ['Maison Ambre boutiques', 'Maison Ambre online'],
-        channels: ['online', 'in_store'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Travel sizes', 'Gift sets'],
-        locations: ['Department store counters'],
-        transactions: [],
-        stacking: 'One sample set per order.',
-      },
-      howToUse: {
-        online: 'Shop on Maison Ambre’s site. The set is added at checkout.',
-        inStore: 'Show your code at the boutique till.',
-        whenYouGetIt: 'Added to your order.',
-      },
-      redemption: { url: link('maison-ambre', 'fragrance'), code: 'PERKLY-MA-DISCOVER', codeAutoAppliedOnline: true },
-    },
-    {
-      ...base,
-      id: 'bloom-skincare',
-      brandId: 'bloom',
-      category: 'beauty',
-      subcategory: 'Skincare',
-      headline: '10% off your first skincare order',
-      benefit: { kind: 'percent_off', value: 10, summary: '10% off' },
-      valueEstimate: { amount: 6, basis: '10% of a $60 order, the demo average.' },
-      minSpend: null,
-      youPay: { summary: 'Your order total, minus 10%.', knownFees: ['Shipping $5.00 on orders under $50'], feesUnknown: false },
-      validFrom: day(now, -30, 0, 0),
-      expiresAt: day(now, 30),
-      valid: {
-        items: ['All skincare'],
-        locations: ['Bloom Apothecary online'],
-        channels: ['online'],
-        who: ['Perkly members who haven’t ordered from Bloom before'],
-      },
-      notValid: {
-        exclusions: ['Devices and tools'],
-        locations: ['Bloom pop-up stores'],
-        transactions: ['Subscription renewals'],
-        stacking: 'Can’t be combined with other codes.',
-      },
-      howToUse: { online: 'Shop on Bloom’s site. The code is applied at checkout.', inStore: null, whenYouGetIt: 'Immediately, at checkout.' },
-      redemption: { url: link('bloom', 'skincare'), code: 'PERKLY-BA-FIRST10', codeAutoAppliedOnline: true },
-    },
-    {
-      ...base,
-      id: 'circuit-headphones',
-      brandId: 'circuit-house',
-      category: 'tech',
-      subcategory: 'Audio',
-      headline: '$50 off headphones priced $249 and up',
-      benefit: { kind: 'amount_off', value: 50, summary: '$50.00 off' },
-      valueEstimate: { amount: 50, basis: 'Fixed discount stated by Circuit House.' },
-      minSpend: 249,
-      youPay: { summary: 'Headphones priced $249.00 or more, minus $50.00.', knownFees: ['Sales tax at checkout'], feesUnknown: false },
-      validFrom: day(now, -2, 0, 0),
-      expiresAt: day(now, 15),
-      valid: {
-        items: ['Over-ear and in-ear headphones, new condition'],
-        locations: ['Circuit House online', 'Circuit House stores'],
-        channels: ['online', 'in_store'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Open-box and refurbished items', 'Gaming headsets'],
-        locations: ['Marketplace sellers'],
-        transactions: ['Price matches'],
-        stacking: 'Can’t be combined with other discounts.',
-      },
-      howToUse: {
-        online: 'Shop on Circuit House’s site. The code is applied at checkout.',
-        inStore: 'Show your code at the register.',
-        whenYouGetIt: 'Immediately, at checkout.',
-      },
-      redemption: { url: link('circuit-house', 'headphones'), code: 'PERKLY-CH-50', codeAutoAppliedOnline: true },
-      sponsored: true,
-    },
-    {
-      ...base,
-      id: 'lumen-warranty',
-      brandId: 'lumen-audio',
-      category: 'tech',
-      subcategory: 'Audio',
-      headline: 'Two extra years of warranty when you register a speaker',
-      benefit: { kind: 'service', value: null, summary: 'Warranty extended from 1 to 3 years' },
-      valueEstimate: { amount: null, basis: 'Lumen doesn’t sell extended warranties, so there’s no price to compare.' },
-      minSpend: null,
-      youPay: { summary: 'Nothing. You need a Lumen speaker bought in the last 60 days.', knownFees: [], feesUnknown: false },
-      validFrom: day(now, -40, 0, 0),
-      expiresAt: day(now, 52),
-      valid: {
-        items: ['Lumen speakers bought in the last 60 days'],
-        locations: ['Bought from any authorized retailer'],
-        channels: ['online'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Headphones', 'Refurbished units'],
-        locations: [],
-        transactions: ['Purchases older than 60 days'],
-        stacking: 'Not applicable.',
-      },
-      howToUse: { online: 'Register the speaker’s serial number on Lumen’s site. The code is filled in for you.', inStore: null, whenYouGetIt: 'Lumen emails confirmation within 2 days.' },
-      redemption: { url: link('lumen-audio', 'register'), code: 'PERKLY-LA-3YR', codeAutoAppliedOnline: true },
-    },
-    {
-      ...base,
-      id: 'paragon-tuesday',
-      brandId: 'paragon',
-      category: 'entertainment',
-      subcategory: 'Cinema',
-      headline: 'Two tickets for the price of one on Tuesdays',
-      benefit: { kind: 'freebie', value: null, summary: 'Second standard ticket free' },
-      valueEstimate: { amount: 16, basis: 'One standard evening ticket.' },
-      minSpend: null,
-      youPay: { summary: 'One standard ticket.', knownFees: ['Booking fee $1.50 per ticket online'], feesUnknown: false },
-      validFrom: day(now, -30, 0, 0),
-      expiresAt: day(now, 21),
-      valid: {
-        items: ['Standard 2D screenings'],
-        locations: ['All Paragon Cinemas', 'Paragon online booking'],
-        channels: ['online', 'in_store'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['IMAX, 3D and premium seats', 'Special events'],
-        locations: [],
-        transactions: ['Any day other than Tuesday'],
-        stacking: 'Can’t be combined with Paragon member pricing.',
-      },
-      howToUse: {
-        online: 'Book on Paragon’s site. The free ticket is applied when you choose two seats.',
-        inStore: 'Show your code at the box office.',
-        whenYouGetIt: 'Immediately, when you buy.',
-      },
-      redemption: { url: link('paragon', 'tuesdays'), code: 'PERKLY-PC-2FOR1', codeAutoAppliedOnline: true },
-      routine: ['evening'],
-    },
-    {
-      ...base,
-      id: 'glide-rides',
-      brandId: 'glide',
-      category: 'transport',
-      subcategory: 'Rideshare',
-      headline: '$3 off each of your next three rides',
-      benefit: { kind: 'amount_off', value: 3, summary: '$3.00 off per ride, three rides' },
-      valueEstimate: { amount: 9, basis: '$3.00 × 3 rides.' },
-      minSpend: null,
-      youPay: { summary: 'Your fare minus $3.00.', knownFees: ['Surge pricing set by Glide may apply'], feesUnknown: false },
-      validFrom: day(now, -6, 0, 0),
-      expiresAt: day(now, 1),
-      valid: {
-        items: ['Standard and Comfort rides'],
-        locations: ['Cities where Glide operates'],
-        channels: ['online'],
-        who: MEMBERS,
-      },
-      notValid: {
-        exclusions: ['Shared rides', 'Airport surcharges'],
-        locations: [],
-        transactions: ['Scheduled rides'],
-        stacking: 'One discount per ride.',
-      },
-      howToUse: { online: 'Open Glide from Perkly. The code is saved to your Glide account.', inStore: null, whenYouGetIt: 'Applied to each fare.' },
-      redemption: { url: link('glide', 'ride'), code: 'PERKLY-GR-3X3', codeAutoAppliedOnline: true },
-      routine: ['weekday_morning'],
-    },
-    {
-      ...base,
-      id: 'tidewater-first-class',
-      brandId: 'tidewater',
-      category: 'wellness',
-      subcategory: 'Yoga and fitness',
-      headline: 'Your first yoga class on the house',
-      benefit: { kind: 'freebie', value: null, summary: 'One drop-in class' },
-      valueEstimate: { amount: 28, basis: 'Tidewater’s drop-in price.' },
-      minSpend: null,
-      youPay: { summary: 'Nothing. Mat rental is extra if you need one.', knownFees: ['Mat rental $3.00'], feesUnknown: false },
-      validFrom: day(now, -12, 0, 0),
-      expiresAt: day(now, 19),
-      valid: {
-        items: ['Any drop-in class'],
-        locations: ['Tidewater Yoga, Tribeca'],
-        channels: ['online'],
-        who: ['Perkly members new to Tidewater'],
-      },
-      notValid: {
-        exclusions: ['Workshops and private sessions'],
-        locations: [],
-        transactions: [],
-        stacking: 'One per person.',
-      },
-      howToUse: { online: 'Book a class on Tidewater’s site. The class shows as $0.00.', inStore: null, whenYouGetIt: 'When you book.' },
-      redemption: { url: link('tidewater', 'book'), code: 'PERKLY-TY-FIRST', codeAutoAppliedOnline: true },
-    },
-  ];
-}
-
-/** The fictional person behind "Try the Demo". */
+/** The fictional student behind "Try the Demo". */
 export const DEMO_PERSON = {
   displayName: 'Maya',
-  favoriteBrands: ['ember-oak', 'greenleaf', 'osteria-lume'],
-  categories: ['coffee', 'groceries', 'food', 'transport'] as CategoryId[],
+  categories: ['coffee', 'food', 'groceries', 'books'] as CategoryId[],
+  linked: ['campus-coffee', 'northline-card', 'pageturn-books', 'freshcart', 'reel-stars'],
 };
 
-export const DEMO_SPENDING: SpendingSummary = {
-  share: { groceries: 0.31, food: 0.24, coffee: 0.22, transport: 0.08, travel: 0.06, entertainment: 0.05, fashion: 0.02, beauty: 0.01, tech: 0.01 },
-  typicalSpend: { groceries: 48, food: 34, coffee: 6.5, transport: 17, travel: 260, entertainment: 18, fashion: 70, beauty: 40, tech: 120 },
-  source: 'synthetic_demo',
-};
+/** Habit profile used to generate a believable synthetic purchase history. */
+const ROUTINE: { merchantId: string; perWeek: number; spend: [number, number]; hours: [number, number]; days: number[] }[] = [
+  { merchantId: 'cc-union', perWeek: 4, spend: [4.5, 8.5], hours: [7, 10], days: [0, 1, 2, 3, 4] },
+  { merchantId: 'cc-library', perWeek: 1.5, spend: [4, 7], hours: [14, 21], days: [0, 1, 2, 3, 6] },
+  { merchantId: 'olive-ash', perWeek: 1, spend: [12, 36], hours: [12, 20], days: [3, 4, 5] },
+  { merchantId: 'freshcart', perWeek: 1.2, spend: [28, 58], hours: [16, 20], days: [2, 5, 6] },
+  { merchantId: 'pageturn', perWeek: 0.35, spend: [12, 45], hours: [13, 17], days: [0, 1, 2, 3, 4] },
+  { merchantId: 'reel', perWeek: 0.5, spend: [11, 22], hours: [18, 22], days: [4, 5] },
+];
 
-export interface Persona {
-  id: string;
-  label: string;
-  line: string;
-  categories: CategoryId[];
-  favoriteBrands: string[];
-  spending: SpendingSummary;
+/** Which merchants a program can see purchases from. A bank card sees all of them. */
+export function programSeesMerchant(programId: string, merchantId: string) {
+  if (programId === 'northline-card') return true;
+  const p = programById(programId);
+  const m = merchantById(merchantId);
+  return !!p && !!m && p.category === m.category;
 }
 
-/** Sample shoppers for the landing-page demo. Illustrative only. */
-export const PERSONAS: Persona[] = [
-  {
-    id: 'coffee-food',
-    label: 'Coffee and food lover',
-    line: 'Coffee most mornings, dinner out twice a week.',
-    categories: ['coffee', 'food'],
-    favoriteBrands: ['ember-oak', 'osteria-lume'],
-    spending: {
-      share: { coffee: 0.3, food: 0.38, groceries: 0.18, entertainment: 0.08, transport: 0.06 },
-      typicalSpend: { coffee: 6, food: 42, groceries: 35, entertainment: 18, transport: 15 },
-      source: 'synthetic_demo',
-    },
-  },
-  {
-    id: 'traveler',
-    label: 'Frequent traveler',
-    line: 'Flies monthly and stays in city hotels.',
-    categories: ['travel', 'hotels'],
-    favoriteBrands: ['northwind', 'halcyon'],
-    spending: {
-      share: { travel: 0.42, hotels: 0.28, food: 0.14, transport: 0.1, coffee: 0.06 },
-      typicalSpend: { travel: 320, hotels: 240, food: 45, transport: 25, coffee: 5 },
-      source: 'synthetic_demo',
-    },
-  },
-  {
-    id: 'grocery-household',
-    label: 'Grocery-focused household',
-    line: 'Big weekly shop, family of four, careful with budget.',
-    categories: ['groceries', 'food'],
-    favoriteBrands: ['greenleaf', 'harvest-lane'],
-    spending: {
-      share: { groceries: 0.55, food: 0.15, transport: 0.12, entertainment: 0.1, wellness: 0.08 },
-      typicalSpend: { groceries: 96, food: 38, transport: 14, entertainment: 32, wellness: 25 },
-      source: 'synthetic_demo',
-    },
-  },
-  {
-    id: 'fashion-beauty',
-    label: 'Fashion and beauty shopper',
-    line: 'Buys a few considered pieces a season, loves fragrance.',
-    categories: ['fashion', 'beauty', 'watches'],
-    favoriteBrands: ['atelier-rowe', 'maison-ambre'],
-    spending: {
-      share: { fashion: 0.34, beauty: 0.26, watches: 0.1, food: 0.18, coffee: 0.12 },
-      typicalSpend: { fashion: 190, beauty: 85, watches: 300, food: 40, coffee: 6 },
-      source: 'synthetic_demo',
-    },
-  },
-  {
-    id: 'tech',
-    label: 'Technology enthusiast',
-    line: 'Upgrades gear thoughtfully, goes to the cinema, rides across town.',
-    categories: ['tech', 'entertainment'],
-    favoriteBrands: ['circuit-house', 'lumen-audio'],
-    spending: {
-      share: { tech: 0.4, entertainment: 0.2, transport: 0.15, food: 0.15, coffee: 0.1 },
-      typicalSpend: { tech: 260, entertainment: 20, transport: 18, food: 30, coffee: 5 },
-      source: 'synthetic_demo',
-    },
-  },
+/** Small deterministic PRNG so each demo account gets the same history every time. */
+function rng(seed: string) {
+  let h = 1779033703 ^ seed.length;
+  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 3432918353);
+  return () => {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  };
+}
+
+/** 90 days of synthetic purchases visible to one linked program. */
+export function syntheticPurchases(seed: string, programId: string, now = new Date()): Purchase[] {
+  // One history per person; each program sees only the merchants it covers.
+  const rand = rng(seed);
+  const out: Purchase[] = [];
+  for (const r of ROUTINE) {
+    const visible = programSeesMerchant(programId, r.merchantId);
+    const m = merchantById(r.merchantId)!;
+    for (let d = 90; d >= 1; d--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - d);
+      const weekday = (date.getDay() + 6) % 7;
+      if (!r.days.includes(weekday)) continue;
+      // Visits get slightly more frequent in the last two weeks (spend velocity).
+      const boost = d <= 14 ? 1.25 : 1;
+      if (rand() > (r.perWeek / r.days.length) * boost) continue;
+      const hour = r.hours[0] + Math.floor(rand() * (r.hours[1] - r.hours[0] + 1));
+      date.setHours(hour, Math.floor(rand() * 60), 0, 0);
+      const amount = Math.round((r.spend[0] + rand() * (r.spend[1] - r.spend[0])) * 100) / 100;
+      if (visible) out.push({ id: `${r.merchantId}-${d}`, programId, merchantId: m.id, category: m.category, amount, at: date.toISOString() });
+    }
+  }
+  return out.sort((a, b) => a.at.localeCompare(b.at));
+}
+
+/** Stops for "Simulate a day": a student's route past the sample merchants. */
+export const DAY_STOPS = [
+  { id: 'morning', time: '08:10', label: 'Walking into the Student Union', lat: 30.2723, lng: -81.5081 },
+  { id: 'lunch', time: '12:30', label: 'Lunch break on College Row', lat: 30.2778, lng: -81.5008 },
+  { id: 'afternoon', time: '15:40', label: 'Between classes on Campus Walk', lat: 30.2743, lng: -81.5043 },
+  { id: 'evening', time: '18:20', label: 'Heading home past Beach Parkway', lat: 30.2806, lng: -81.4991 },
+  { id: 'late', time: '22:40', label: 'Leaving a late study group', lat: 30.2836, lng: -81.4956 },
 ];
+
+/** Great-circle distance in metres. */
+export function distanceM(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371000;
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return Math.round(2 * R * Math.asin(Math.sqrt(s)));
+}

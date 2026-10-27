@@ -26,3 +26,15 @@ export function greeting(hour = new Date().getHours()) {
   if (hour < 18) return 'Good afternoon';
   return 'Good evening';
 }
+
+export const points = (n: number, unit = 'points') => `${Math.round(n).toLocaleString('en-US')} ${n === 1 ? unit.replace(/s$/, '') : unit}`;
+
+/** "1 h 42 min" until a time, for holds. */
+export function countdown(iso: string, now = Date.now()) {
+  const ms = Math.max(0, new Date(iso).getTime() - now);
+  const min = Math.ceil(ms / 60_000);
+  if (min >= 60) return `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')} min`;
+  return `${min} min`;
+}
+
+export const timeOfDay = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });

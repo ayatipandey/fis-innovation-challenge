@@ -13,6 +13,7 @@ type Field = 'email' | 'password' | 'confirm';
 export function SignUp() {
   const navigate = useNavigate();
   const { user, setSession } = useSession();
+  const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -52,10 +53,10 @@ export function SignUp() {
     setConsentOpen(true);
   }
 
-  async function register(optional: { spendingData: boolean; location: boolean; marketing: boolean }) {
+  async function register(optional: { history: boolean; location: boolean; marketing: boolean }) {
     const s = await api<Parameters<typeof setSession>[0]>('/auth/register', {
       method: 'POST',
-      body: { email: email.trim(), password, termsAccepted: true, termsVersion: '2026-10-draft', optional },
+      body: { email: email.trim(), password, firstName: firstName.trim(), termsAccepted: true, termsVersion: '2026-10-draft', optional },
     });
     setSession(s);
     navigate('/onboarding', { replace: true });
@@ -65,11 +66,11 @@ export function SignUp() {
     <AuthLayout
       aside={
         <div className="auth-aside-inner">
-          <p className="display auth-aside-h">Membership is free. Setup takes a minute.</p>
+          <p className="display auth-aside-h">Free. Setup takes a couple of minutes.</p>
           <ol className="auth-steps">
-            <li>Pick the categories you care about</li>
-            <li>Choose favorite brands, or skip</li>
-            <li>Set how often Perkly may alert you</li>
+            <li>Link the points programs you already have, read-only</li>
+            <li>Allow location, or skip it</li>
+            <li>Set how often Perkly may nudge you</li>
           </ol>
           <p className="muted">Everything you choose can be changed later in Profile.</p>
         </div>
@@ -80,6 +81,10 @@ export function SignUp() {
         Already have one? <Link to="/signin">Sign in</Link>
       </p>
       <form className="auth-form" onSubmit={submit} noValidate>
+        <div className="field">
+          <label htmlFor="su-first">First name <span className="hint">(optional)</span></label>
+          <input id="su-first" value={firstName} maxLength={40} autoComplete="given-name" onChange={(e) => setFirstName(e.target.value)} />
+        </div>
         <TextField
           id="su-email"
           label="Email address"
@@ -204,11 +209,11 @@ export function TextField(p: {
 function ConsentDialog(p: {
   open: boolean;
   onBack: () => void;
-  onAgree: (optional: { spendingData: boolean; location: boolean; marketing: boolean }) => Promise<void>;
+  onAgree: (optional: { history: boolean; location: boolean; marketing: boolean }) => Promise<void>;
 }) {
   const id = useId();
   const [agreed, setAgreed] = useState(false);
-  const [spendingData, setSpendingData] = useState(false);
+  const [history, setHistory] = useState(false);
   const [location, setLocation] = useState(false);
   const [marketing, setMarketing] = useState(false);
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle');
@@ -222,7 +227,7 @@ function ConsentDialog(p: {
   async function agree() {
     setState('busy');
     try {
-      await p.onAgree({ spendingData, location, marketing });
+      await p.onAgree({ history, location, marketing });
       setState('done');
     } catch {
       setState('idle');
@@ -234,8 +239,8 @@ function ConsentDialog(p: {
       <div className="consent">
         <h2 id={`${id}-h`} className="display consent-h">Before you continue</h2>
         <p className="consent-text">
-          Perkly uses your selected preferences and, when you authorize it, supported reward and spending data to personalize recommendations.
-          Location access is optional. You control your notification and data permissions.
+          Perkly reads the points programs you link: balances, expiry dates and, if you allow it, purchase history. It uses them to suggest the best use of your points and the right moment.
+          Perkly never issues or holds points and can’t spend them without your tap. Location is optional.
         </p>
         <label className="checkbox consent-check">
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
@@ -251,12 +256,12 @@ function ConsentDialog(p: {
         <fieldset className="consent-optional">
           <legend>Optional. Off unless you turn them on.</legend>
           <div className="switch-row">
-            <div><div className="label">Use spending data for recommendations</div><div className="hint">Spending categories from accounts you connect. Demo data in this prototype.</div></div>
-            <Switch checked={spendingData} onChange={setSpendingData} label="Use spending data for recommendations" />
+            <div><div className="label">Learn from purchase history</div><div className="hint">From programs you link and allow to share it. Synthetic in this prototype.</div></div>
+            <Switch checked={history} onChange={setHistory} label="Learn from purchase history" />
           </div>
           <div className="switch-row">
-            <div><div className="label">Location for nearby rewards</div><div className="hint">Only used while you allow it.</div></div>
-            <Switch checked={location} onChange={setLocation} label="Location for nearby rewards" />
+            <div><div className="label">Location for nearby moments</div><div className="hint">Checked while the app is open. Not stored.</div></div>
+            <Switch checked={location} onChange={setLocation} label="Location for nearby moments" />
           </div>
           <div className="switch-row">
             <div><div className="label">Product news by email</div><div className="hint">Occasional updates. Unsubscribe any time.</div></div>

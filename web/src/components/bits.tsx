@@ -1,18 +1,15 @@
-import type { Brand, Offer } from '@shared/types';
-import { AlertTriangle, FlaskConical, Heart, MapPin } from 'lucide-react';
+import { programById } from '@shared/demo-data';
+import { AlertTriangle, FlaskConical } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { daysUntil, expiryPhrase, money } from '../lib/format';
 
-/** The Perkly mark: a swing tag, tilted, the way a perk hangs from something you already own. */
+/** The Perkly mark: a coin with a spark, the moment a balance turns into something. */
 export function Mark({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden focusable="false">
-      <g transform="rotate(-8 16 16)">
-        <path d="M9 6.5h9.6L25.5 13.4V25.5a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1z" fill="var(--forest)" />
-        <circle cx="19.4" cy="11.4" r="2.1" fill="var(--bg)" />
-        <path d="M12.5 21.5h8" stroke="var(--champagne)" strokeWidth="1.4" strokeLinecap="round" />
-      </g>
+      <circle cx="16" cy="16" r="13" fill="var(--action)" />
+      <circle cx="16" cy="16" r="13" fill="none" stroke="var(--text)" strokeOpacity="0.18" />
+      <path d="M16 8.5l1.9 5.6 5.6 1.9-5.6 1.9L16 23.5l-1.9-5.6L8.5 16l5.6-1.9z" fill="var(--action-ink)" />
     </svg>
   );
 }
@@ -26,11 +23,20 @@ export function Logo({ to = '/', label = 'Perkly home' }: { to?: string; label?:
   );
 }
 
-export function DemoTag({ children = 'Demo data' }: { children?: ReactNode }) {
+export function DemoTag({ children = 'Sample data' }: { children?: ReactNode }) {
   return (
     <span className="demo-tag">
       <FlaskConical aria-hidden />
       {children}
+    </span>
+  );
+}
+
+export function ProgramMark({ programId, size }: { programId: string; size?: 'sm' | 'lg' }) {
+  const p = programById(programId);
+  return (
+    <span className={`monogram ${size ?? ''} pm-${programId}`} aria-hidden>
+      {p?.monogram ?? '?'}
     </span>
   );
 }
@@ -59,69 +65,6 @@ export function SwitchRow(p: { id: string; label: string; hint?: ReactNode; chec
       </div>
       <Switch checked={p.checked} onChange={p.onChange} label={p.label} disabled={p.disabled} describedBy={p.hint ? `${p.id}-h` : undefined} />
     </div>
-  );
-}
-
-/** One reward as an editorial line: brand, benefit as a headline, then the facts. */
-export function RewardRow(p: {
-  offer: Offer;
-  brand?: Brand;
-  reason?: string;
-  warning?: string;
-  favorite?: boolean;
-  onFavorite?: () => void;
-  onOpen: () => void;
-  size?: 'feature' | 'row' | 'tile';
-  showNearby?: boolean;
-  status?: string;
-}) {
-  const { offer, brand } = p;
-  const urgent = daysUntil(offer.expiresAt) <= 3;
-  const name = brand?.name ?? offer.brandId;
-  return (
-    <article className={`rrow rrow-${p.size ?? 'row'}`}>
-      <div className="rrow-brand">
-        <span className={`monogram ${p.size === 'feature' ? 'lg' : ''}`} aria-hidden>{brand?.monogram}</span>
-        <span className="rrow-name">{name}</span>
-        {offer.sponsored && <span className="tag">Sponsored</span>}
-        {p.status && <span className="tag rrow-status">{p.status}</span>}
-      </div>
-      <h3 className="rrow-head display">
-        <button type="button" className="rrow-open" onClick={p.onOpen}>
-          {offer.headline}
-        </button>
-      </h3>
-      {p.reason && <p className="rrow-why">{p.reason}</p>}
-      <p className="rrow-facts">
-        <span className={urgent ? 'is-urgent' : ''}>
-          {urgent && <AlertTriangle aria-hidden />}
-          {expiryPhrase(offer.expiresAt)}
-        </span>
-        <span>{offer.minSpend != null ? `Min. spend ${money(offer.minSpend)}` : 'No minimum spend'}</span>
-        {p.showNearby && offer.nearby && (
-          <span><MapPin aria-hidden /> {offer.nearby.distanceMeters} m away</span>
-        )}
-      </p>
-      {p.warning && (
-        <p className="rrow-warn"><AlertTriangle aria-hidden /> {p.warning}</p>
-      )}
-      <div className="rrow-actions">
-        <button type="button" className="btn btn-sm" onClick={p.onOpen} aria-label={`View reward: ${offer.headline}, ${name}`}>
-          View reward
-        </button>
-        {p.onFavorite && (
-          <button
-            type="button"
-            className="fav"
-            aria-pressed={!!p.favorite}
-            aria-label={p.favorite ? `Remove from favorites: ${offer.headline}` : `Save to favorites: ${offer.headline}`}
-            onClick={p.onFavorite}
-          >
-            <Heart aria-hidden />
-          </button>
-        )}
-      </div>
-    </article>
   );
 }
 
@@ -154,5 +97,17 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
         )}
       </div>
     </div>
+  );
+}
+
+export function PageHead({ title, lede, children }: { title: string; lede?: ReactNode; children?: ReactNode }) {
+  return (
+    <header className="page-head">
+      <div>
+        <h1 className="page-h display">{title}</h1>
+        {lede && <p className="page-lede">{lede}</p>}
+      </div>
+      {children && <div className="page-head-aside">{children}</div>}
+    </header>
   );
 }

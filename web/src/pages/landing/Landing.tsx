@@ -1,16 +1,16 @@
-import { buildCatalog } from '@shared/demo-data';
-import { ArrowDown, Check, ChevronDown, Menu, X } from 'lucide-react';
+import { ArrowRight, BellRing, Brain, Link2, Lock, Menu, MousePointerClick, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { DemoTag, Logo, Mark } from '../../components/bits';
 import { api } from '../../lib/api';
-import { longDateline, shortDate } from '../../lib/format';
 import { useSession } from '../../state/session';
-import { AiDemo, ControlDemo, RedemptionDemo, SolutionDemo } from './LandingDemos';
+import { TEAM } from '../legal/Legal';
+
+export const PITCH = 'Other apps show you your points. Perkly spends them for you at the right moment.';
 
 export function Landing() {
   useEffect(() => {
-    document.title = 'Perkly — All your perks. One place.';
+    document.title = 'Perkly · Use the points you already have';
   }, []);
   return (
     <div className="landing">
@@ -18,13 +18,9 @@ export function Landing() {
       <LandingHeader />
       <main id="main">
         <Hero />
-        <Problem />
-        <Solution />
-        <Ai />
-        <Redemption />
-        <Control />
-        <HowItWorks />
-        <Faq />
+        <Steps />
+        <Example />
+        <Privacy />
         <FinalCta />
       </main>
       <SiteFooter />
@@ -53,24 +49,30 @@ function useTryDemo() {
   return { start, busy, error };
 }
 
+function TryDemo({ big }: { big?: boolean }) {
+  const { start, busy, error } = useTryDemo();
+  return (
+    <>
+      <button type="button" className={`btn btn-primary ${big ? 'btn-lg' : ''}`} onClick={start} disabled={busy}>
+        {busy && <span className="spinner" aria-hidden />}
+        Try the demo
+      </button>
+      {error && <p className="form-error" role="alert">{error}</p>}
+    </>
+  );
+}
+
 function LandingHeader() {
   const { user } = useSession();
-  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  useEffect(() => {
-    const on = () => setScrolled(window.scrollY > 24);
-    on();
-    window.addEventListener('scroll', on, { passive: true });
-    return () => window.removeEventListener('scroll', on);
-  }, []);
   const links = [
-    { href: '#product', label: 'Product' },
-    { href: '#how', label: 'How It Works' },
-    { href: '#ai', label: 'AI Recommendations' },
+    { href: '#how', label: 'How it works' },
+    { href: '#example', label: 'An example' },
+    { href: '#privacy', label: 'Privacy' },
   ];
   return (
-    <header className={`site-header ${scrolled ? 'is-scrolled' : ''}`}>
-      <div className="site-header-inner">
+    <header className="site-header">
+      <div className="site-header-inner glass">
         <Logo />
         <nav aria-label="Main" className="site-nav">
           {links.map((l) => <a key={l.href} href={l.href}>{l.label}</a>)}
@@ -80,8 +82,8 @@ function LandingHeader() {
             <Link to="/app" className="btn btn-primary">Open Perkly</Link>
           ) : (
             <>
-              <Link to="/signin" className="btn btn-quiet signin-link">Sign In</Link>
-              <Link to="/signup" className="btn btn-primary">Get Started</Link>
+              <Link to="/signin" className="btn btn-quiet signin-link">Sign in</Link>
+              <Link to="/signup" className="btn btn-primary">Get started</Link>
             </>
           )}
           <button type="button" className="icon-btn menu-btn" aria-expanded={open} aria-controls="mobile-nav" aria-label={open ? 'Close menu' : 'Open menu'} onClick={() => setOpen((v) => !v)}>
@@ -90,9 +92,9 @@ function LandingHeader() {
         </div>
       </div>
       {open && (
-        <nav id="mobile-nav" className="mobile-nav" aria-label="Main">
+        <nav id="mobile-nav" className="mobile-nav glass" aria-label="Main">
           {links.map((l) => <a key={l.href} href={l.href} onClick={() => setOpen(false)}>{l.label}</a>)}
-          {!user && <Link to="/signin" onClick={() => setOpen(false)}>Sign In</Link>}
+          {!user && <Link to="/signin" onClick={() => setOpen(false)}>Sign in</Link>}
         </nav>
       )}
     </header>
@@ -101,255 +103,130 @@ function LandingHeader() {
 
 function Hero() {
   return (
-    <section className="hero" aria-labelledby="hero-h">
+    <section className="hero wrap" aria-labelledby="hero-h">
       <div className="hero-copy">
-        <h1 id="hero-h" className="display hero-h">Your rewards, finally working for you.</h1>
+        <p className="eyebrow">For anyone with points they never get around to using</p>
+        <h1 id="hero-h" className="display hero-h">
+          Other apps show you your points. <span className="hero-accent">Perkly spends them for you at the right moment.</span>
+        </h1>
         <p className="hero-sub">
-          One free membership unlocks rewards from Perkly’s partner brands. Perkly picks the ones that fit your life and explains exactly how
-          to use them, online or in store.
+          Link the bank card, coffee card and memberships you already have. Perkly turns each balance into real rewards with a dollar value, and
+          tells you when and where to use them, before they expire.
         </p>
         <div className="hero-ctas">
-          <Link to="/signup" className="btn btn-primary btn-lg">Get Started</Link>
-          <a href="#how" className="btn btn-lg">
-            Explore How It Works
-            <ArrowDown aria-hidden />
-          </a>
+          <TryDemo big />
+          <Link to="/signup" className="btn btn-lg">Create an account</Link>
         </div>
-        <p className="hero-note">Student prototype. The partner brands and rewards shown are fictional demo data.</p>
+        <p className="hero-note">Student prototype. The programs, shops and balances are samples; nothing real is linked.</p>
       </div>
-      <HeroSpread />
+      <HeroPhone />
     </section>
   );
 }
 
-/** The app itself as the hero: a personalized Home with the reward detail laid over it. Illustration only. */
-function HeroSpread() {
-  const catalog = buildCatalog();
-  const ember = catalog.find((o) => o.id === 'ember-flat-white')!;
-  const thisWeek = catalog.filter((o) => (new Date(o.expiresAt).getTime() - Date.now()) / 86400_000 <= 7).length;
-  const weekday = new Date(ember.expiresAt).toLocaleDateString('en-US', { weekday: 'long' });
+/** Illustration of the moment: a lock-screen notification over a balance. Described in text for screen readers. */
+function HeroPhone() {
   return (
-    <figure className="spread" aria-label="Perkly app preview: Home shows partner rewards picked for Maya, and the open reward lists its conditions above the Use Reward buttons. Demo data.">
-      <div className="spread-app" inert>
-        <p className="spread-date">{longDateline()}</p>
-        <p className="display spread-greet">Good morning, Maya.</p>
-        <p className="spread-lede">Three rewards fit your morning. One expires on {weekday}.</p>
-        <dl className="spread-balances tabular">
-          <div><dt>Partner rewards</dt><dd>{catalog.length}</dd><dd className="sub">With your membership</dd></div>
-          <div><dt>Expiring this week</dt><dd>{thisWeek}</dd><dd className="sub">Across partners</dd></div>
-          <div><dt>Saved so far</dt><dd>$19.00</dd><dd className="sub">Estimated</dd></div>
-        </dl>
-        <div className="spread-recs">
-          <div className="spread-rec is-active">
-            <span className="monogram sm">EO</span>
-            <div>
-              <p className="display">$2 off your morning flat white</p>
-              <p className="why">Recommended because you frequently buy coffee.</p>
-            </div>
-          </div>
-          <div className="spread-rec">
-            <span className="monogram sm">GM</span>
-            <div>
-              <p className="display">$10 off a grocery shop of $75 or more</p>
-              <p className="why warn">Needs $75, more than your usual $48 shop.</p>
-            </div>
-          </div>
+    <figure className="hero-phone" aria-label="Example: a notification says you’re 120 m from Campus Coffee and have a free latte worth $5 that expires in 6 days.">
+      <div className="phone" aria-hidden>
+        <p className="phone-time tabular">8:10</p>
+        <p className="phone-date">Tuesday</p>
+        <div className="notif glass">
+          <span className="notif-app"><Mark size={18} /> Perkly <span className="notif-now">now</span></span>
+          <p className="notif-title">Campus Coffee: a free latte</p>
+          <p className="notif-body">You’re 120 m from Campus Coffee and have a free latte worth $5 that expires in 6 days.</p>
+        </div>
+        <div className="phone-card glass">
+          <p className="phone-card-h">Campus Coffee Rewards</p>
+          <p className="phone-card-n tabular">70 points</p>
+          <ol className="phone-plans">
+            <li><span>7 × $2 off any drink</span><strong>$14</strong></li>
+            <li><span>$15 off a $20 order</span><strong>$15</strong></li>
+          </ol>
+          <p className="phone-card-note">Ranked first: no minimum, and your usual order is about $6.</p>
         </div>
       </div>
-
-      <div className="spread-detail" inert>
-        <div className="sd-brand"><span className="monogram sm">EO</span> Ember &amp; Oak Coffee <span className="sd-exp">Expires {shortDate(ember.expiresAt)}</span></div>
-        <p className="display sd-head">$2 off your morning flat white</p>
-        <dl className="sd-terms">
-          <div><dt>What you get</dt><dd>$2.00 off any handcrafted drink</dd></div>
-          <div><dt>What you pay</dt><dd>Menu price minus $2.00. No minimum.</dd></div>
-          <div><dt>Valid</dt><dd>All cafés and online ordering</dd></div>
-          <div><dt>Not valid</dt><dd>Merchandise, gift cards, delivery apps</dd></div>
-          <div><dt>How to use it</dt><dd>Online, the code is applied for you</dd></div>
-          <div><dt>Combining</dt><dd>One Perkly reward per order</dd></div>
-        </dl>
-        <div className="sd-actions">
-          <div className="sd-use">Use Reward online</div>
-          <div className="sd-use sd-use-alt">Use Reward in store</div>
-        </div>
-      </div>
-      <figcaption className="spread-cap"><DemoTag>Demo data</DemoTag></figcaption>
+      <figcaption className="visually-hidden">Illustration with sample data.</figcaption>
     </figure>
   );
 }
 
-function Problem() {
-  return (
-    <section className="band problem" aria-labelledby="problem-h">
-      <div className="wrap problem-grid">
-        <h2 id="problem-h" className="display section-h">You earned the rewards. Why is using them so complicated?</h2>
-        <div className="problem-list">
-          <div className="problem-item">
-            <h3>Good offers are scattered everywhere.</h3>
-            <p>A different app for every brand, codes buried in your inbox, and deals you never hear about until they’ve ended.</p>
-            <div className="frag frag-scatter tabular" aria-hidden>
-              <span>Brand app</span>
-              <span>Promo email</span>
-              <span>Receipt coupon</span>
-              <span>Loyalty card</span>
-              <span>Social post</span>
-            </div>
-          </div>
-          <div className="problem-item">
-            <h3>The terms and expiry dates are hard to find.</h3>
-            <p>The rule that matters is usually in the smallest print, next to a date that has already passed.</p>
-            <p className="frag frag-fine" aria-hidden>
-              Valid on qualifying purchases of $75 or more excluding alcohol, tobacco, lottery, gift cards, pharmacy, delivery fees and tips.
-              Not valid at Express kiosks. One per member. <mark>Offer ends Nov 2.</mark> Other restrictions may apply.
-            </p>
-          </div>
-          <div className="problem-item">
-            <h3>Too many steps between finding a reward and using it.</h3>
-            <p>Find it, check it, copy the code, then hope it works at checkout. Most rewards are lost somewhere along the way.</p>
-            <ol className="frag frag-steps" aria-hidden>
-              <li>Search</li><li>Find a code</li><li>Read terms</li><li>Check it’s still valid</li><li>Copy code</li><li>Paste at checkout</li>
-            </ol>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Solution() {
-  return (
-    <section id="product" className="band solution" aria-labelledby="solution-h">
-      <div className="wrap">
-        <h2 id="solution-h" className="display section-h narrow">Less searching. Better decisions. Easier redemption.</h2>
-        <div className="pillars">
-          <div>
-            <h3>Discover</h3>
-            <p>Every partner brand’s rewards, included with one free membership and ranked for what you actually buy.</p>
-          </div>
-          <div>
-            <h3>Decide</h3>
-            <p>AI-powered comparisons explain the value, the conditions and the limits of each reward before you commit.</p>
-          </div>
-          <div>
-            <h3>Redeem</h3>
-            <p>One clear action takes you to the brand’s site with the code applied, or gives you a code to show in store.</p>
-          </div>
-        </div>
-        <SolutionDemo />
-      </div>
-    </section>
-  );
-}
-
-function Ai() {
-  return (
-    <section id="ai" className="band ai" aria-labelledby="ai-h">
-      <div className="wrap">
-        <div className="section-intro">
-          <h2 id="ai-h" className="display section-h">The same catalog, ranked for five different people.</h2>
-          <p className="section-lede">
-            Pick a sample shopper. Perkly’s recommendation service ranks the demo catalog by what they actually buy, and says why each reward
-            made the list. A reward that asks for more spending than usual drops down, even when its discount looks bigger.
-          </p>
-        </div>
-        <AiDemo />
-      </div>
-    </section>
-  );
-}
-
-function Redemption() {
-  return (
-    <section id="redeem" className="band redemption" aria-labelledby="redeem-h">
-      <div className="wrap redemption-grid">
-        <div className="section-intro sticky-intro">
-          <h2 id="redeem-h" className="display section-h">Every condition, before you commit.</h2>
-          <p className="section-lede">
-            What you get, what you pay, what’s valid and what isn’t, all in one pop-up, in plain words, with nothing in fine print. Then one
-            button takes you to the brand, or gives you a code for the register.
-          </p>
-          <ul className="check-list">
-            <li><Check aria-hidden /> Online: the brand’s site opens with your code applied.</li>
-            <li><Check aria-hidden /> In store: show a QR code to the cashier.</li>
-            <li><Check aria-hidden /> You pay the brand directly. Perkly never handles payment.</li>
-          </ul>
-        </div>
-        <RedemptionDemo />
-      </div>
-    </section>
-  );
-}
-
-function Control() {
-  return (
-    <section className="band control" aria-labelledby="control-h">
-      <div className="wrap control-grid">
-        <div className="section-intro">
-          <h2 id="control-h" className="display section-h">Personal, on your terms.</h2>
-          <p className="section-lede">
-            Perkly ranks partner rewards by the interests and brands you choose. Spending-based picks, location and alerts are each a separate
-            switch, and location is off until you turn it on. Change any of it later in Profile.
-          </p>
-        </div>
-        <ControlDemo />
-      </div>
-    </section>
-  );
-}
-
-function HowItWorks() {
-  const steps = [
-    ['Join free and tell Perkly what you’re into.', 'Pick categories and favorite brands. It takes a minute, and you can skip any of it.'],
-    ['Discover partner rewards that fit you.', 'Home shows what matters today. Explore holds every reward in the network.'],
-    ['Understand the benefit and conditions instantly.', 'Every reward shows what you get, what you pay, and what doesn’t count.'],
-    ['Use it online or in store.', 'Go to the brand’s site with the code applied, or show a QR code at the register.'],
-  ];
-  return (
-    <section id="how" className="band how" aria-labelledby="how-h">
-      <div className="wrap">
-        <h2 id="how-h" className="display section-h narrow">How it works</h2>
-        <ol className="how-steps">
-          {steps.map(([t, d], i) => (
-            <li key={t}>
-              <span className="how-n display" aria-hidden>{i + 1}</span>
-              <h3>{t}</h3>
-              <p>{d}</p>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  );
-}
-
-const FAQS: [string, string][] = [
-  ['What is Perkly?', 'Perkly is a free membership. Brands partner with Perkly to offer rewards to its members, and Perkly shows you the ones that fit you, with every condition explained before you use them.'],
-  ['Which brands partner with Perkly?', 'In this prototype, none yet: every partner and reward shown is fictional, so you can see how the product would work. Real partners would be listed here and labeled in the app.'],
-  ['How much does membership cost?', 'Nothing. Membership is free.'],
-  ['How does Perkly make money?', 'Partner brands may pay Perkly a commission when a member uses a reward. That never changes how rewards are ranked, and sponsored placements are always labeled.'],
-  ['Does Perkly handle my payment?', 'No. You pay the brand directly on its own site or at its register. Perkly never sees or stores your card details.'],
-  ['Is Perkly a bank or a points program?', 'Neither. Perkly doesn’t hold money, issue cards, or run a points currency. It connects members with partner rewards.'],
-  ['How does AI personalize recommendations?', 'A transparent scoring service ranks rewards using only what you allow: the categories and brands you pick, spending categories if you switch them on, expiry dates, time of day, and location if you turn it on. Each recommendation says why it appears. It uses clear rules rather than a trained model, so it can explain every result.'],
-  ['Does Perkly need my location?', 'No. Location is off by default. If you turn it on, Perkly can point out partners nearby. You can turn it off at any time.'],
-  ['How do I use a reward in store?', 'Open the reward and choose “Use Reward in store”. Perkly shows a QR code and a member code to give the cashier before you pay.'],
-  ['Is the current demonstration connected to real brands?', 'No. Every partner, reward and saving is fictional, and partner sites and purchases are simulated and labeled. Nothing you do in the demo is real.'],
+const STEPS = [
+  { icon: Link2, title: 'Link, read-only', body: 'Connect the programs you have. Perkly reads balances, expiry dates and, if you allow it, purchase history. It never issues or holds points. Samples here; in real life, through each bank’s or brand’s API.' },
+  { icon: Sparkles, title: 'Turn points into rewards', body: '800 points covers a free latte. 2,400 covers $24 off dinner. Perkly ranks every way to spend a balance by what you actually get.' },
+  { icon: BellRing, title: 'Pick the moment', body: 'A moment engine weighs where you are, the time of day, your habits and what’s about to expire, then decides whether a notification is worth sending.' },
+  { icon: MousePointerClick, title: 'Redeem in one tap', body: 'Show a code in store or jump to the seller’s site with the points applied. Points stay on hold for 2 hours until the purchase is confirmed, so they can’t be spent twice.' },
+  { icon: Brain, title: 'Learn and prove it', body: 'Rate a notification Good, Fine or Bad and the next one changes. An uplift model only notifies people it would actually change, and a 10% control group measures the lift.' },
 ];
 
-function Faq() {
+function Steps() {
   return (
-    <section className="band faq" aria-labelledby="faq-h">
-      <div className="wrap faq-grid">
-        <h2 id="faq-h" className="display section-h">Questions, answered plainly</h2>
-        <div className="faq-list">
-          {FAQS.map(([q, a]) => (
-            <details key={q}>
-              <summary>
-                <span>{q}</span>
-                <ChevronDown aria-hidden />
-              </summary>
-              <p>{a}</p>
-            </details>
-          ))}
+    <section id="how" className="wrap section" aria-labelledby="how-h">
+      <h2 id="how-h" className="display section-h">How it works</h2>
+      <ol className="steps">
+        {STEPS.map((s, i) => (
+          <li key={s.title} className="step glass">
+            <span className="step-n tabular" aria-hidden>{i + 1}</span>
+            <s.icon aria-hidden className="step-icon" />
+            <h3 className="step-h">{s.title}</h3>
+            <p>{s.body}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+function Example() {
+  return (
+    <section id="example" className="wrap section example" aria-labelledby="ex-h">
+      <div className="example-copy">
+        <h2 id="ex-h" className="display section-h">70 coffee points. Two ways to spend them.</h2>
+        <p>
+          The $15 reward looks bigger. But it needs a $20 order, and you usually spend about $6. Seven $2-off drinks give you $14 with nothing extra
+          to buy, so Perkly ranks them first and says why.
+        </p>
+        <DemoTag>Sample program</DemoTag>
+      </div>
+      <div className="compare">
+        <div className="compare-card glass is-best">
+          <p className="compare-tag">Ranked first</p>
+          <p className="compare-h">7 × $2 off any drink</p>
+          <p className="compare-n display tabular">$14</p>
+          <ul>
+            <li>No minimum spend</li>
+            <li>Fits your 5 coffees a week</li>
+            <li>Uses the 30 points that expire in 6 days</li>
+          </ul>
+        </div>
+        <div className="compare-card glass">
+          <p className="compare-tag">Option 2</p>
+          <p className="compare-h">$15 off a $20 order</p>
+          <p className="compare-n display tabular">$15</p>
+          <ul>
+            <li>Needs about $14 more than you usually spend</li>
+            <li>One visit</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Privacy() {
+  return (
+    <section id="privacy" className="wrap section privacy" aria-labelledby="pv-h">
+      <div className="privacy-inner glass">
+        <Lock aria-hidden className="privacy-icon" />
+        <div>
+          <h2 id="pv-h" className="display section-h">Read-only, and your call</h2>
+          <ul className="privacy-list">
+            <li>Each program shows its own consent screen. You pick what it shares.</li>
+            <li>No card numbers, passwords or PINs. Perkly can’t move money or spend points without your tap.</li>
+            <li>Location is optional, checked while the app is open, and not stored.</li>
+            <li>A daily limit and quiet hours you set. Unlink a program and its data is deleted.</li>
+          </ul>
+          <Link to="/legal/privacy" className="link-more">Read the privacy policy <ArrowRight aria-hidden /></Link>
         </div>
       </div>
     </section>
@@ -357,21 +234,12 @@ function Faq() {
 }
 
 function FinalCta() {
-  const demo = useTryDemo();
   return (
-    <section className="final" aria-labelledby="final-h">
-      <div className="wrap final-inner">
-        <Mark size={44} />
-        <h2 id="final-h" className="display final-h">Make more of the rewards you already have.</h2>
-        <div className="hero-ctas center">
-          <Link to="/signup" className="btn btn-lg btn-light">Create Your Perkly Account</Link>
-          <button type="button" className="btn btn-lg btn-outline-light" onClick={demo.start} disabled={demo.busy}>
-            {demo.busy && <span className="spinner" aria-hidden />}
-            Try the Demo
-          </button>
-        </div>
-        {demo.error && <p className="final-err" role="alert">{demo.error}</p>}
-        <p className="final-note">Membership is free. The demo opens a fictional account with sample partner rewards; nothing you do there is real.</p>
+    <section className="wrap section final" aria-labelledby="final-h">
+      <h2 id="final-h" className="display final-h">See it with a sample member.</h2>
+      <p>Maya has a bank card, a coffee card, a bookstore membership, grocery points and cinema stars. Walk through her day.</p>
+      <div className="hero-ctas">
+        <TryDemo big />
       </div>
     </section>
   );
@@ -383,10 +251,9 @@ export function SiteFooter() {
       <div className="wrap footer-grid">
         <div className="footer-brand">
           <Logo />
-          <p>All your perks. One place.</p>
+          <p className="footer-pitch">{PITCH}</p>
           <p className="footer-small">
-            A student prototype by [Group name] for [Course or competition name]. Perkly is not a registered company. The partner brands shown
-            are fictional; Perkly has no real brand partnerships yet. Perkly may earn a commission from partners when you use a reward.
+            A student prototype by {TEAM.join(', ')}. Perkly is not a registered company and has no partnerships with the sample programs shown.
           </p>
         </div>
         <nav aria-label="Legal and support" className="footer-links">
@@ -396,13 +263,13 @@ export function SiteFooter() {
           <Link to="/legal/refunds">Refunds</Link>
           <Link to="/legal/accessibility">Accessibility</Link>
           <Link to="/contact">Contact</Link>
-          <Link to="/signin">Sign In</Link>
+          <Link to="/signin">Sign in</Link>
         </nav>
       </div>
       <div className="wrap">
         <div className="footer-base">
-          <span>© 2026 [Group name]. All rights reserved.</span>
-          <span>Demo data throughout.</span>
+          <span>© 2026 The Perkly team</span>
+          <span>Web preview of the Perkly phone app. Sample data throughout.</span>
         </div>
       </div>
     </footer>

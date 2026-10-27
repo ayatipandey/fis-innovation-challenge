@@ -11,113 +11,152 @@ class Loose(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
-class Benefit(Loose):
-    kind: str
-    value: Optional[float] = None
-    unit: Optional[str] = None
-    summary: str = ""
-
-
-class ValueEstimate(Loose):
-    amount: Optional[float] = None
-    basis: str = ""
-
-
-class Nearby(Loose):
-    label: str
-    distanceMeters: int
-
-
-class Redemption(Loose):
-    url: Optional[str] = None
-
-
-class YouPay(Loose):
-    knownFees: list[str] = Field(default_factory=list)
-    feesUnknown: bool = False
-
-
-class Valid(Loose):
-    channels: list[str] = Field(default_factory=list)
-
-
-class RewardIn(Loose):
-    """The subset of an offer the scorer needs."""
-
-    id: str
-    brandId: str
-    brandName: str
-    category: str
-    headline: str = ""
-    benefit: Benefit
-    valueEstimate: ValueEstimate
-    minSpend: Optional[float] = None
-    maxBenefit: Optional[float] = None
-    validFrom: str
-    expiresAt: str
-    redemption: Redemption = Field(default_factory=Redemption)
-    youPay: YouPay = Field(default_factory=YouPay)
-    valid: Valid = Field(default_factory=Valid)
-    nearby: Optional[Nearby] = None
-    routine: list[str] = Field(default_factory=list)
-    sponsored: bool = False
-
-
-class Spending(Loose):
-    share: dict[str, float] = Field(default_factory=dict)
+class Habits(Loose):
+    visitsPerWeek: dict[str, float] = Field(default_factory=dict)
     typicalSpend: dict[str, float] = Field(default_factory=dict)
-    source: str = "none"
+    hourShare: dict[str, list[float]] = Field(default_factory=dict)
+    spendVelocity: dict[str, float] = Field(default_factory=dict)
 
 
-class UserSummary(Loose):
-    """Only what the user has permitted Perkly to use."""
+class MerchantIn(Loose):
+    id: str
+    name: str
+    lat: float
+    lng: float
+    opens: int
+    closes: int
+    category: str
 
-    categories: list[str] = Field(default_factory=list)
-    favoriteBrands: list[str] = Field(default_factory=list)
-    spending: Optional[Spending] = None
-    brandHistory: dict[str, int] = Field(default_factory=dict)
+
+class Candidate(Loose):
+    """One reward the member can afford right now."""
+
+    optionId: str
+    programId: str
+    programName: str
+    unit: str = "points"
+    title: str
+    cost: float
+    value: float
+    minSpend: Optional[float] = None
+    channels: list[str] = Field(default_factory=list)
+    available: float
+    expiringPoints: float = 0
+    daysToExpiry: Optional[float] = None
+    category: Optional[str] = None
+    merchants: list[MerchantIn] = Field(default_factory=list)
+
+
+class Context(Loose):
+    now: str
+    hour: int = Field(ge=0, le=23)
+    minute: int = Field(default=0, ge=0, le=59)
+    weekday: int = Field(ge=0, le=6)
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    source: Literal["simulated", "device"] = "simulated"
+
+
+class QuietHours(Loose):
+    enabled: bool = False
+    start: str = "21:00"
+    end: str = "08:00"
+
+
+class Prefs(Loose):
+    quietHours: QuietHours = Field(default_factory=QuietHours)
+    dailyLimit: int = 3
+    sentToday: int = 0
+    locationAllowed: bool = False
     personalization: bool = True
 
 
-class TimeContext(Loose):
-    now: str
-    weekday: int = Field(ge=0, le=6, description="0 = Monday")
-    hour: int = Field(ge=0, le=23)
+class RatingCounts(Loose):
+    good: int = 0
+    fine: int = 0
+    bad: int = 0
 
 
-class LocationContext(Loose):
-    permitted: bool = False
-    label: Optional[str] = None
+class MomentRequest(Loose):
+    context: Context
+    prefs: Prefs = Field(default_factory=Prefs)
+    habits: Habits = Field(default_factory=Habits)
+    ratings: dict[str, RatingCounts] = Field(default_factory=dict)
+    candidates: list[Candidate] = Field(max_length=200)
 
 
-class RecommendationRequest(Loose):
-    user: UserSummary
-    rewards: list[RewardIn] = Field(max_length=500)
-    time: TimeContext
-    location: Optional[LocationContext] = None
-    limit: int = Field(default=20, ge=1, le=100)
+class Scored(BaseModel):
+    optionId: str
+    programId: str
+    merchantId: Optional[str]
+    merchantName: Optional[str]
+    distanceM: Optional[int]
+    pIfNotified: float
+    pIfNot: float
+    uplift: float
+    expectedExtraValue: float
 
 
-class RankedReward(BaseModel):
-    offerId: str
-    score: float
+class MomentDecision(BaseModel):
+    sent: bool
+    optionId: Optional[str]
+    programId: Optional[str]
+    merchantId: Optional[str]
+    title: str
+    body: str
     reasons: list[str]
-    warnings: list[str]
+    suppressedBecause: Optional[str]
+    uplift: float
+    pIfNotified: float
+    pIfNot: float
+    distanceM: Optional[int]
+    bucket: str
+    category: Optional[str]
 
 
-class RecommendationResponse(BaseModel):
-    items: list[RankedReward]
-    engine: Literal["perkly-scorer-v1"] = "perkly-scorer-v1"
-    generatedAt: str
-    note: str
+class MomentResponse(BaseModel):
+    decision: MomentDecision
+    considered: list[Scored]
+    model: str
+    threshold: float
 
 
-class CopilotRequest(Loose):
+class PlanIn(Loose):
+    label: str
+    totalValue: float
+    pointsUsed: float
+    leftover: float
+    visits: int
+    extraSpend: float
+    valueAtRisk: float
+    score: float
+    reasons: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    optionIds: list[str] = Field(default_factory=list)
+
+
+class ExpiryIn(Loose):
+    points: float
+    days: float
+
+
+class ProgramIn(Loose):
+    programId: str
+    name: str
+    unit: str = "points"
+    available: float
+    expiries: list[ExpiryIn] = Field(default_factory=list)
+    plans: list[PlanIn] = Field(default_factory=list)
+
+
+class PilotRequest(Loose):
     message: str = Field(min_length=1, max_length=1000)
-    user: UserSummary
-    rewards: list[RewardIn] = Field(max_length=500)
-    time: TimeContext
-    location: Optional[LocationContext] = None
+    context: Context
+    prefs: Prefs = Field(default_factory=Prefs)
+    habits: Habits = Field(default_factory=Habits)
+    ratings: dict[str, RatingCounts] = Field(default_factory=dict)
+    programs: list[ProgramIn] = Field(default_factory=list)
+    candidates: list[Candidate] = Field(default_factory=list, max_length=200)
 
 
 class Table(BaseModel):
@@ -125,10 +164,10 @@ class Table(BaseModel):
     rows: list[list[str]]
 
 
-class CopilotResponse(BaseModel):
+class PilotResponse(BaseModel):
     reply: str
     cards: list[str]
     table: Optional[Table] = None
     notes: list[str]
     followUps: list[str]
-    engine: Literal["rule-based-v1"] = "rule-based-v1"
+    engine: Literal["perkly-pilot-v1"] = "perkly-pilot-v1"

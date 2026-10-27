@@ -1,11 +1,9 @@
-import { createApp } from './app';
-import { config } from './config';
-import { openDb } from './db';
-import { demoCatalog } from './services/catalog';
+import { createApp } from './app.js';
+import { config } from './config.js';
+import { sharedDb } from './db.js';
 
-const db = openDb(config.databasePath);
-const app = createApp(db, demoCatalog());
+const app = createApp(() => sharedDb(config.databaseUrl, config.databaseToken));
 
 app.listen(config.port, () => {
-  console.log(`Perkly API on http://localhost:${config.port} (recommender: ${config.recommenderUrl})`);
+  console.log(`Perkly API on http://localhost:${config.port} (AI service: ${config.recommenderUrl})`);
 });

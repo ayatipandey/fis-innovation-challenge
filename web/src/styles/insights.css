@@ -1,0 +1,55 @@
+.insights { min-height: 100dvh; padding-bottom: var(--s-8);
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-0: #8b8a85;
+}
+.ins-head { display: flex; justify-content: space-between; align-items: center; padding-block: var(--s-4); }
+.ins-main { display: grid; gap: var(--s-4); }
+.ins-h { font-size: clamp(2.2rem, 1.6rem + 2.4vw, 3.6rem); max-width: 22ch; }
+.ins-lede { font-size: var(--fs-lg); color: var(--text-3); max-width: 64ch; margin-bottom: var(--s-3); }
+.ins-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-3); }
+.ins-tiles .tile { padding: var(--s-5); display: grid; gap: var(--s-1); align-content: start; }
+.tile-label { font-size: var(--fs-sm); font-weight: 700; color: var(--text-3); }
+.tile-n { font-size: clamp(2.2rem, 1.8rem + 1.4vw, 3.2rem); }
+.tile-sub { font-size: var(--fs-sm); color: var(--text-3); }
+.ins-chart { background: var(--glass-strong); }
+.ins-callout { font-size: var(--fs-lg); }
+
+.hbars { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
+.hbars li { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: var(--s-3); align-items: center; }
+.hbar-label { font-size: var(--fs-sm); font-weight: 600; }
+.hbar-track { display: flex; align-items: center; gap: var(--s-2); }
+.hbar { display: block; height: 28px; border-radius: 0 4px 4px 0; background: var(--series-0); }
+.hbar.s1 { background: var(--series-1); }
+.hbar:hover { filter: brightness(1.08); }
+.hbar-value { font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.decile { display: grid; gap: var(--s-2); }
+.legend { display: flex; gap: var(--s-4); flex-wrap: wrap; font-size: var(--fs-sm); font-weight: 600; }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; background: var(--series-1); }
+.sw.dot { border-radius: 50%; background: var(--series-2); width: 10px; height: 10px; box-shadow: 0 0 0 2px #fff; }
+.decile-plot { position: relative; }
+.decile-plot svg { width: 100%; height: auto; overflow: visible; }
+.decile-plot .grid { stroke: var(--border); stroke-width: 1; }
+.decile-plot .axis-zero { stroke: var(--text-3); stroke-width: 1.5; }
+.decile-plot .threshold { stroke: var(--text-3); stroke-width: 1; stroke-dasharray: 4 4; }
+.decile-plot .tick { font-size: 12px; fill: var(--text-3); font-family: var(--font-ui); }
+.decile-plot .dlabel { font-size: 13px; font-weight: 800; fill: var(--text); font-family: var(--font-ui); }
+.decile-plot .bar { fill: var(--series-1); }
+.decile-plot .bar.is-hover { filter: brightness(1.12); }
+.decile-plot .pred { fill: var(--series-2); stroke: #fff; stroke-width: 2; }
+.viz-tip { position: absolute; top: 0; transform: translateX(-50%); display: grid; gap: 2px; padding: var(--s-2) var(--s-3); border-radius: 10px; background: var(--text); color: var(--bg); font-size: var(--fs-xs); pointer-events: none; white-space: nowrap; box-shadow: var(--shadow-lift); }
+.ins-table summary { cursor: pointer; font-weight: 700; font-size: var(--fs-sm); }
+.ins-table .table-wrap { margin-top: var(--s-2); }
+.live-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-3); margin: 0; }
+.live-grid div { padding: var(--s-3); border-radius: var(--r-control); background: var(--surface-2); }
+.live-grid dt { font-size: var(--fs-xs); color: var(--text-3); font-weight: 700; }
+.live-grid dd { margin: 0; font-size: var(--fs-xl); font-weight: 800; }
+@media (forced-colors: active) {
+  .hbar, .decile-plot .bar { forced-color-adjust: none; }
+}
+@media (max-width: 820px) {
+  .ins-tiles, .live-grid { grid-template-columns: 1fr; }
+  .hbars li { grid-template-columns: 1fr; gap: 4px; }
+}

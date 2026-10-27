@@ -18,7 +18,14 @@ html {
 
 body {
   margin: 0;
-  background: var(--bg);
+  min-height: 100dvh;
+  background-color: var(--bg);
+  /* The two theme orbs, fixed behind every glass panel. */
+  background-image:
+    radial-gradient(42vmax 42vmax at 8% -6%, color-mix(in srgb, var(--orb-1) 85%, transparent), transparent 70%),
+    radial-gradient(38vmax 38vmax at 100% 104%, color-mix(in srgb, var(--orb-2) 85%, transparent), transparent 70%),
+    radial-gradient(26vmax 26vmax at 78% 18%, color-mix(in srgb, var(--orb-2) 40%, transparent), transparent 70%);
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-ui);
   font-size: var(--fs-md);
@@ -57,11 +64,11 @@ a {
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
 }
-a:hover { text-decoration-color: var(--champagne); }
+a:hover { text-decoration-thickness: 2px; }
 
 ::selection {
-  background: var(--forest);
-  color: var(--forest-ink);
+  background: var(--text);
+  color: var(--bg);
 }
 
 :focus-visible {
@@ -74,17 +81,28 @@ a:hover { text-decoration-color: var(--champagne); }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; border: 3px solid var(--bg); }
 ::-webkit-scrollbar-track { background: transparent; }
 
-input { caret-color: var(--forest); }
+input { caret-color: var(--text); }
 
 .tabular { font-variant-numeric: tabular-nums lining-nums; }
 
 .display {
-  font-family: var(--font-display);
-  font-optical-sizing: auto;
-  font-weight: 500;
-  letter-spacing: -0.015em;
-  line-height: 1.04;
+  font-family: var(--font-ui);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
 }
+
+/* A frosted panel. */
+.glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--r-panel);
+  box-shadow: var(--shadow-glass);
+}
+:root[data-contrast='high'] .glass { border: 2px solid var(--text); }
+:root[data-contrast='high'] body { background-image: none; }
 
 .visually-hidden {
   position: absolute !important;
@@ -102,8 +120,8 @@ input { caret-color: var(--forest); }
   top: var(--s-4);
   z-index: 100;
   padding: var(--s-3) var(--s-4);
-  background: var(--espresso);
-  color: var(--paper);
+  background: var(--text);
+  color: var(--bg);
   border-radius: var(--r-control);
   transform: translateY(-200%);
   transition: transform var(--dur-fast) var(--ease-out);

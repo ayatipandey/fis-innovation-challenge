@@ -1,0 +1,170 @@
+{
+ "synthetic": true,
+ "method": "Randomized holdout. 90% of members can be notified, 10% are a control group that never is. Lift = redemption rate of notified members minus the control group's.",
+ "holdoutRows": 17857,
+ "overall": {
+  "notifiedRate": 0.3488,
+  "controlRate": 0.2323,
+  "liftPoints": 11.7
+ },
+ "targeting": {
+  "threshold": 0.05,
+  "shareTargeted": 0.6942,
+  "targetedLiftPoints": 18.0,
+  "untargetedLiftPoints": -3.0,
+  "causedPer1000Blanket": 117,
+  "causedPer1000Targeted": 180
+ },
+ "deciles": [
+  {
+   "decile": 1,
+   "predictedUplift": 0.3924,
+   "notifiedRate": 0.6244,
+   "controlRate": 0.2222,
+   "actualLift": 0.4022,
+   "members": 1786
+  },
+  {
+   "decile": 2,
+   "predictedUplift": 0.2524,
+   "notifiedRate": 0.5403,
+   "controlRate": 0.3563,
+   "actualLift": 0.184,
+   "members": 1786
+  },
+  {
+   "decile": 3,
+   "predictedUplift": 0.1968,
+   "notifiedRate": 0.5037,
+   "controlRate": 0.3169,
+   "actualLift": 0.1868,
+   "members": 1785
+  },
+  {
+   "decile": 4,
+   "predictedUplift": 0.157,
+   "notifiedRate": 0.4537,
+   "controlRate": 0.2796,
+   "actualLift": 0.1742,
+   "members": 1786
+  },
+  {
+   "decile": 5,
+   "predictedUplift": 0.123,
+   "notifiedRate": 0.3639,
+   "controlRate": 0.25,
+   "actualLift": 0.1139,
+   "members": 1786
+  },
+  {
+   "decile": 6,
+   "predictedUplift": 0.0923,
+   "notifiedRate": 0.2687,
+   "controlRate": 0.1615,
+   "actualLift": 0.1072,
+   "members": 1785
+  },
+  {
+   "decile": 7,
+   "predictedUplift": 0.0629,
+   "notifiedRate": 0.2049,
+   "controlRate": 0.1421,
+   "actualLift": 0.0628,
+   "members": 1786
+  },
+  {
+   "decile": 8,
+   "predictedUplift": 0.034,
+   "notifiedRate": 0.1604,
+   "controlRate": 0.1194,
+   "actualLift": 0.041,
+   "members": 1785
+  },
+  {
+   "decile": 9,
+   "predictedUplift": 0.0048,
+   "notifiedRate": 0.1327,
+   "controlRate": 0.1217,
+   "actualLift": 0.0111,
+   "members": 1786
+  },
+  {
+   "decile": 10,
+   "predictedUplift": -0.1415,
+   "notifiedRate": 0.2263,
+   "controlRate": 0.3763,
+   "actualLift": -0.1501,
+   "members": 1786
+  }
+ ],
+ "segments": {
+  "persuadables": {
+   "share": 0.6942,
+   "notifiedRate": 0.4257,
+   "controlRate": 0.2456,
+   "lift": 0.18
+  },
+  "sureThings": {
+   "share": 0.02,
+   "notifiedRate": 0.5849,
+   "controlRate": 0.5641,
+   "lift": 0.0208
+  },
+  "doNotDisturb": {
+   "share": 0.1325,
+   "notifiedRate": 0.2091,
+   "controlRate": 0.3095,
+   "lift": -0.1004
+  },
+  "lostCauses": {
+   "share": 0.1533,
+   "notifiedRate": 0.0884,
+   "controlRate": 0.0646,
+   "lift": 0.0238
+  }
+ },
+ "modelQuality": {
+  "aucNotified": 0.829,
+  "aucControl": 0.829,
+  "upliftCorrelationWithTruth": 0.961
+ },
+ "features": [
+  "near",
+  "habit_now",
+  "visit_rate",
+  "expiry_urgency",
+  "value",
+  "extra_spend",
+  "velocity",
+  "open_now",
+  "bad_ratings",
+  "near_x_habit",
+  "habit_x_rate"
+ ],
+ "treatedCoefficients": {
+  "near": 0.461,
+  "habit_now": 1.323,
+  "visit_rate": 0.412,
+  "expiry_urgency": 0.256,
+  "value": 0.204,
+  "extra_spend": -0.541,
+  "velocity": 0.069,
+  "open_now": 0.281,
+  "bad_ratings": -0.601,
+  "near_x_habit": 0.015,
+  "habit_x_rate": -0.17
+ },
+ "controlCoefficients": {
+  "near": -0.017,
+  "habit_now": 1.553,
+  "visit_rate": 0.429,
+  "expiry_urgency": -0.1,
+  "value": 0.026,
+  "extra_spend": -0.275,
+  "velocity": 0.093,
+  "open_now": 0.069,
+  "bad_ratings": 0.01,
+  "near_x_habit": 0.145,
+  "habit_x_rate": -0.074
+ }
+}

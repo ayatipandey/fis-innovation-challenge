@@ -1,45 +1,37 @@
 # Perkly
 
-**All your perks. One place.** Perkly is a free membership that unlocks rewards from partner brands. An AI-powered recommendation engine picks the rewards that fit each member, every reward explains its conditions in plain language before you use it, and one button takes you to the brand's website with your code applied, or gives you a QR code to show in store.
+**Other apps show you your points. Perkly spends them for you at the right moment.**
 
-> **Student prototype.** Every partner brand, reward and saving is fictional demo data. Partner websites and purchase reports are simulated and labeled as such. No real brand has partnered with Perkly, and nothing in the demo is real.
+Perkly links, read-only, to the points programs people already have: a bank rewards card, a coffee stamp card, a bookstore membership and so on. It never issues or holds points. It reads balances, expiry dates and (with permission) purchase history, turns each balance into specific rewards with a dollar value, and decides when a notification would actually change what the member does.
 
-## How Perkly works
+> **Student prototype.** The programs, shops, balances and purchases are invented sample data, labeled as such throughout. Program sign-in screens and seller checkouts are mock pages. In real life they would connect through each bank's or brand's API. The web app is a preview of the planned phone app.
 
-- **Members join free.** Membership unlocks every partner reward; there's nothing to link.
-- **Brands partner with Perkly** to offer rewards to members, and may pay Perkly a commission when a reward is used. Commissions never change rankings, and sponsored placements are labeled.
-- **Members pay the brand directly**, on its website or at its register. Perkly never handles payment, holds money, or issues points.
-- **Partners report uses back** (in a live network, through an affiliate postback or point-of-sale integration), so members can see their history and estimated savings. In the prototype, the report is simulated.
+## The five steps
 
-## What's in it
-
-- **Landing page** with live demos: switch between sample rewards, re-rank the catalog for five sample shoppers (served by the real recommendation service), and open the reward pop-up.
-- **Accounts**: sign up with inline validation, then a short consent step (nothing pre-ticked, with optional permissions kept separate). Also sign in, and **Try the Demo**, which opens a fresh fictional member account per visitor.
-- **Onboarding** in four skippable steps: interests, favorite partners, notifications and accessibility.
-- **App**: Home (today's picks, a member summary, rewards expiring soon), Explore, AI Copilot and Profile, with responsive layouts at mobile, tablet and desktop widths.
-- **Reward pop-up**: what you get, what you pay, what's valid, what isn't, and how to use it, all in plain text. It fits without scrolling on a typical laptop and scrolls on phones and with larger text. **Use Reward online** shows the hand-off to the brand's site with the code applied; **Use Reward in store** shows a QR code and member code for the cashier.
+1. **Link, read-only.** A mock consent screen for each sample program: balance and expiry dates are always shared; purchase history and store visits are checkboxes.
+2. **Turn points into rewards.** The planner (`shared/planner.ts`) ranks every way to spend a balance. For 70 coffee points, "7 × $2 off" ($14, no minimum) ranks above "$15 off a $20 order" when the member usually spends about $6. Score = value − 25% of the extra spend a minimum forces − $0.15 per visit − the value of points that would expire before they're used.
+3. **Pick the moment.** The moment engine (`services/recommender/app/engine.py`) weighs distance, opening hours, the member's habit at this hour, visit rate, spend velocity, expiry and ratings. It respects quiet hours and a daily limit, for example "You're 120 m from Campus Coffee and have a free latte worth $5 that expires in 6 days."
+4. **Redeem in one tap.** Show a QR code in store, or go to the seller's (mock) site with the points applied. Points are held for 2 hours and only spent when the program confirms. Holds run in a database write transaction with an idempotency key, so the same points can't be spent twice.
+5. **Learn and prove.** Good/Fine/Bad ratings feed the model ("Got it, fewer coffee reminders in the evening."). An uplift model only notifies members it would change. The partner insights page compares redemption rate against a 10% control group.
 
 ## Architecture
 
 ```
-web/                    React + TypeScript + Vite + React Router
-server/                 Node.js + Express API: auth, sessions, preferences, partner
-                        catalog, favorites, reward uses and history
-services/recommender/   Python FastAPI: ranking, explanations, rule-based Copilot
-shared/                 Types, demo partner catalog and account rules, used by both
-                        web and server
+web/                    React + TypeScript + Vite: landing, app, mock program and seller pages, /insights
+server/                 Node + Express API: auth, links, holds, moments, ratings, Pilot proxy
+services/recommender/   Python FastAPI: uplift model, moment engine, Perkly's Pilot, insights report
+shared/                 Types, sample programs and merchants, planner, habits, themes
+api/                    Vercel Functions: index.ts (Express) and ai.py (FastAPI)
 ```
 
-- The browser only talks to the Node API (`/api`). The Python service is internal and can require a shared `RECOMMENDER_SERVICE_KEY`.
-- If the Python service is down or slow (2.5 s timeout), the API falls back to a simpler local ranking and labels it as a backup. The Copilot reports that it's unavailable rather than inventing an answer.
-- Partner integrations sit behind adapters (`server/src/adapters`, `server/src/services/catalog.ts`). Only mock adapters exist: the partner catalog is synthetic, and purchase reports are simulated.
-- SQLite (built into Node 22 as `node:sqlite`) stores users, consents, sessions, preferences, favorites, reward uses and activity. Demo accounts are flagged `is_demo` and kept separate from real sign-ups. Use a managed database such as Postgres for deployment.
+- The browser only talks to `/api`. The Node API calls the Python service at `/api/ai` on Vercel, or port 8001 locally, and can require `RECOMMENDER_SERVICE_KEY`. If the service is down, a rule-based fallback answers, labeled as such.
+- The database is libSQL: a local file in development and Turso when deployed.
 
-### Recommendation engine
+### The model
 
-`services/recommender/app/scoring.py` is a transparent weighted rule set, not a trained model. Signals: category spend share, chosen interests, favorite partners, past use, expiry, estimated value, time-of-day routine, nearby (only with location on), and best value in a category. Penalties: a minimum spend well above the member's usual spend, and undisclosed fees. Sponsorship never changes the score. The strongest signals are returned as plain-language reasons, such as "Recommended because you frequently buy coffee." The function signature is the seam for a learned model later.
+`services/recommender/training/train_uplift.py` generates 60,000 invented moments (90% notified, 10% control) and trains a T-learner: two logistic regressions (numpy IRLS), one per group, with uplift as the difference between them. The trained coefficients ship as JSON (`app/model/uplift_model.json`), so the service needs no numpy at runtime. On held-out data: 34.9% redemption when notified vs 23.2% control (+11.7 points); +18.0 points where the model chooses to send; 180 extra redemptions per 1,000 moments vs 117 when everyone is notified. These results come from invented data and only show that the method works.
 
-The Copilot (`services/recommender/app/copilot.py`) is rule-based and says so. It finds rewards by category, lists what's expiring, compares offers, checks whether a minimum spend is worth it, and works out what each reward would save on a given amount. Savings are labeled as estimates.
+**Perkly's Pilot** (`app/pilot.py`) answers points questions (best use, what's expiring, is a minimum worth it, what to use near me now or tonight) from the planner, expiry dates and the moment engine. No language model is connected, and the page says so.
 
 ## Run it locally
 
@@ -48,17 +40,16 @@ Requires Node 22+ and Python 3.11+.
 ```bash
 npm install
 python3 -m pip install -r services/recommender/requirements-dev.txt
-cp .env.example .env
 npm run dev
 ```
 
-`npm run dev` starts the AI service on port 8001, the API on 4000 and the web app on 5173. Copying `.env` is optional for local development.
+This starts the AI service on 8001, the API on 4000 and the web app on 5173. Open http://localhost:5173 and use **Try the demo**. The partner insights page, at http://localhost:5173/insights, isn't linked from the site.
 
-Install the Python packages with `python3 -m pip`, not plain `pip`: the dev script runs `python3`, and on machines with more than one Python (for example Conda plus python.org), `pip` can install into a different one, which shows up as `No module named uvicorn`.
+Retrain the model with `cd services/recommender && python3 training/train_uplift.py`.
 
-Open http://localhost:5173. To see everything quickly, use **Try the Demo**.
+## Deploy (Vercel, free Hobby plan)
 
-Production-style run: `npm run build && npm start`. The API then serves the built app on port 4000. Serve it over HTTPS in any deployment.
+`vercel.json` builds `web/` as static files and deploys two functions: `api/index.ts` (Express) and `api/ai.py` (FastAPI). For data that persists, add a Turso database through the Vercel Marketplace (free tier). It sets `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`. Without Turso, the API falls back to a temporary per-instance database in `/tmp`, so accounts can disappear. Optionally set the same `RECOMMENDER_SERVICE_KEY` for both functions.
 
 ## Tests
 
@@ -66,43 +57,23 @@ Production-style run: `npm run build && npm start`. The API then serves the buil
 npm test
 ```
 
-- API (11 tests): consent required, password policy, bcrypt hashing, HttpOnly session, auth on protected routes, the custom-header CSRF check, recording a reward use with its estimated saving, refusing a channel the partner doesn't accept, unknown rewards and channels, history, fallback ranking, Copilot unavailable, data export and account deletion.
-- Recommender (10 tests): relevance ranking, extra-spend penalty, expired offers excluded, location only with permission, sponsorship-neutral scores, personalization off, savings worked out for a given amount (including below the minimum), honesty about points, minimum-spend advice, and the service key.
+- API (17): consent, password policy, bcrypt, HttpOnly sessions, CSRF header, linking with consent, plan ranking, **concurrent holds can't double-spend**, idempotent holds, confirm spends soonest-expiring points, release/expiry return points, rating effects, quiet hours, fallbacks, insights, export and delete.
+- AI service (14): model/feature match, nearby + expiring sends, quiet hours, daily limit, distance gate, Bad ratings lower uplift, affordability, location off, Pilot intents, insights, routing and service key.
 
-The UI was also checked in Chromium at 390, 768 and 1440 px: there's no horizontal scroll and no console errors, the reward pop-up fits without scrolling at 1440×900, and axe-core finds no WCAG 2.2 AA violations on the main pages or the reward pop-up.
+## Security and privacy
 
-## Security and privacy notes
+bcrypt passwords; random session tokens stored hashed in an HttpOnly, SameSite=Lax, Secure cookie; a custom header on every state-changing request (CSRF); rate limits; Helmet CSP; no card numbers; request logs without bodies or emails; location used per check and not stored; unlinking a program deletes its data; export and account deletion in Profile.
 
-- Passwords are hashed with bcrypt (cost 12) and never logged; login timing doesn't reveal whether an account exists.
-- Session tokens are random 256-bit values stored as SHA-256 hashes, in an HttpOnly, SameSite=Lax cookie that is Secure in production.
-- Login and registration are rate-limited, and so is the Copilot. State-changing requests require a custom header (CSRF defense). Helmet sets a strict Content-Security-Policy.
-- Perkly never collects payment details; members pay partner brands directly.
-- Request logs record method, path, status and timing, never bodies, cookies or emails.
-- No analytics, trackers or third-party embeds on Perkly; fonts are self-hosted. Partner sites have their own cookies and policies.
-- Data export and account deletion are available in Profile, under Privacy.
+## Placeholders to fill in
 
-These controls are part of the prototype's design. They don't make it production-ready or compliant with any regulation on their own.
+`[contact link or form]`, `[Course or competition name]`, `[State]` and `[Date of last update]`, at the top of `web/src/pages/legal/Legal.tsx`. The team is listed by first name only.
 
-## Before sharing: placeholders to fill in
+## Web preview vs the phone app
 
-The legal pages and footer use bracketed placeholders for your group's details:
+The web demo can't do everything the phone app will:
 
-| Placeholder | Where |
-|---|---|
-| `[Group name]` | Footer, Terms, Privacy, Contact |
-| `[Course or competition name]` | Footer, Terms, Contact |
-| `[contact email]` | Terms, Privacy, Refunds, Accessibility, Contact |
-| `[Mailing address]` | Privacy, Contact |
-| `[State]` | Terms (governing law) |
-| `[hosting provider]` | Privacy |
-| `[Date of last update]` | Legal pages |
-
-They're defined at the top of `web/src/pages/legal/Legal.tsx` and in `SiteFooter` in `web/src/pages/landing/Landing.tsx`. The legal pages are drafts written for the United States and are not legal advice; have them reviewed before Perkly handles real users, money or data.
-
-## Known limitations
-
-- No real partner brands, partner catalog feed, affiliate tracking or point-of-sale integrations; all are simulated.
-- The Copilot is rule-based. It answers a set of reward questions and says so. A language model could be added behind `/api/copilot` later.
-- Notifications are in-app only; push and email aren't connected.
-- Location is a fixed demo location; the device location is never read.
-- No password reset flow.
+- Background geofenced notifications. The web checks location only while the page is open; "Simulate a day" stands in.
+- Push notifications when the app is closed. The web uses browser notifications while the tab is open.
+- Real program connections (OAuth or open-banking APIs) instead of mock consent pages.
+- Point-of-sale confirmation of redemptions instead of "The cashier scanned it".
+- Wallet passes, NFC, offline QR codes and biometric sign-in.

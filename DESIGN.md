@@ -1,36 +1,30 @@
-# Perkly design system: "The Edit"
+# Perkly design system: glass
 
-Perkly is presented as a calm lifestyle magazine about your own rewards. The benefit is the headline; the conditions are the copy beneath it, set large enough to read without squinting.
+Frosted panels over two soft color orbs on a calm paper background. One typeface, one ink, one action color per theme.
 
-## Palette
+## Themes
 
-| Token | Hex | Use |
-|---|---|---|
-| Ivory | `#F7F2E9` | Page ground |
-| Paper | `#FFFCF6` | Raised surfaces: reward sheet, panels |
-| Linen | `#EFE7DA` | Second surface: checkout, featured band |
-| Stone | `#E1D6C4` / `#C9BAA3` | Borders and rules |
-| Espresso | `#2B211B` | Text, selected chips, dark band |
-| Ink 2 / Ink 3 | `#5C4F43` / `#716355` | Secondary and tertiary text (≥4.5:1 on ivory) |
-| Forest | `#2F4A3B` | The one action color: Use Reward, primary buttons, focus, "why" reasons |
-| Wine | `#6B2433` | Time pressure, warnings, "What is not valid" |
-| Champagne | `#C6A971` | Hairlines and decoration only, never text |
+| Theme | Background | Text | Action (text on it) | Orbs |
+|---|---|---|---|---|
+| Fresh Green (default) | `#F6F4EC` | `#012834`, secondary `#2C7A24` | `#4BCD3E` (`#012834`) | `#8FD9E8`, `#98E08F` |
+| Ivory Silk | `#F7F2E9` | `#2B211B` | `#2F4A3B` (`#F4F1E8`) | `#EFCB8E`, `#F2C9C0` |
+| Sage Mist | `#EEF0E8` | `#24302A` | `#6B2433` (`#FFFFFF`) | `#A9C5B0`, `#E4D9C6` |
+| Sandy Shore | `#FAF3E3` | `#0B2545` | `#0E7490` (`#FFFFFF`) | `#7DD3FC`, `#F5D9A8` |
+| Seafoam and Sun | `#E6F6F3` | `#0B2545` | `#FACC15` (`#0B2545`) | `#99E1D9`, `#FDE68A` |
 
-A high-contrast mode darkens text, borders and actions. Text size scales 100% / 112.5% / 125%.
+Themes are tokens on `[data-theme]` (`web/src/styles/tokens.css`), chosen in Profile → Appearance. Status colors (urgent, success, warning) are the same in every theme. High contrast, reduced transparency and forced colors swap the glass for solid panels.
 
 ## Type
 
-- **Bodoni Moda** (self-hosted variable font) for display only: headlines, reward benefits, greetings and large numerals. Never below about 20px.
-- **Hanken Grotesk** for everything functional: UI, forms, conditions, numbers (tabular).
+Hanken Grotesk everywhere, on every theme and page: 750–800 weight with tight tracking for display, regular for body, tabular numerals for money and points.
 
-## Shape and depth
+## Shape
 
-Radii follow hierarchy: sheets 28px, panels 20px, controls 12px, chips fully round. There are two shadows only: a soft lift for hovered actions, and a deep, soft sheet shadow for overlays.
+Sheets 28px, panels 22px, controls 14px, chips fully round. Glass panels have a white edge and a soft, ink-tinted shadow.
 
 ## Principles
 
-1. One bold move per screen: the benefit set as an editorial headline. Everything around it stays quiet.
-2. Conditions are never fine print. What you get, what you pay, what's valid and what isn't each get a heading, sit at body size or larger, and are never hidden behind accordions.
-3. Forest marks the single action that matters; wine marks deadlines and limits; nothing else is colored.
-4. Demo and simulated states are always labeled in place.
-5. Motion answers actions: sheet entry, favorite pop, rank reordering, and the confirmation stamp. It's off with reduced motion.
+1. Dollars first: balances are shown as what they buy.
+2. Every suggestion says why, and a held-back notification says why not.
+3. Sample data is labeled in place. Mock third-party pages (program consent, seller checkout) are deliberately plain and white, so leaving Perkly is obvious.
+4. Charts on /insights use a validated two-color palette with a table view.

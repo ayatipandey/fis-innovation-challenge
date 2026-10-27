@@ -1,28 +1,26 @@
-import { AlertTriangle, ArrowUp, Info, RotateCcw } from 'lucide-react';
+import { DAY_STOPS, optionById, programById } from '@shared/demo-data';
+import { AlertTriangle, ArrowUp, Info, MapPin, RotateCcw } from 'lucide-react';
 import { Fragment, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { ProgramMark } from '../../components/bits';
 import { api, localTime } from '../../lib/api';
-import { expiryPhrase } from '../../lib/format';
-import { useData } from '../../state/data';
-
-interface CopilotReply {
-  reply: string;
-  cards: string[];
-  table: { columns: string[]; rows: string[][] } | null;
-  notes: string[];
-  followUps: string[];
-  engine: string;
-}
+import { money, points } from '../../lib/format';
+import type { PilotReply as CopilotReply } from '../../lib/types';
+import { useApp } from '../../state/app';
+import { useSession } from '../../state/session';
 
 type Msg = { id: number; role: 'user'; text: string } | { id: number; role: 'assistant'; data: CopilotReply } | { id: number; role: 'error'; text: string; retry: string };
 
 const SUGGESTED = [
-  'Find food rewards relevant to me.',
-  'Which of my rewards expires soon?',
-  'How much would I save on a $90 grocery shop?',
-  'Which of these offers gives me better value?',
-  'Find rewards from my favorite brands.',
-  'Is this offer worth the minimum spend?',
+  'What’s the best use of my points?',
+  'What should I use near me right now?',
+  'Which points expire soon?',
+  'What can I do with my points tonight?',
+  'Is the $15 coffee reward worth the minimum spend?',
+  'How much are all my points worth?',
 ];
+
+/** The web preview can't assume you're near the sample shops, so the Pilot stands at the demo campus. */
+const DEMO_SPOT = DAY_STOPS[0];
 
 /** Renders **bold** and "- " bullet lines. Nothing else is interpreted. */
 function RichText({ text }: { text: string }) {
@@ -46,8 +44,10 @@ function RichText({ text }: { text: string }) {
   );
 }
 
-export function Copilot() {
-  const d = useData();
+export function Pilot() {
+  const { redeem } = useApp();
+  const { preferences } = useSession();
+  const located = Boolean(preferences?.privacy.location);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -56,7 +56,7 @@ export function Copilot() {
   const idRef = useRef(0);
 
   useEffect(() => {
-    document.title = 'AI Copilot · Perkly';
+    document.title = 'Perkly’s Pilot · Perkly';
   }, []);
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end', behavior: document.documentElement.dataset.motion === 'reduced' ? 'auto' : 'smooth' });
@@ -69,7 +69,8 @@ export function Copilot() {
     setMsgs((m) => [...m, { id: ++idRef.current, role: 'user', text: message }]);
     setBusy(true);
     try {
-      const data = await api<CopilotReply>('/me/copilot', { method: 'POST', body: { message, ...localTime() }, timeoutMs: 8000 });
+      const context = { ...localTime(), lat: DEMO_SPOT.lat, lng: DEMO_SPOT.lng, source: 'simulated' as const, session: 'pilot' };
+      const data = await api<CopilotReply>('/me/pilot', { method: 'POST', body: { message, context }, timeoutMs: 8000 });
       setMsgs((m) => [...m, { id: ++idRef.current, role: 'assistant', data }]);
     } catch (e) {
       setMsgs((m) => [...m, { id: ++idRef.current, role: 'error', text: (e as Error).message, retry: message }]);
@@ -88,10 +89,13 @@ export function Copilot() {
     <div className="page copilot">
       <header className="page-head copilot-head">
         <div>
-          <h1 className="display page-h">AI Copilot</h1>
-          <p className="page-lede">Ask about partner rewards. Answers use the demo rewards and the preferences you’ve allowed.</p>
+          <h1 className="display page-h">Perkly’s Pilot</h1>
+          <p className="page-lede">Ask how to get the most out of your points. The Pilot uses your linked balances, expiry dates, spending habits, the time and where you are.</p>
         </div>
-        <p className="cp-engine"><Info aria-hidden /> Rule-based assistant. No language model is connected, so it answers a set of reward questions rather than anything at all.</p>
+        <div className="cp-engine">
+          <p><Info aria-hidden /> No language model is connected. The Pilot matches your question to a set of points questions, and every number comes from your linked programs, the planner and the moment engine.</p>
+          <p><MapPin aria-hidden /> {located ? `Location: demo campus (${DEMO_SPOT.label.replace('Walking into the ', '')})` : 'Location is off, so answers skip distance.'}</p>
+        </div>
       </header>
 
       <div className="cp-thread" role="log" aria-live="polite" aria-label="Conversation">
@@ -134,17 +138,17 @@ export function Copilot() {
               {m.data.cards.length > 0 && (
                 <ul className="cp-cards">
                   {m.data.cards.map((id) => {
-                    const o = d.offer(id);
+                    const o = optionById(id);
                     if (!o) return null;
-                    const b = d.brand(o.brandId);
+                    const prog = programById(o.programId);
                     return (
                       <li key={id}>
-                        <button type="button" className="cp-card" onClick={() => d.openReward(id)}>
-                          <span className="monogram sm" aria-hidden>{b?.monogram}</span>
+                        <button type="button" className="cp-card" onClick={() => redeem(id)}>
+                          <ProgramMark programId={o.programId} size="sm" />
                           <span>
-                            <span className="cp-card-brand">{b?.name}</span>
-                            <span className="cp-card-head">{o.benefit.summary}</span>
-                            <span className="cp-card-meta">{expiryPhrase(o.expiresAt)}. View reward</span>
+                            <span className="cp-card-brand">{prog?.name}</span>
+                            <span className="cp-card-head">{o.title}</span>
+                            <span className="cp-card-meta tabular">{money(o.value)} for {points(o.cost, prog?.unit)}. Use it</span>
                           </span>
                         </button>
                       </li>
@@ -168,7 +172,7 @@ export function Copilot() {
           ),
         )}
         {busy && (
-          <div className="cp-msg cp-bot cp-typing" aria-label="Copilot is working">
+          <div className="cp-msg cp-bot cp-typing" aria-label="The Pilot is working">
             <span /><span /><span />
           </div>
         )}
@@ -176,13 +180,13 @@ export function Copilot() {
       </div>
 
       <form className="cp-input" onSubmit={submit}>
-        <label htmlFor="cp-text" className="visually-hidden">Ask the Copilot</label>
+        <label htmlFor="cp-text" className="visually-hidden">Ask Perkly’s Pilot</label>
         <textarea
           id="cp-text"
           ref={inputRef}
           rows={1}
           maxLength={1000}
-          placeholder="Ask about a reward, a saving, or a comparison"
+          placeholder="Ask about your points, a reward or a minimum spend"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {

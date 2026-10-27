@@ -1,0 +1,31 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build -w web",
+  "outputDirectory": "web/dist",
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 15,
+      "includeFiles": "services/recommender/app/model/report.json"
+    },
+    "api/ai.py": {
+      "maxDuration": 15,
+      "includeFiles": "services/recommender/app/**",
+      "excludeFiles": "{.claude,.impeccable,web,server,shared,api/index.ts,node_modules,services/recommender/tests,services/recommender/training}/**"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/ai/:path*",
+      "destination": "/api/ai"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

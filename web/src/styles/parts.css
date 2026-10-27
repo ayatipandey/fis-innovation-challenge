@@ -1,0 +1,87 @@
+/* ── Program marks: each sample program gets its own color ─────────── */
+.monogram.pm-campus-coffee { background: #6f4e37; color: #fff; border-color: transparent; }
+.monogram.pm-northline-card { background: #1e3a8a; color: #fff; border-color: transparent; }
+.monogram.pm-pageturn-books { background: #7c2d12; color: #fff; border-color: transparent; }
+.monogram.pm-freshcart { background: #166534; color: #fff; border-color: transparent; }
+.monogram.pm-reel-stars { background: #6b21a8; color: #fff; border-color: transparent; }
+
+/* ── Notification card (moment) ────────────────────────────────────── */
+.moment { display: grid; gap: var(--s-2); }
+.moment-status { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+.moment-status svg { width: 15px; height: 15px; }
+.moment.is-held .moment-status { color: var(--text-3); }
+.moment-time { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--text-3); }
+.notif {
+  display: grid;
+  gap: 6px;
+  padding: var(--s-3) var(--s-4);
+  border-radius: 20px;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--shadow-lift);
+}
+.moment.is-held .notif { opacity: 0.72; box-shadow: none; border-style: dashed; border-color: var(--border-strong); }
+.notif-app { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); font-weight: 700; color: var(--text-3); }
+.notif-now { margin-left: auto; font-weight: 500; }
+.notif-main { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s-3); align-items: start; }
+.notif-title { font-weight: 800; line-height: 1.3; }
+.notif-body { font-size: var(--fs-sm); line-height: 1.45; }
+.moment-why-not { font-size: var(--fs-sm); color: var(--text-3); font-weight: 600; }
+.moment-why { font-size: var(--fs-sm); }
+.moment-why summary { cursor: pointer; font-weight: 700; width: max-content; }
+.moment-why ul { margin: var(--s-2) 0 0; padding-left: 1.2em; display: grid; gap: 2px; color: var(--text-3); }
+.moment-model { margin-top: var(--s-1); color: var(--text-3); }
+.moment-actions { display: flex; gap: var(--s-3); align-items: center; flex-wrap: wrap; }
+.rate { display: flex; gap: var(--s-1); align-items: center; flex-wrap: wrap; }
+.rate-q { font-size: var(--fs-sm); color: var(--text-3); margin-right: var(--s-1); }
+.rate .chip { min-height: 34px; padding: 0 var(--s-3); }
+.rate-effect { font-size: var(--fs-sm); font-weight: 700; padding: var(--s-2) var(--s-3); border-radius: var(--r-control); background: var(--surface-2); animation: modal-in var(--dur) var(--ease-out); }
+.moment.is-compact .notif { box-shadow: none; }
+
+/* ── Redeem pop-up ─────────────────────────────────────────────────── */
+dialog.sheet.redeem-modal {
+  margin: auto;
+  width: min(760px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  border-radius: var(--r-sheet);
+  box-shadow: var(--shadow-sheet);
+  overflow: auto;
+}
+dialog.sheet.redeem-modal[open] { animation: modal-in var(--dur-slow) var(--ease-out); }
+.redeem { display: grid; }
+.redeem-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--s-4); align-items: start; padding: var(--s-5) var(--s-5) var(--s-4); border-bottom: 1px solid var(--border); }
+.redeem-title { display: grid; gap: 4px; }
+.redeem-program { display: flex; gap: var(--s-2); align-items: center; flex-wrap: wrap; font-size: var(--fs-sm); font-weight: 700; color: var(--text-3); }
+.redeem-title h2 { font-size: var(--fs-2xl); }
+.redeem-value { font-size: var(--fs-md); }
+.redeem-body { display: grid; gap: var(--s-4); padding: var(--s-5); }
+.terms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3) var(--s-5); margin: 0; }
+.terms dt { font-size: var(--fs-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-3); }
+.terms dd { margin: 2px 0 0; font-size: var(--fs-sm); }
+.terms ul { margin: 0; padding-left: 1.1em; }
+.redeem-how { font-size: var(--fs-sm); }
+.redeem-hold-note { display: flex; gap: var(--s-2); font-size: var(--fs-sm); padding: var(--s-3); border-radius: var(--r-control); background: var(--surface-2); }
+.redeem-hold-note svg { width: 16px; height: 16px; flex: none; margin-top: 3px; }
+.redeem-code { grid-template-columns: 220px minmax(0, 1fr); align-items: start; }
+.qr { width: 220px; height: 220px; padding: 10px; border-radius: var(--r-control); background: #fff; border: 1px solid var(--border); }
+.qr svg { width: 100%; height: 100%; }
+.redeem-code-side { display: grid; gap: var(--s-3); }
+.code { font-size: 1.9rem; font-weight: 800; letter-spacing: 0.08em; }
+.hold-timer { display: flex; gap: 6px; align-items: center; font-weight: 700; font-size: var(--fs-sm); }
+.hold-timer svg { width: 16px; height: 16px; }
+.demo-box { display: grid; gap: var(--s-2); padding: var(--s-3); border-radius: var(--r-control); border: 1px dashed var(--border-strong); font-size: var(--fs-sm); }
+.redeem-actions { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+.redeem-done { justify-items: center; text-align: center; padding: var(--s-7) var(--s-5); }
+.redeem-done > svg { width: 48px; height: 48px; color: var(--text-3); }
+.redeem-done > svg.ok { color: var(--success); }
+.redeem-done h3 { font-size: var(--fs-2xl); }
+@media (max-width: 640px) {
+  dialog.sheet.redeem-modal { margin: auto 0 0; width: 100vw; max-height: calc(100dvh - 12px); border-radius: var(--r-sheet) var(--r-sheet) 0 0; }
+  .redeem-head { padding: var(--s-4); gap: var(--s-3); }
+  .redeem-head .monogram.lg { width: 44px; height: 44px; }
+  .redeem-body { padding: var(--s-4); }
+  .terms { grid-template-columns: 1fr; }
+  .redeem-code { grid-template-columns: 1fr; justify-items: center; }
+  .redeem-code-side { justify-items: stretch; width: 100%; text-align: center; }
+  .hold-timer { justify-content: center; }
+}
