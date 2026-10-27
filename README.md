@@ -1,40 +1,45 @@
 # Perkly
 
-**All your perks. One place.** Perkly is an AI-powered reward discovery, optimization and redemption prototype. It shows the right reward, explains its conditions clearly, and lets you use it with one action, including splitting a bill between points and money.
+**All your perks. One place.** Perkly is a free membership that unlocks rewards from partner brands. An AI-powered recommendation engine picks the rewards that fit each member, every reward explains its conditions in plain language before you use it, and one button takes you to the brand's website with your code applied, or gives you a QR code to show in store.
 
-> **Student prototype.** Every brand, offer, balance and transaction is fictional demo data. Payments, point redemptions and program connections are simulated and labeled as such. No real money or points move, and no brand shown has a partnership with Perkly.
+> **Student prototype.** Every partner brand, reward and saving is fictional demo data. Partner websites and purchase reports are simulated and labeled as such. No real brand has partnered with Perkly, and nothing in the demo is real.
+
+## How Perkly works
+
+- **Members join free.** Membership unlocks every partner reward; there's nothing to link.
+- **Brands partner with Perkly** to offer rewards to members, and may pay Perkly a commission when a reward is used. Commissions never change rankings, and sponsored placements are labeled.
+- **Members pay the brand directly**, on its website or at its register. Perkly never handles payment, holds money, or issues points.
+- **Partners report uses back** (in a live network, through an affiliate postback or point-of-sale integration), so members can see their history and estimated savings. In the prototype, the report is simulated.
 
 ## What's in it
 
-- **Landing page** with live demos: switch between sample rewards, re-rank the catalog for five sample shoppers (served by the real recommendation service), and try the one-screen redemption with split payment and the in-store code.
-- **Accounts**: sign up with inline validation, then a short consent step (nothing pre-ticked, with optional permissions kept separate). Also sign in, and **Try the Demo**, which opens a fresh fictional account per visitor.
-- **Onboarding** in six skippable steps: interests, favorite brands, reward programs, payment methods, notifications and accessibility.
-- **App**: Home, Explore, AI Copilot and Profile, with responsive layouts at mobile, tablet and desktop widths.
-- **One-screen reward view**: what you get, what you pay, what's valid, what isn't, how to use it, the points + money split, how to pay the rest, an in-store code (shown only for in-store payment), and **Use Reward**.
-- **Honest failure handling**: a demo scenario picker simulates a declined payment, a points outage, or points stuck on hold, with a recovery path.
+- **Landing page** with live demos: switch between sample rewards, re-rank the catalog for five sample shoppers (served by the real recommendation service), and open the reward pop-up.
+- **Accounts**: sign up with inline validation, then a short consent step (nothing pre-ticked, with optional permissions kept separate). Also sign in, and **Try the Demo**, which opens a fresh fictional member account per visitor.
+- **Onboarding** in four skippable steps: interests, favorite partners, notifications and accessibility.
+- **App**: Home (today's picks, a member summary, rewards expiring soon), Explore, AI Copilot and Profile, with responsive layouts at mobile, tablet and desktop widths.
+- **Reward pop-up**: what you get, what you pay, what's valid, what isn't, and how to use it, all in plain text. It fits without scrolling on a typical laptop and scrolls on phones and with larger text. **Use Reward online** shows the hand-off to the brand's site with the code applied; **Use Reward in store** shows a QR code and member code for the cashier.
 
 ## Architecture
 
 ```
 web/                    React + TypeScript + Vite + React Router
-server/                 Node.js + Express API: auth, sessions, preferences, catalog,
-                        favorites, history, redemption orchestration
-services/recommender/   Python FastAPI: ranking, explanations, eligibility,
-                        points/miles value, rule-based Copilot
-shared/                 Types, demo catalog, checkout maths and account rules,
-                        used by both web and server so numbers never drift
+server/                 Node.js + Express API: auth, sessions, preferences, partner
+                        catalog, favorites, reward uses and history
+services/recommender/   Python FastAPI: ranking, explanations, rule-based Copilot
+shared/                 Types, demo partner catalog and account rules, used by both
+                        web and server
 ```
 
 - The browser only talks to the Node API (`/api`). The Python service is internal and can require a shared `RECOMMENDER_SERVICE_KEY`.
 - If the Python service is down or slow (2.5 s timeout), the API falls back to a simpler local ranking and labels it as a backup. The Copilot reports that it's unavailable rather than inventing an answer.
-- Reward redemption and payment are separate adapters (`server/src/adapters`). Only mock adapters exist. A transaction is reported complete only when every required step is confirmed; if payment fails after points are held, the points are returned, or the user is told plainly that they're still on hold and offered **Release points**.
-- SQLite (built into Node 22 as `node:sqlite`) stores users, consents, sessions, preferences, favorites, demo payment references, program links, redemptions and activity. Demo accounts are flagged `is_demo` and kept separate from real sign-ups. Use a managed database such as Postgres for deployment.
+- Partner integrations sit behind adapters (`server/src/adapters`, `server/src/services/catalog.ts`). Only mock adapters exist: the partner catalog is synthetic, and purchase reports are simulated.
+- SQLite (built into Node 22 as `node:sqlite`) stores users, consents, sessions, preferences, favorites, reward uses and activity. Demo accounts are flagged `is_demo` and kept separate from real sign-ups. Use a managed database such as Postgres for deployment.
 
 ### Recommendation engine
 
-`services/recommender/app/scoring.py` is a transparent weighted rule set, not a trained model. Signals: category spend share, chosen interests, favorite brands, past use, expiry, estimated value, time-of-day routine, nearby (only with location on), and best value in a category. Penalties: a minimum spend well above the user's usual spend, no supported payment method, and undisclosed fees. Sponsorship never changes the score. The strongest signals are returned as plain-language reasons, such as "Recommended because you frequently buy coffee." The function signature is the seam for a learned model later.
+`services/recommender/app/scoring.py` is a transparent weighted rule set, not a trained model. Signals: category spend share, chosen interests, favorite partners, past use, expiry, estimated value, time-of-day routine, nearby (only with location on), and best value in a category. Penalties: a minimum spend well above the member's usual spend, and undisclosed fees. Sponsorship never changes the score. The strongest signals are returned as plain-language reasons, such as "Recommended because you frequently buy coffee." The function signature is the seam for a learned model later.
 
-Value per point or mile = (cash price avoided − additional fees) ÷ points or miles required. Missing prices produce "unknown", never a guess.
+The Copilot (`services/recommender/app/copilot.py`) is rule-based and says so. It finds rewards by category, lists what's expiring, compares offers, checks whether a minimum spend is worth it, and works out what each reward would save on a given amount. Savings are labeled as estimates.
 
 ## Run it locally
 
@@ -61,19 +66,19 @@ Production-style run: `npm run build && npm start`. The API then serves the buil
 npm test
 ```
 
-- API (16 tests): consent required, password policy, bcrypt hashing, HttpOnly session, auth on protected routes, the custom-header CSRF check, card numbers rejected, the $10 split ($2 in points + $8 card), rewards-only payment, payment failure returning points, partial failure plus recovery, below-minimum spend, in-store payment, provider-only rewards, fallback ranking, Copilot unavailable, data export and account deletion.
-- Recommender (11 tests): relevance ranking, extra-spend penalty, expired offers excluded, location only with permission, sponsorship-neutral scores, personalization off, the value formula, unknown not counted as eligible, Copilot labels illustrative maths, and the service key.
+- API (11 tests): consent required, password policy, bcrypt hashing, HttpOnly session, auth on protected routes, the custom-header CSRF check, recording a reward use with its estimated saving, refusing a channel the partner doesn't accept, unknown rewards and channels, history, fallback ranking, Copilot unavailable, data export and account deletion.
+- Recommender (10 tests): relevance ranking, extra-spend penalty, expired offers excluded, location only with permission, sponsorship-neutral scores, personalization off, savings worked out for a given amount (including below the minimum), honesty about points, minimum-spend advice, and the service key.
 
-The UI was also checked in Chromium at 390, 768 and 1440 px: there's no horizontal scroll and no console errors, and axe-core finds no WCAG 2.2 AA violations on the main pages or the reward sheet.
+The UI was also checked in Chromium at 390, 768 and 1440 px: there's no horizontal scroll and no console errors, the reward pop-up fits without scrolling at 1440×900, and axe-core finds no WCAG 2.2 AA violations on the main pages or the reward pop-up.
 
 ## Security and privacy notes
 
 - Passwords are hashed with bcrypt (cost 12) and never logged; login timing doesn't reveal whether an account exists.
 - Session tokens are random 256-bit values stored as SHA-256 hashes, in an HttpOnly, SameSite=Lax cookie that is Secure in production.
 - Login and registration are rate-limited, and so is the Copilot. State-changing requests require a custom header (CSRF defense). Helmet sets a strict Content-Security-Policy.
-- The API never accepts card numbers or CVVs; payment methods are demo token references only.
+- Perkly never collects payment details; members pay partner brands directly.
 - Request logs record method, path, status and timing, never bodies, cookies or emails.
-- No analytics, trackers or third-party embeds; fonts are self-hosted.
+- No analytics, trackers or third-party embeds on Perkly; fonts are self-hosted. Partner sites have their own cookies and policies.
 - Data export and account deletion are available in Profile, under Privacy.
 
 These controls are part of the prototype's design. They don't make it production-ready or compliant with any regulation on their own.
@@ -96,8 +101,8 @@ They're defined at the top of `web/src/pages/legal/Legal.tsx` and in `SiteFooter
 
 ## Known limitations
 
-- No live payment, Apple Pay, bank linking or loyalty-provider integrations; all are simulated.
-- The Copilot is rule-based. It answers a set of reward questions and says so. An LLM could be added behind `/api/copilot` later.
+- No real partner brands, partner catalog feed, affiliate tracking or point-of-sale integrations; all are simulated.
+- The Copilot is rule-based. It answers a set of reward questions and says so. A language model could be added behind `/api/copilot` later.
 - Notifications are in-app only; push and email aren't connected.
 - Location is a fixed demo location; the device location is never read.
 - No password reset flow.

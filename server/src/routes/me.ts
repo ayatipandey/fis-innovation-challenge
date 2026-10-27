@@ -1,39 +1,25 @@
 import { Router, type Request } from 'express';
 import rateLimit from 'express-rate-limit';
-import { PROGRAMS, brandById, programById } from '../../../shared/demo-data';
-import type { RedemptionRecord } from '../../../shared/types';
+import { brandById } from '../../../shared/demo-data';
+import { mockPartner } from '../adapters';
 import { destroySession, requireUser } from '../auth';
 import type { DB } from '../db';
 import { nowIso } from '../db';
 import type { CatalogSource } from '../services/catalog';
 import { catalogMeta, toRewardInput } from '../services/catalog';
 import * as rec from '../services/recommender';
-import { recover, redeem } from '../services/redemption';
 import {
-  addDemoPaymentMethod,
   brandHistory,
-  cashbackSummary,
-  connectDemoProgram,
-  connectedBalances,
-  disconnectProgram,
   getPreferences,
   listActivity,
   listFavorites,
-  listPaymentMethods,
-  listProgramLinks,
-  listRedemptions,
+  listUses,
+  recordUse,
   savePreferences,
   spendingFor,
+  usageSummary,
 } from '../store';
-import {
-  copilotSchema,
-  eligibilitySchema,
-  firstIssue,
-  paymentMethodSchema,
-  preferencesSchema,
-  redeemSchema,
-  timeQuery,
-} from '../validation';
+import { copilotSchema, firstIssue, preferencesSchema, timeQuery, useSchema } from '../validation';
 
 export function meRoutes(db: DB, catalog: CatalogSource, opts: { rateLimit: boolean }) {
   const r = Router();
@@ -57,28 +43,22 @@ export function meRoutes(db: DB, catalog: CatalogSource, opts: { rateLimit: bool
       favoriteBrands: prefs.favoriteBrands,
       spending: personal ? spendingFor(prefs) : null,
       brandHistory: personal ? brandHistory(db, userId, (id) => catalog.get(id)?.brandId) : {},
-      paymentMethods: listPaymentMethods(db, userId).map((m) => m.kind),
       personalization: personal,
-      balances: connectedBalances(db, userId),
     };
   }
 
-  // ── Catalog and wallet ────────────────────────────────────────────────
+  // ── Catalog and member summary ────────────────────────────────────────
   r.get('/catalog', (_req, res) => {
     res.json({ offers: catalog.list(), ...catalogMeta() });
   });
 
   r.get('/wallet', (req, res) => {
     const id = uid(req);
-    const activated = (db.prepare('SELECT offer_id FROM activations WHERE user_id = ?').all(id) as { offer_id: string }[]).map((a) => a.offer_id);
     const recent = (db.prepare('SELECT offer_id FROM recently_viewed WHERE user_id = ? ORDER BY viewed_at DESC LIMIT 6').all(id) as { offer_id: string }[]).map((a) => a.offer_id);
     res.json({
-      programs: listProgramLinks(db, id),
-      cashback: cashbackSummary(db, id),
+      summary: usageSummary(db, id),
       activity: listActivity(db, id),
-      paymentMethods: listPaymentMethods(db, id),
       favorites: listFavorites(db, id),
-      activated,
       recentlyViewed: recent,
       spendingSource: spendingFor(getPreferences(db, id))?.source ?? 'none',
     });
@@ -99,7 +79,7 @@ export function meRoutes(db: DB, catalog: CatalogSource, opts: { rateLimit: bool
     res.json(getPreferences(db, uid(req)));
   });
 
-  // ── Favorites ─────────────────────────────────────────────────────────
+  // ── Favorites and recently viewed ─────────────────────────────────────
   r.put('/favorites/:offerId', (req, res) => {
     if (!catalog.get(req.params.offerId)) {
       res.status(404).json({ error: 'Reward not found.' });
@@ -124,54 +104,13 @@ export function meRoutes(db: DB, catalog: CatalogSource, opts: { rateLimit: bool
     res.json({ ok: true });
   });
 
-  // ── Recommendations, eligibility, Copilot ─────────────────────────────
+  // ── Recommendations and Copilot ───────────────────────────────────────
   r.get('/recommendations', async (req, res) => {
     const q = timeQuery.safeParse(req.query);
     const t = timeContext(q.success ? q.data.weekday : undefined, q.success ? q.data.hour : undefined);
     const prefs = getPreferences(db, uid(req));
     const result = await rec.recommend(userSummary(uid(req)), catalog.list(), t, prefs.privacy.location, 30);
     res.json({ ...result, location: prefs.privacy.location ? 'Demo location: SoHo, New York' : null });
-  });
-
-  r.post('/eligibility', async (req, res) => {
-    const parsed = eligibilitySchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: firstIssue(parsed.error) });
-      return;
-    }
-    const offer = catalog.get(parsed.data.offerId);
-    if (!offer) {
-      res.status(404).json({ error: 'Reward not found.' });
-      return;
-    }
-    const id = uid(req);
-    const activated = Boolean(db.prepare('SELECT 1 FROM activations WHERE user_id = ? AND offer_id = ?').get(id, offer.id));
-    const programRequired = offer.redemption.split?.programId ?? null;
-    try {
-      const out = await rec.eligibilityCheck({
-        conditions: {
-          channels: offer.valid.channels,
-          paymentMethods: offer.valid.paymentMethods,
-          minSpend: offer.minSpend,
-          validFrom: offer.validFrom,
-          expiresAt: offer.expiresAt,
-          requiresProgram: offer.howToUse.pointsRedemption ? programRequired : null,
-          activationRequired: offer.howToUse.activationRequired,
-          excludedTransactions: offer.notValid.transactions,
-        },
-        context: {
-          now: new Date().toISOString(),
-          channel: parsed.data.channel,
-          paymentMethod: parsed.data.paymentMethod,
-          purchaseTotal: parsed.data.purchaseTotal,
-          connectedPrograms: Object.keys(connectedBalances(db, id)),
-          activated,
-        },
-      });
-      res.json(out);
-    } catch {
-      res.json({ status: 'unknown', checks: [], summary: 'Eligibility can’t be checked right now. Review the conditions before you buy.', unavailable: true });
-    }
   });
 
   r.post('/copilot', copilotLimiter, async (req, res) => {
@@ -186,7 +125,6 @@ export function meRoutes(db: DB, catalog: CatalogSource, opts: { rateLimit: bool
         message: parsed.data.message,
         user: userSummary(uid(req)),
         rewards: catalog.list().map(toRewardInput),
-        programs: PROGRAMS,
         time: timeContext(parsed.data.weekday, parsed.data.hour),
         location: { permitted: prefs.privacy.location },
       });
@@ -196,100 +134,35 @@ export function meRoutes(db: DB, catalog: CatalogSource, opts: { rateLimit: bool
     }
   });
 
-  r.post('/compare-redemptions', async (req, res) => {
-    try {
-      res.json(await rec.compareRedemptions(req.body));
-    } catch {
-      res.status(503).json({ error: 'The value calculator isn’t responding. Try again in a moment.' });
-    }
-  });
-
-  // ── Programs ──────────────────────────────────────────────────────────
-  r.get('/programs', (req, res) => {
-    res.json(listProgramLinks(db, uid(req)));
-  });
-
-  r.post('/programs/:programId/connect', (req, res) => {
-    if (!programById(req.params.programId)) {
-      res.status(404).json({ error: 'Program not found.' });
-      return;
-    }
-    connectDemoProgram(db, uid(req), req.params.programId);
-    res.json(listProgramLinks(db, uid(req)));
-  });
-
-  r.post('/programs/:programId/disconnect', (req, res) => {
-    disconnectProgram(db, uid(req), req.params.programId);
-    res.json(listProgramLinks(db, uid(req)));
-  });
-
-  // ── Payment methods ───────────────────────────────────────────────────
-  r.get('/payment-methods', (req, res) => {
-    res.json(listPaymentMethods(db, uid(req)));
-  });
-
-  r.post('/payment-methods', (req, res) => {
-    const parsed = paymentMethodSchema.safeParse(req.body);
+  // ── Using a reward ────────────────────────────────────────────────────
+  // The member uses the reward on the partner's site or in store; the partner
+  // reports the purchase back. Here the partner report is simulated.
+  r.post('/rewards/:offerId/use', (req, res) => {
+    const parsed = useSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({ error: 'Perkly never accepts card numbers here. Choose a demo method to add.' });
+      res.status(400).json({ error: 'Choose online or in store.' });
       return;
     }
-    addDemoPaymentMethod(db, uid(req), parsed.data.kind);
-    res.status(201).json(listPaymentMethods(db, uid(req)));
-  });
-
-  r.post('/payment-methods/:id/preferred', (req, res) => {
-    const id = uid(req);
-    db.prepare('UPDATE payment_methods SET preferred = (id = ?) WHERE user_id = ?').run(req.params.id, id);
-    res.json(listPaymentMethods(db, id));
-  });
-
-  r.delete('/payment-methods/:id', (req, res) => {
-    const id = uid(req);
-    db.prepare('DELETE FROM payment_methods WHERE id = ? AND user_id = ?').run(req.params.id, id);
-    const rest = listPaymentMethods(db, id);
-    if (rest.length && !rest.some((m) => m.preferred)) {
-      db.prepare('UPDATE payment_methods SET preferred = 1 WHERE id = ?').run(rest[0].id);
-    }
-    res.json(listPaymentMethods(db, id));
-  });
-
-  // ── Activation and redemption ─────────────────────────────────────────
-  r.post('/activations/:offerId', (req, res) => {
     const offer = catalog.get(req.params.offerId);
     if (!offer) {
-      res.status(404).json({ error: 'Reward not found.' });
+      res.status(404).json({ error: 'This reward no longer exists.' });
       return;
     }
-    db.prepare('INSERT OR IGNORE INTO activations (user_id, offer_id, activated_at) VALUES (?, ?, ?)').run(uid(req), offer.id, nowIso());
-    res.json({ activated: true, isDemo: true, message: 'Activated in demo mode. No provider was contacted.' });
-  });
-
-  r.post('/redemptions', (req, res) => {
-    const parsed = redeemSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: firstIssue(parsed.error) });
+    if (new Date(offer.expiresAt) < new Date()) {
+      res.status(409).json({ error: 'This reward has expired.' });
       return;
     }
-    const out = redeem(db, catalog, uid(req), parsed.data);
-    if (!out.ok) {
-      res.status(out.status).json({ error: out.error, errors: out.errors });
+    if (!offer.valid.channels.includes(parsed.data.channel)) {
+      res.status(409).json({ error: `${brandById(offer.brandId)?.name} only accepts this reward ${offer.valid.channels.includes('online') ? 'online' : 'in store'}.` });
       return;
     }
-    res.status(201).json(out.record);
-  });
-
-  r.post('/redemptions/:id/recover', (req, res) => {
-    const row = db.prepare('SELECT data FROM redemptions WHERE id = ? AND user_id = ?').get(req.params.id, uid(req)) as { data: string } | undefined;
-    if (!row) {
-      res.status(404).json({ error: 'Transaction not found.' });
-      return;
-    }
-    res.json(recover(db, catalog, uid(req), JSON.parse(row.data) as RedemptionRecord));
+    const report = mockPartner.reportUse(offer, parsed.data.channel);
+    const use = recordUse(db, uid(req), offer, parsed.data.channel);
+    res.status(201).json({ use, simulated: report.simulated });
   });
 
   r.get('/history', (req, res) => {
-    res.json({ redemptions: listRedemptions(db, uid(req)), activity: listActivity(db, uid(req)) });
+    res.json({ uses: listUses(db, uid(req)), activity: listActivity(db, uid(req)) });
   });
 
   // ── Data rights ───────────────────────────────────────────────────────
@@ -304,11 +177,9 @@ export function meRoutes(db: DB, catalog: CatalogSource, opts: { rateLimit: bool
       consents,
       preferences: getPreferences(db, id),
       favorites: listFavorites(db, id).map((o) => ({ offerId: o, brand: brandById(catalog.get(o)?.brandId ?? '')?.name })),
-      programs: listProgramLinks(db, id).filter((p) => p.status === 'connected'),
-      paymentMethods: listPaymentMethods(db, id).map(({ tokenRef: _t, ...m }) => m),
-      redemptions: listRedemptions(db, id),
+      rewardsUsed: listUses(db, id),
       activity: listActivity(db, id),
-      note: 'Passwords are stored only as bcrypt hashes and are not included. Payment methods are demo references.',
+      note: 'Passwords are stored only as bcrypt hashes and are not included. Perkly holds no payment details.',
     });
   });
 

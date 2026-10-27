@@ -32,18 +32,25 @@ const DOCS: Record<string, Doc> = {
       <>
         <h2>Who we are</h2>
         <p>
-          Perkly is a student prototype built by {ORG} for {PROGRAM}. It is not a registered company, a bank, a lender, a card issuer or a loyalty
-          program, and it doesn’t issue its own points.
+          Perkly is a student prototype built by {ORG} for {PROGRAM}. It is not a registered company. Perkly is designed as a free membership:
+          partner brands offer rewards to Perkly members. Perkly is not a bank or card issuer, doesn’t process payments, and doesn’t issue
+          points.
         </p>
         <h2>What the prototype does</h2>
         <p>
-          Perkly shows sample rewards, explains their conditions and simulates redeeming them. All brands, offers, balances, transactions and
-          program connections are fictional demo data. No brand shown has a partnership with Perkly.
+          Perkly shows sample partner rewards, explains their conditions and simulates using them. All partner brands, rewards, savings and
+          purchase reports are fictional demo data. Perkly has no real brand partnerships.
         </p>
-        <h2>No real payments or redemptions</h2>
+        <h2>Using rewards and buying from partners</h2>
         <p>
-          Nothing you do in Perkly charges money, redeems real points or contacts a real reward program. Screens marked “Demo” or “simulated”
-          show what a live version would do. Don’t enter real card numbers, bank details or reward-program passwords anywhere in the prototype.
+          When you use a reward, you buy from the partner brand, on its site or in its store, and you pay the brand directly. The brand is the
+          seller and its own terms apply to your purchase. Rewards are subject to the conditions shown in Perkly and the brand’s terms. In the
+          prototype, partner sites and purchases are simulated; nothing is bought and no code works at a real store.
+        </p>
+        <h2>How Perkly is paid</h2>
+        <p>
+          Partner brands may pay Perkly a commission or fee when members use their rewards. This never changes how rewards are ranked for you,
+          and paid placements are labeled “Sponsored”.
         </p>
         <h2>Your account</h2>
         <ul>
@@ -82,9 +89,9 @@ const DOCS: Record<string, Doc> = {
           <li><strong>Account:</strong> your email address and a password, stored only as a bcrypt hash.</li>
           <li><strong>Consent record:</strong> which version of these terms you accepted, when, and your optional choices.</li>
           <li><strong>Preferences you choose:</strong> name for greetings (optional), categories, favorite brands, notification and accessibility settings.</li>
-          <li><strong>Activity in the prototype:</strong> favorites, rewards viewed, simulated redemptions and connections.</li>
+          <li><strong>Activity in the prototype:</strong> favorites, rewards viewed, and rewards you used (reported by partners, simulated in the prototype).</li>
         </ul>
-        <p>We don’t ask for your birthday, phone number, home address, card numbers, security codes or bank credentials.</p>
+        <p>We don’t ask for your birthday, phone number, home address, or any payment details. Payment happens on partner brands’ own sites and registers.</p>
         <h2>Spending data and location</h2>
         <p>
           Both are off unless you turn them on. In this prototype, “spending data” is a synthetic summary, not your real transactions, and
@@ -99,13 +106,14 @@ const DOCS: Record<string, Doc> = {
         <h2>What we don’t do</h2>
         <ul>
           <li>We don’t sell or share your personal information for money or for cross-context advertising.</li>
+          <li>When a partner reports that you used a reward, it tells us which reward and roughly what it was worth, so we can show your history. We don’t receive your card details.</li>
           <li>We don’t use third-party analytics, advertising trackers or embedded social widgets.</li>
           <li>Sponsored offers are labeled, and sponsorship never raises a reward’s ranking.</li>
         </ul>
         <h2>Service providers</h2>
         <p>
-          The prototype runs on [hosting provider]. Fonts are served from our own server. If a live version adds payment or loyalty providers, we’ll
-          list them here before sharing any data with them.
+          The prototype runs on [hosting provider]. Fonts are served from our own server. When you follow a link to a partner brand’s site, that
+          brand’s own privacy policy and cookies apply there, including any it uses to record that you arrived from Perkly.
         </p>
         <h2>Your rights</h2>
         <p>
@@ -140,7 +148,9 @@ const DOCS: Record<string, Doc> = {
         </table>
         <p>This cookie is strictly necessary for signing in, so it doesn’t need consent and there’s no cookie banner.</p>
         <h2>What we don’t use</h2>
-        <p>No analytics, advertising, social-media or other third-party cookies, pixels or fingerprinting. Fonts are self-hosted, so loading a page doesn’t contact a font service.</p>
+        <p>No analytics, advertising, social-media or other third-party cookies, pixels or fingerprinting on Perkly. Fonts are self-hosted, so loading a page doesn’t contact a font service.</p>
+        <h2>Partner sites</h2>
+        <p>When you use a reward online, you continue on the partner brand’s website. That site may set its own cookies, for example to apply your code or to record that you came from Perkly. Its cookie policy applies there.</p>
         <h2>Controlling cookies</h2>
         <p>You can delete cookies in your browser settings. If you block the session cookie, you won’t be able to sign in.</p>
       </>
@@ -148,23 +158,20 @@ const DOCS: Record<string, Doc> = {
   },
   refunds: {
     title: 'Refund Policy',
-    lede: 'Perkly doesn’t charge you, and the prototype moves no money.',
+    lede: 'Perkly is free and never takes payment, so refunds are handled by the brand you bought from.',
     body: (
       <>
-        <h2>Perkly is free</h2>
-        <p>There’s no subscription or fee for using Perkly, so there is nothing for Perkly to refund.</p>
+        <h2>Membership</h2>
+        <p>Perkly membership is free, so there is nothing for Perkly to refund.</p>
+        <h2>Purchases from partner brands</h2>
+        <p>
+          When you use a reward, you buy from the partner brand and pay the brand directly. The brand is the seller, so refunds, returns and
+          exchanges follow that brand’s own policy. Card disputes go through your card issuer.
+        </p>
+        <h2>Discounts on returned items</h2>
+        <p>If you return something you bought with a Perkly reward, the brand normally refunds what you actually paid, after the discount. Whether the reward can be used again is up to the brand.</p>
         <h2>Demo transactions</h2>
-        <p>Every payment and point redemption in the prototype is simulated. No money is charged and no real points are used, so there is nothing to refund.</p>
-        <h2>Purchases from brands (in a live version)</h2>
-        <p>
-          When you buy from a brand, the brand is the seller. Refunds, returns and exchanges follow that brand’s own policy. Payments would be
-          processed by your chosen payment provider, so card disputes go through your card issuer.
-        </p>
-        <h2>Points, miles and cashback</h2>
-        <p>
-          Whether points come back after a return is decided by each reward program. Perkly would show the program’s rule where it’s available. If a
-          payment fails after points are held, Perkly is designed to return the points, and to tell you plainly if that hasn’t been confirmed yet.
-        </p>
+        <p>In the prototype, partner sites and purchases are simulated. No money is charged, so there is nothing to refund.</p>
         <h2>Questions</h2>
         <p>Email {EMAIL}.</p>
       </>

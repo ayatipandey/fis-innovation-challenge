@@ -42,36 +42,7 @@ CREATE TABLE IF NOT EXISTS favorites (
   PRIMARY KEY (user_id, offer_id)
 );
 
-CREATE TABLE IF NOT EXISTS payment_methods (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  kind TEXT NOT NULL,
-  label TEXT NOT NULL,
-  token_ref TEXT NOT NULL,
-  preferred INTEGER NOT NULL DEFAULT 0,
-  is_demo INTEGER NOT NULL DEFAULT 1,
-  created_at TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS program_links (
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  program_id TEXT NOT NULL,
-  status TEXT NOT NULL,
-  balance REAL NOT NULL,
-  held REAL NOT NULL DEFAULT 0,
-  linked_at TEXT,
-  is_demo INTEGER NOT NULL DEFAULT 1,
-  PRIMARY KEY (user_id, program_id)
-);
-
-CREATE TABLE IF NOT EXISTS activations (
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  offer_id TEXT NOT NULL,
-  activated_at TEXT NOT NULL,
-  PRIMARY KEY (user_id, offer_id)
-);
-
-CREATE TABLE IF NOT EXISTS redemptions (
+CREATE TABLE IF NOT EXISTS reward_uses (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   offer_id TEXT NOT NULL,

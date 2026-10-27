@@ -3,12 +3,13 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { EMAIL_RE, createSession, destroySession, hashPassword, passwordProblems, verifyPassword } from '../auth';
 import { config } from '../config';
+import type { CatalogSource } from '../services/catalog';
 import type { DB } from '../db';
 import { nowIso } from '../db';
 import { defaultPreferences, getPreferences, savePreferences, seedDemoUser } from '../store';
 import { firstIssue, loginSchema, registerSchema } from '../validation';
 
-export function authRoutes(db: DB, opts: { rateLimit: boolean }) {
+export function authRoutes(db: DB, catalog: CatalogSource, opts: { rateLimit: boolean }) {
   const r = Router();
   const limiter = opts.rateLimit
     ? rateLimit({ windowMs: 15 * 60_000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Too many attempts. Wait 15 minutes and try again.' } })
@@ -84,7 +85,7 @@ export function authRoutes(db: DB, opts: { rateLimit: boolean }) {
     const email = `demo-${id.slice(0, 8)}@demo.perkly.invalid`;
     // Unusable random password: demo accounts can't be signed into with credentials.
     db.prepare('INSERT INTO users (id, email, password_hash, is_demo, created_at) VALUES (?, ?, ?, 1, ?)').run(id, email, `!demo:${randomUUID()}`, nowIso());
-    seedDemoUser(db, id);
+    seedDemoUser(db, id, catalog.list());
     createSession(db, res, id);
     res.status(201).json(sessionPayload(id, email, true));
   });

@@ -152,9 +152,8 @@
 .sd-terms dt { font-size: var(--fs-xs); font-weight: 700; }
 .sd-terms div:nth-child(4) dt { color: var(--urgent); }
 .sd-terms dd { font-size: var(--fs-sm); line-height: 1.35; }
-.sd-split { display: grid; padding: var(--s-2) var(--s-3); border-radius: var(--r-control); background: var(--surface-2); font-size: var(--fs-sm); }
-.sd-split div { display: flex; justify-content: space-between; padding: 4px 0; }
-.sd-split .t { font-weight: 700; border-top: 1px solid var(--border-strong); margin-top: 2px; padding-top: 6px; }
+.sd-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-2); }
+.sd-use-alt { background: var(--espresso) !important; }
 .sd-use {
   display: grid;
   place-items: center;
@@ -163,7 +162,8 @@
   background: var(--forest);
   color: var(--forest-ink);
   font-weight: 600;
-  font-size: var(--fs-lg);
+  font-size: var(--fs-sm);
+  text-align: center;
 }
 .spread-cap { position: absolute; left: var(--s-6); bottom: var(--s-4); }
 

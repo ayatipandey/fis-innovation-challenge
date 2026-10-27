@@ -1,4 +1,4 @@
-import type { CategoryId, Offer } from '@shared/types';
+import type { CategoryId, Channel, Offer } from '@shared/types';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -6,45 +6,27 @@ import { ErrorState, RewardRow, SkeletonRows, Switch } from '../../components/bi
 import { useData } from '../../state/data';
 import { useSession } from '../../state/session';
 
-type RewardType = 'all' | 'discount' | 'cashback' | 'points' | 'miles' | 'complimentary';
+type RewardType = 'all' | 'discount' | 'complimentary';
 type Sort = 'match' | 'value' | 'expiry';
+type Where = 'all' | Channel;
 
 const TYPE_LABEL: Record<RewardType, string> = {
   all: 'All types',
   discount: 'Discounts',
-  cashback: 'Cashback',
-  points: 'Pay with points',
-  miles: 'Miles and points',
-  complimentary: 'Complimentary extras',
+  complimentary: 'Free items and extras',
 };
 
-function typeOf(o: Offer): RewardType {
-  switch (o.benefit.kind) {
-    case 'amount_off':
-    case 'percent_off':
-      return 'discount';
-    case 'cashback':
-      return 'cashback';
-    case 'points_pay':
-    case 'points_multiplier':
-      return 'points';
-    case 'miles_redemption':
-    case 'points_redemption':
-      return 'miles';
-    default:
-      return 'complimentary';
-  }
-}
+const typeOf = (o: Offer): RewardType => (o.benefit.kind === 'amount_off' || o.benefit.kind === 'percent_off' ? 'discount' : 'complimentary');
 
 function valueRatio(o: Offer) {
   if (o.valueEstimate.amount == null) return -1;
-  return o.valueEstimate.amount / Math.max(o.minSpend ?? o.demoPurchaseTotal ?? 1, 1);
+  return o.valueEstimate.amount / Math.max(o.minSpend ?? 1, 1);
 }
 
-function availability(o: Offer, activated: string[]) {
-  if (o.redemption.providerOnly) return 'Booked with provider';
-  if (o.howToUse.activationRequired && !activated.includes(o.id)) return 'Needs activation';
-  return 'Ready to use';
+function whereLabel(o: Offer) {
+  const on = o.valid.channels.includes('online');
+  const store = o.valid.channels.includes('in_store');
+  return on && store ? 'Online and in store' : on ? 'Online' : 'In store';
 }
 
 export function Explore() {
@@ -59,7 +41,7 @@ export function Explore() {
   const [brand, setBrand] = useState<string | null>(params.get('brand'));
   const [favBrands, setFavBrands] = useState(false);
   const [saved, setSaved] = useState(params.get('saved') === '1');
-  const [eligibleOnly, setEligibleOnly] = useState(false);
+  const [where, setWhere] = useState<Where>('all');
   const [nearby, setNearby] = useState(false);
   const [sort, setSort] = useState<Sort>('match');
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -79,7 +61,6 @@ export function Explore() {
   const catalog = d.catalog.status === 'ready' ? d.catalog.data : null;
   const wallet = d.wallet.status === 'ready' ? d.wallet.data : null;
   const recRank = useMemo(() => new Map((d.recs.status === 'ready' ? d.recs.data.items : []).map((r, i) => [r.offerId, i])), [d.recs]);
-  const myMethods = new Set(wallet?.paymentMethods.map((m) => m.kind) ?? []);
 
   const results = useMemo(() => {
     if (!catalog) return [];
@@ -89,9 +70,8 @@ export function Explore() {
     if (term) {
       list = list.filter((o) => {
         const b = catalog.brands.find((x) => x.id === o.brandId);
-        const prog = catalog.programs.find((p) => p.id === o.programId);
         const cat = catalog.categories.find((c) => c.id === o.category);
-        return [b?.name, cat?.label, o.subcategory, prog?.name, o.headline, o.benefit.summary, ...o.valid.items].some((s) => s?.toLowerCase().includes(term));
+        return [b?.name, cat?.label, o.subcategory, o.headline, o.benefit.summary, ...o.valid.items].some((s) => s?.toLowerCase().includes(term));
       });
     }
     if (category !== 'all') list = list.filter((o) => o.category === category);
@@ -100,7 +80,7 @@ export function Explore() {
     if (brand) list = list.filter((o) => o.brandId === brand);
     if (favBrands) list = list.filter((o) => preferences?.favoriteBrands.includes(o.brandId));
     if (saved) list = list.filter((o) => wallet?.favorites.includes(o.id));
-    if (eligibleOnly) list = list.filter((o) => !o.redemption.providerOnly && o.redemption.methods.some((m) => m === 'in_store' || myMethods.has(m)));
+    if (where !== 'all') list = list.filter((o) => o.valid.channels.includes(where));
     if (nearby && locationOn) list = list.filter((o) => o.nearby);
     const sorted = [...list];
     if (sort === 'match') sorted.sort((a, b) => (recRank.get(a.id) ?? 999) - (recRank.get(b.id) ?? 999));
@@ -108,9 +88,9 @@ export function Explore() {
     if (sort === 'expiry') sorted.sort((a, b) => a.expiresAt.localeCompare(b.expiresAt));
     return sorted;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [catalog, q, category, sub, type, brand, favBrands, saved, eligibleOnly, nearby, sort, recRank, wallet, preferences, locationOn]);
+  }, [catalog, q, category, sub, type, brand, favBrands, saved, where, nearby, sort, recRank, wallet, preferences, locationOn]);
 
-  const activeCount = [category !== 'all', sub !== 'all', type !== 'all', !!brand, favBrands, saved, eligibleOnly, nearby].filter(Boolean).length;
+  const activeCount = [category !== 'all', sub !== 'all', type !== 'all', !!brand, favBrands, saved, where !== 'all', nearby].filter(Boolean).length;
   function clearAll() {
     setQ('');
     setCategory('all');
@@ -119,7 +99,7 @@ export function Explore() {
     setBrand(null);
     setFavBrands(false);
     setSaved(false);
-    setEligibleOnly(false);
+    setWhere('all');
     setNearby(false);
     setParams({}, { replace: true });
   }
@@ -132,7 +112,7 @@ export function Explore() {
     <div className="page explore">
       <header className="page-head">
         <h1 className="display page-h">Explore</h1>
-        <p className="page-lede">Every reward in the demo catalog, with the conditions up front.</p>
+        <p className="page-lede">Every partner reward included with your membership, with the conditions up front.</p>
       </header>
 
       <div className="explore-bar">
@@ -183,7 +163,14 @@ export function Explore() {
         </div>
         <label className="ef-switch"><Switch checked={favBrands} onChange={setFavBrands} label="Favorite brands only" /> Favorite brands only</label>
         <label className="ef-switch"><Switch checked={saved} onChange={setSaved} label="Saved rewards only" /> Saved rewards only</label>
-        <label className="ef-switch"><Switch checked={eligibleOnly} onChange={setEligibleOnly} label="Works with my payment methods" /> Works with my payment methods</label>
+        <div className="ef-item">
+          <label htmlFor="ex-where" className="ef-label">Where to use it</label>
+          <select id="ex-where" className="select" value={where} onChange={(e) => setWhere(e.target.value as Where)}>
+            <option value="all">Online or in store</option>
+            <option value="online">Online</option>
+            <option value="in_store">In store</option>
+          </select>
+        </div>
         <div className="ef-switch-wrap">
           <label className="ef-switch">
             <Switch checked={nearby && locationOn} onChange={setNearby} label="Nearby only" disabled={!locationOn} /> Nearby only
@@ -226,7 +213,7 @@ export function Explore() {
                 onFavorite={() => d.toggleFavorite(o.id)}
                 onOpen={() => d.openReward(o.id)}
                 showNearby={locationOn}
-                status={availability(o, wallet?.activated ?? [])}
+                status={whereLabel(o)}
               />
             </li>
           ))}

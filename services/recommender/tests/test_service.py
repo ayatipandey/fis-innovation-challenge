@@ -24,7 +24,8 @@ def reward(id, category, brand, **kw):
         "minSpend": None,
         "validFrom": iso(-5),
         "expiresAt": iso(20),
-        "redemption": {"methods": ["apple_pay", "saved_card", "in_store"]},
+        "redemption": {"url": None},
+        "valid": {"channels": ["online", "in_store"]},
     }
     base.update(kw)
     return base
@@ -38,7 +39,6 @@ COFFEE_USER = {
         "typicalSpend": {"coffee": 6, "groceries": 48, "food": 30},
         "source": "synthetic_demo",
     },
-    "paymentMethods": ["apple_pay"],
 }
 TIME = {"now": NOW.isoformat(), "weekday": 1, "hour": 8}
 
@@ -100,60 +100,41 @@ def test_personalization_off_ignores_spending_and_favorites():
     assert not any("favorite" in r or "coffee" in r for r in items[0]["reasons"])
 
 
-def test_compare_uses_the_formula_and_flags_missing_prices():
-    res = client.post("/api/compare-redemptions", json={
-        "options": [
-            {"label": "Upgrade", "unitsRequired": 12000, "cashPrice": 150, "fees": 0},
-            {"label": "Ticket", "unitsRequired": 18500, "cashPrice": 240, "fees": 5.6},
-            {"label": "Mystery", "unitsRequired": 5000},
-        ],
-        "balance": 15000,
-    }).json()
-    up, tk, mystery = res["options"]
-    assert up["valuePerUnitCents"] == 1.25
-    assert tk["valuePerUnitCents"] == round((240 - 5.6) / 18500 * 100, 2)
-    assert mystery["valuePerUnitCents"] is None
-    assert tk["affordable"] is False
-    assert any("Mystery" in a for a in res["assumptions"])
+def copilot(message, rewards=(), user=COFFEE_USER):
+    res = client.post("/api/copilot", json={"message": message, "user": user, "rewards": list(rewards), "time": TIME})
+    assert res.status_code == 200, res.text
+    return res.json()
 
 
-def test_eligibility_unknown_is_not_eligible():
-    res = client.post("/api/eligibility-check", json={
-        "conditions": {"minSpend": 75, "paymentMethods": ["apple_pay"], "expiresAt": iso(3)},
-        "context": {"now": NOW.isoformat()},
-    }).json()
-    assert res["status"] == "unknown"
-    res = client.post("/api/eligibility-check", json={
-        "conditions": {"minSpend": 75, "paymentMethods": ["apple_pay"], "expiresAt": iso(3)},
-        "context": {"now": NOW.isoformat(), "purchaseTotal": 60, "paymentMethod": "apple_pay"},
-    }).json()
-    assert res["status"] == "ineligible"
-    assert any("15.00 short" in c["reason"] for c in res["checks"])
+def test_copilot_works_out_savings_for_a_given_amount():
+    rewards = [
+        reward("big", "groceries", "greenleaf", minSpend=75, benefit={"kind": "amount_off", "value": 10, "summary": "$10 off"}),
+        reward("pct", "groceries", "harvest", benefit={"kind": "percent_off", "value": 10, "summary": "10% off"}, maxBenefit=15),
+    ]
+    res = copilot("How much would I save on a $90 grocery shop?", rewards)
+    rows = {r[0]: r for r in res["table"]["rows"]}
+    assert rows["Greenleaf"][3] == "$10"
+    assert rows["Harvest"][3] == "$9"
+    below = copilot("How much would I save on a $50 grocery shop?", rewards)
+    rows = {r[0]: r for r in below["table"]["rows"]}
+    assert rows["Greenleaf"][3] == "$0" and "minimum" in rows["Greenleaf"][4]
+    assert any("estimates" in n for n in res["notes"])
 
 
-def test_copilot_labels_illustrative_miles_maths():
-    res = client.post("/api/copilot", json={
-        "message": "Should I use miles for a seat upgrade or save them for a ticket?",
-        "user": {**COFFEE_USER, "balances": {"northwind-miles": 48500}},
-        "rewards": [], "programs": [], "time": TIME,
-    }).json()
+def test_copilot_is_honest_that_perkly_has_no_points():
+    res = copilot("Should I use miles for a seat upgrade?")
     assert res["engine"] == "rule-based-v1"
-    assert res["table"]["columns"][4] == "Value per mile"
-    assert any("illustrative" in n for n in res["notes"])
-    assert "illustrative" in res["reply"]
+    assert "doesn’t hold or redeem points or miles" in res["reply"]
 
 
-def test_copilot_uses_given_prices():
-    res = client.post("/api/copilot", json={
-        "message": "The upgrade costs $210 and the ticket costs $260.",
-        "user": COFFEE_USER, "rewards": [], "programs": [], "time": TIME,
-    }).json()
-    assert res["table"]["rows"][0][2] == "$210"
-    assert not any("illustrative" in n for n in res["notes"])
+def test_copilot_minimum_spend_uses_usual_spend():
+    rewards = [reward("big", "groceries", "greenleaf", minSpend=150, valueEstimate={"amount": 10, "basis": "Fixed discount."})]
+    res = copilot("Is the Greenleaf offer worth the minimum spend?", rewards)
+    assert "$102" in res["reply"] and res["cards"] == ["big"]
 
 
 def test_service_key_is_enforced(monkeypatch):
     monkeypatch.setenv("RECOMMENDER_SERVICE_KEY", "secret")
-    body = {"options": [{"label": "a", "unitsRequired": 1, "cashPrice": 1}]}
-    assert client.post("/api/compare-redemptions", json=body).status_code == 401
-    assert client.post("/api/compare-redemptions", json=body, headers={"X-Service-Key": "secret"}).status_code == 200
+    body = {"user": COFFEE_USER, "rewards": [], "time": TIME}
+    assert client.post("/api/recommendations", json=body).status_code == 401
+    assert client.post("/api/recommendations", json=body, headers={"X-Service-Key": "secret"}).status_code == 200

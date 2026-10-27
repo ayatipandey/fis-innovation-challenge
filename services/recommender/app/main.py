@@ -12,23 +12,13 @@ from datetime import datetime, timezone
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 
-from . import compare as compare_mod
-from . import copilot, eligibility, scoring
-from .models import (
-    CompareRequest,
-    CompareResponse,
-    CopilotRequest,
-    CopilotResponse,
-    EligibilityRequest,
-    EligibilityResponse,
-    RecommendationRequest,
-    RecommendationResponse,
-)
+from . import copilot, scoring
+from .models import CopilotRequest, CopilotResponse, RecommendationRequest, RecommendationResponse
 
 app = FastAPI(
     title="Perkly recommendation service",
-    version="1.0.0",
-    description="Transparent rule-based reward ranking, eligibility and value calculations.",
+    version="2.0.0",
+    description="Transparent rule-based ranking of partner rewards, with explanations, and a rule-based Copilot.",
 )
 
 
@@ -52,16 +42,6 @@ def recommendations(req: RecommendationRequest) -> RecommendationResponse:
         else "Personalization is off, so rewards are ranked by expiry and estimated value only."
     )
     return RecommendationResponse(items=items, generatedAt=datetime.now(timezone.utc).isoformat(), note=note)
-
-
-@app.post("/api/compare-redemptions", response_model=CompareResponse, dependencies=[Depends(require_service_key)])
-def compare_redemptions(req: CompareRequest) -> CompareResponse:
-    return compare_mod.compare(req)
-
-
-@app.post("/api/eligibility-check", response_model=EligibilityResponse, dependencies=[Depends(require_service_key)])
-def eligibility_check(req: EligibilityRequest) -> EligibilityResponse:
-    return eligibility.check(req)
 
 
 @app.post("/api/copilot", response_model=CopilotResponse, dependencies=[Depends(require_service_key)])

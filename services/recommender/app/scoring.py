@@ -17,7 +17,6 @@ Signals (max contribution):
   better value in group   4
 Penalties:
   minimum spend well above the user's usual spend   up to −18
-  no supported payment method on file              −6
   undisclosed fees                                 −2
   no interest, spend, or favourite in the category −12
 
@@ -64,7 +63,7 @@ def money(n: float) -> str:
 def _value_ratio(r: RewardIn) -> float | None:
     if r.valueEstimate.amount is None:
         return None
-    required = r.minSpend or r.demoPurchaseTotal or 1.0
+    required = r.minSpend or 1.0
     return r.valueEstimate.amount / max(required, 1.0)
 
 
@@ -147,7 +146,7 @@ def score_rewards(
 
         if location_ok and r.nearby:
             score += 10
-            reasons.append((12, f"Available at a participating location nearby ({r.nearby.label}, {r.nearby.distanceMeters} m)."))
+            reasons.append((12, f"A partner location is nearby ({r.nearby.label}, {r.nearby.distanceMeters} m)."))
 
         if best_in_group.get(r.category) == r.id:
             score += 4
@@ -164,20 +163,12 @@ def score_rewards(
             elif not typical:
                 warnings.append(f"Needs a minimum spend of {money(r.minSpend)}.")
 
-        methods = set(r.redemption.methods)
-        if methods and "in_store" not in methods and not methods.intersection(user.paymentMethods):
-            score -= 6
-            warnings.append("Needs a payment method you haven’t added yet.")
-
         if r.youPay.feesUnknown:
             score -= 2
             warnings.append("Some fees or prices weren’t disclosed by the provider.")
 
         if personal and share == 0 and not interested and not favourite:
             score -= 12
-
-        if r.programId and r.redemption.split and r.programId not in user.balances:
-            warnings.append("Connect this brand’s program to pay with points.")
 
         reasons.sort(key=lambda x: -x[0])
         texts = [t for _, t in reasons[:3]]

@@ -1,34 +1,14 @@
-import { computeCheckout } from '@shared/checkout';
-import { BRANDS, CATEGORIES, PERSONAS, buildCatalog, brandById, programById } from '@shared/demo-data';
-import type { CategoryId, Offer, PaymentMethod, PaymentMethodKind, RecommendationResult, RedemptionRecord } from '@shared/types';
-import { AlertTriangle, BellRing, Clock, CreditCard, Landmark, MapPin, Minus, Plus, Smartphone, Store } from 'lucide-react';
+import { BRANDS, CATEGORIES, PERSONAS, buildCatalog, brandById } from '@shared/demo-data';
+import type { CategoryId, Channel, Offer, RecommendationResult, RewardUse } from '@shared/types';
+import { AlertTriangle, BellRing, Clock, Globe, MapPin, Minus, Plus, Store } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { DemoTag, Switch } from '../../components/bits';
-import { RewardDetail, type RedeemRequest } from '../../components/RewardDetail';
+import { RewardDetail } from '../../components/RewardDetail';
 import { api } from '../../lib/api';
 import { expiryPhrase, money } from '../../lib/format';
 
 const catalog = buildCatalog();
 const byId = (id: string) => catalog.find((o) => o.id === id)!;
-
-const DEMO_METHODS: PaymentMethod[] = [
-  { id: 'demo-ap', kind: 'apple_pay', label: 'Apple Pay (simulated)', tokenRef: 'pm_demo_ap', preferred: true, isDemo: true },
-  { id: 'demo-card', kind: 'saved_card', label: 'Demo Visa ending in 4242', tokenRef: 'pm_demo_card', preferred: false, isDemo: true },
-  { id: 'demo-bank', kind: 'online_banking', label: 'Demo checking ending in 6789', tokenRef: 'pm_demo_bank', preferred: false, isDemo: true },
-];
-
-const METHOD_ICON: Record<PaymentMethodKind, typeof CreditCard> = {
-  apple_pay: Smartphone,
-  saved_card: CreditCard,
-  online_banking: Landmark,
-  in_store: Store,
-};
-const METHOD_NAME: Record<PaymentMethodKind, string> = {
-  apple_pay: 'Apple Pay',
-  saved_card: 'Saved card',
-  online_banking: 'Online banking',
-  in_store: 'In store with a code',
-};
 
 function reducedMotion() {
   return document.documentElement.dataset.motion === 'reduced' || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -36,12 +16,12 @@ function reducedMotion() {
 
 /* ── Discover, decide, redeem ─────────────────────────────────────────── */
 
-const SOLUTION_IDS = ['ember-points-pay', 'greenleaf-10-off-75', 'harvest-produce-cashback', 'northwind-upgrade'];
+const SOLUTION_IDS = ['ember-flat-white', 'greenleaf-10-off-75', 'harvest-produce', 'northwind-fares'];
 const SOLUTION_WHY: Record<string, string> = {
-  'ember-points-pay': 'You buy coffee most weekday mornings, and Ember & Oak is a favorite.',
+  'ember-flat-white': 'You buy coffee most weekday mornings, and Ember & Oak is a favorite.',
   'greenleaf-10-off-75': 'Groceries are the biggest share of your spending.',
-  'harvest-produce-cashback': 'You shop for produce weekly. Cashback arrives after you pay.',
-  'northwind-upgrade': 'You have 48,500 Northwind miles and a trip coming up.',
+  'harvest-produce': 'You shop for fresh produce every week.',
+  'northwind-fares': 'You fly with Northwind a few times a year.',
 };
 
 export function SolutionDemo() {
@@ -59,7 +39,6 @@ export function SolutionDemo() {
     tabRefs.current[n]?.focus();
   }
 
-  const methods = o.redemption.methods;
   return (
     <div className="solution-demo">
       <div className="sol-list" role="tablist" aria-label="Sample rewards" aria-orientation="vertical">
@@ -111,20 +90,11 @@ export function SolutionDemo() {
           </div>
           <div>
             <h3>Redeem</h3>
-            {o.redemption.providerOnly ? (
-              <p>Booked with {b.name}. Perkly shows the value and conditions, and is honest that it can’t book it for you.</p>
-            ) : (
-              <ul className="sol-methods">
-                {methods.map((m) => {
-                  const Icon = METHOD_ICON[m];
-                  return <li key={m}><Icon aria-hidden /> {METHOD_NAME[m]}</li>;
-                })}
-              </ul>
-            )}
-            <p className="muted">
-              {o.howToUse.activationRequired ? 'Activate once first. ' : ''}
-              {o.redemption.split ? 'Points can cover part of the bill.' : o.redemption.splitUnsupportedReason}
-            </p>
+            <ul className="sol-methods">
+              {o.valid.channels.includes('online') && <li><Globe aria-hidden /> Online, code applied for you</li>}
+              {o.valid.channels.includes('in_store') && <li><Store aria-hidden /> In store, with a QR code</li>}
+            </ul>
+            <p className="muted">You pay {brandById(o.brandId)?.name} directly. Perkly never handles payment.</p>
           </div>
         </div>
       </div>
@@ -258,41 +228,25 @@ export function AiDemo() {
 
 /* ── Redemption ───────────────────────────────────────────────────────── */
 
-const REDEEM_IDS = ['ember-points-pay', 'greenleaf-10-off-75', 'osteria-dinner'];
-const DEMO_BALANCES: Record<string, number> = { 'ember-rewards': 140, 'greenleaf-plus': 6200 };
+const REDEEM_IDS = ['ember-flat-white', 'greenleaf-10-off-75', 'kin-noodle-online'];
 
-function simulateLocally(offer: Offer, req: RedeemRequest): Promise<RedemptionRecord> {
-  const split = offer.redemption.split;
-  const balance = split ? DEMO_BALANCES[split.programId] ?? 0 : 0;
-  const b = computeCheckout(offer, { purchaseTotal: req.purchaseTotal, unitsApplied: req.unitsApplied, balance, method: req.method });
-  const rec: RedemptionRecord = {
+function simulateLocally(offer: Offer, channel: Channel): Promise<RewardUse> {
+  const use: RewardUse = {
     id: `local-${Date.now()}`,
     offerId: offer.id,
+    channel,
     createdAt: new Date().toISOString(),
-    purchaseTotal: b.purchaseTotal,
-    discount: b.discount,
-    unitsApplied: b.unitsApplied,
-    rewardValueApplied: b.rewardValue,
-    amountDue: b.amountDue,
-    paymentMethod: b.rewardsCoverAll ? 'rewards_only' : req.method,
-    status: 'completed_demo',
-    steps: { reward: b.unitsApplied ? 'succeeded' : 'skipped', payment: req.method === 'in_store' || b.amountDue === 0 ? 'skipped' : 'succeeded' },
-    message:
-      req.method === 'in_store' && b.amountDue > 0
-        ? `Demo redemption recorded. You’d pay ${money(b.amountDue)} to the merchant directly.`
-        : 'Points and payment both went through in the demo.',
-    remainingBalance: split ? balance - b.unitsApplied : null,
+    estimatedSaving: offer.valueEstimate.amount,
+    status: 'reported_demo',
     isDemo: true,
   };
-  return new Promise((resolve) => setTimeout(() => resolve(rec), 650));
+  return new Promise((resolve) => setTimeout(() => resolve(use), 500));
 }
 
 export function RedemptionDemo() {
   const [id, setId] = useState(REDEEM_IDS[0]);
   const offer = byId(id);
   const brand = brandById(offer.brandId)!;
-  const splitProgram = offer.redemption.split ? programById(offer.redemption.split.programId) : undefined;
-  const balance = offer.redemption.split ? DEMO_BALANCES[offer.redemption.split.programId] ?? null : null;
   return (
     <div className="redeem-demo">
       <div className="redeem-switch">
@@ -310,14 +264,8 @@ export function RedemptionDemo() {
         variant="inline"
         offer={offer}
         brand={brand}
-        splitProgram={splitProgram}
-        balance={balance}
-        paymentMethods={DEMO_METHODS}
-        activated
-        initialUnits={id === 'ember-points-pay' ? 10 : 0}
-        reasons={id === 'ember-points-pay' ? ['Recommended because you frequently buy coffee.', 'Expires soon.'] : undefined}
-        onRedeem={(req) => simulateLocally(offer, req)}
-        onDone={() => undefined}
+        reasons={id === 'ember-flat-white' ? ['Recommended because you frequently buy coffee.', 'Expires soon.'] : undefined}
+        onUse={(channel) => simulateLocally(offer, channel)}
       />
     </div>
   );
@@ -374,7 +322,7 @@ export function ControlDemo() {
         </fieldset>
         <div className="control-switches">
           <div className="switch-row">
-            <div><div className="label">Spending-based picks</div><div className="hint">Uses spending categories you’ve connected, never single purchases.</div></div>
+            <div><div className="label">Spending-based picks</div><div className="hint">Uses a summary of what you spend by category, never single purchases.</div></div>
             <Switch checked={spending} onChange={setSpending} label="Spending-based picks" />
           </div>
           <div className="switch-row">
