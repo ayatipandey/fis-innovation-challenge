@@ -42,10 +42,14 @@ Requires Node 22+ and Python 3.11+.
 
 ```bash
 npm install
-pip install -r services/recommender/requirements-dev.txt
-cp .env.example .env        # optional for local dev
-npm run dev                 # starts the AI service on :8001, the API on :4000 and the web app on :5173
+python3 -m pip install -r services/recommender/requirements-dev.txt
+cp .env.example .env
+npm run dev
 ```
+
+`npm run dev` starts the AI service on port 8001, the API on 4000 and the web app on 5173. Copying `.env` is optional for local development.
+
+Install the Python packages with `python3 -m pip`, not plain `pip`: the dev script runs `python3`, and on machines with more than one Python (for example Conda plus python.org), `pip` can install into a different one, which shows up as `No module named uvicorn`.
 
 Open http://localhost:5173. To see everything quickly, use **Try the Demo**.
 
