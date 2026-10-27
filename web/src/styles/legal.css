@@ -1,0 +1,33 @@
+.legal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: var(--s-4) clamp(16px, 4vw, 48px);
+}
+.legal-main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--s-7) clamp(16px, 4vw, 48px) var(--s-9);
+}
+.legal-h { font-size: clamp(2.6rem, 1.8rem + 2.6vw, 4rem); letter-spacing: -0.025em; }
+.legal-lede { margin-top: var(--s-3); font-size: var(--fs-xl); color: var(--text-2); line-height: 1.4; }
+.legal-draft {
+  margin-top: var(--s-5);
+  padding: var(--s-4);
+  border-radius: var(--r-control);
+  background: var(--champagne-tint);
+  font-size: var(--fs-sm);
+}
+.legal-body { margin-top: var(--s-6); display: grid; gap: var(--s-4); }
+.legal-body h2 { font-size: var(--fs-xl); font-weight: 700; margin-top: var(--s-5); }
+.legal-body p, .legal-body li { max-width: 68ch; line-height: 1.65; }
+.legal-body ul { margin: 0; padding-left: 1.2em; display: grid; gap: var(--s-2); }
+.legal-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+.legal-table th, .legal-table td { text-align: left; padding: var(--s-3); border-bottom: 1px solid var(--border); vertical-align: top; }
+.legal-table thead th { font-weight: 700; border-bottom-color: var(--border-strong); }
+.legal-dl { display: grid; gap: var(--s-4); }
+.legal-dl dt { font-size: var(--fs-sm); font-weight: 600; color: var(--text-2); }
+.legal-dl dd { font-size: var(--fs-lg); }
+.legal-updated { margin-top: var(--s-7); color: var(--text-2); font-size: var(--fs-sm); }

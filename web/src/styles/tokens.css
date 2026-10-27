@@ -1,0 +1,122 @@
+/* Perkly design tokens: "The Edit".
+   A calm lifestyle-magazine world. Ivory paper, espresso ink, forest for the one
+   action that matters, wine for time pressure, champagne only as hairline. */
+
+:root {
+  /* Paper */
+  --ivory: #f7f2e9;
+  --paper: #fffcf6;
+  --linen: #efe7da;
+  --stone: #e1d6c4;
+  --stone-strong: #c9baa3;
+
+  /* Ink */
+  --espresso: #2b211b;
+  --espresso-soft: #3d3129;
+  --ink-2: #5c4f43; /* secondary text: 7.4:1 on ivory */
+  --ink-3: #716355; /* tertiary text: 5.4:1 on ivory, never for essential terms */
+
+  /* Accents */
+  --forest: #2f4a3b;
+  --forest-deep: #223729;
+  --forest-tint: #e2e8df;
+  --forest-ink: #f4f1e8;
+  --wine: #6b2433;
+  --wine-tint: #f3e3e2;
+  --champagne: #c6a971; /* decorative only: rules, marks, never text */
+  --champagne-tint: #f2e9d6;
+
+  /* Semantic */
+  --bg: var(--ivory);
+  --surface: var(--paper);
+  --surface-2: var(--linen);
+  --text: var(--espresso);
+  --text-2: var(--ink-2);
+  --text-3: var(--ink-3);
+  --border: var(--stone);
+  --border-strong: var(--stone-strong);
+  --action: var(--forest);
+  --action-hover: var(--forest-deep);
+  --action-ink: var(--forest-ink);
+  --urgent: var(--wine);
+  --urgent-tint: var(--wine-tint);
+  --success: #2f5b3f;
+  --success-tint: #e1ecdf;
+  --danger: #8a2430;
+  --danger-tint: #f6e1df;
+  --focus: #2f4a3b;
+
+  /* Type */
+  --font-display: 'Bodoni Moda Variable', 'Bodoni Moda', 'Didot', 'Bodoni 72', Georgia, serif;
+  --font-ui: 'Hanken Grotesk Variable', 'Hanken Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --text-scale: 1;
+  --fs-xs: calc(0.8125rem * var(--text-scale)); /* 13px, metadata only */
+  --fs-sm: calc(0.9375rem * var(--text-scale)); /* 15px */
+  --fs-md: calc(1rem * var(--text-scale));
+  --fs-lg: calc(1.125rem * var(--text-scale));
+  --fs-xl: calc(1.375rem * var(--text-scale));
+  --fs-2xl: calc(1.75rem * var(--text-scale));
+  --fs-3xl: calc(2.25rem * var(--text-scale));
+
+  /* Space, 4px base */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4rem;
+  --s-9: 6rem;
+  --s-10: 9rem;
+
+  /* Radii follow hierarchy: sheets > panels > controls > chips */
+  --r-sheet: 28px;
+  --r-panel: 20px;
+  --r-control: 12px;
+  --r-chip: 999px;
+
+  --shadow-sheet: 0 24px 60px -24px rgba(43, 33, 27, 0.28), 0 2px 6px rgba(43, 33, 27, 0.06);
+  --shadow-lift: 0 10px 28px -16px rgba(43, 33, 27, 0.32);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 160ms;
+  --dur: 240ms;
+  --dur-slow: 420ms;
+
+  --sidebar: 252px;
+  --maxw: 1240px;
+}
+
+/* In-app accessibility preferences, set on <html> */
+:root[data-text='large'] { --text-scale: 1.125; }
+:root[data-text='larger'] { --text-scale: 1.25; }
+
+:root[data-contrast='high'] {
+  --bg: #fffdf8;
+  --surface: #ffffff;
+  --surface-2: #f3ede2;
+  --text: #140e0a;
+  --text-2: #2e241d;
+  --text-3: #3b2f26;
+  --border: #6f6151;
+  --border-strong: #3b2f26;
+  --action: #1c3024;
+  --action-hover: #0f1e15;
+  --urgent: #5a1525;
+}
+
+:root[data-motion='reduced'] {
+  --dur-fast: 0ms;
+  --dur: 0ms;
+  --dur-slow: 0ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+    --dur-slow: 0ms;
+  }
+}

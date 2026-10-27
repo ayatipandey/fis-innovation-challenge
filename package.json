@@ -1,0 +1,19 @@
+{
+  "name": "perkly",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Perkly: AI-powered reward discovery, optimization and redemption (student prototype).",
+  "workspaces": ["web", "server"],
+  "scripts": {
+    "dev": "concurrently -k -n ai,api,web -c green,blue,magenta \"npm:dev:ai\" \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:ai": "cd services/recommender && python3 -m uvicorn app.main:app --port 8001 --reload",
+    "dev:api": "npm run dev -w server",
+    "dev:web": "npm run dev -w web",
+    "build": "npm run build -w web && npm run typecheck -w server",
+    "start": "concurrently -k -n ai,api \"cd services/recommender && python3 -m uvicorn app.main:app --port 8001\" \"npm run start -w server\"",
+    "test": "npm test -w server && cd services/recommender && python3 -m pytest -q"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
