@@ -65,12 +65,10 @@ export function SignUp() {
     <AuthLayout
       aside={
         <div className="auth-aside-inner">
-          <p className="display auth-aside-h">Next, a two-minute setup.</p>
+          <p className="display auth-aside-h">Membership is free. Setup takes a minute.</p>
           <ol className="auth-steps">
             <li>Pick the categories you care about</li>
             <li>Choose favorite brands, or skip</li>
-            <li>Connect demo reward programs</li>
-            <li>Add a demo payment method, or skip</li>
             <li>Set how often Perkly may alert you</li>
           </ol>
           <p className="muted">Everything you choose can be changed later in Profile.</p>

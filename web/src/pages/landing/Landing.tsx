@@ -105,8 +105,8 @@ function Hero() {
       <div className="hero-copy">
         <h1 id="hero-h" className="display hero-h">Your rewards, finally working for you.</h1>
         <p className="hero-sub">
-          Perkly finds the rewards that fit your life, explains exactly how to use them, and helps you get more value from every point, mile,
-          and offer.
+          One free membership unlocks rewards from Perkly’s partner brands. Perkly picks the ones that fit your life and explains exactly how
+          to use them, online or in store.
         </p>
         <div className="hero-ctas">
           <Link to="/signup" className="btn btn-primary btn-lg">Get Started</Link>
@@ -115,7 +115,7 @@ function Hero() {
             <ArrowDown aria-hidden />
           </a>
         </div>
-        <p className="hero-note">Student prototype. Brands, offers and balances shown are fictional demo data.</p>
+        <p className="hero-note">Student prototype. The partner brands and rewards shown are fictional demo data.</p>
       </div>
       <HeroSpread />
     </section>
@@ -124,24 +124,26 @@ function Hero() {
 
 /** The app itself as the hero: a personalized Home with the reward detail laid over it. Illustration only. */
 function HeroSpread() {
-  const ember = buildCatalog().find((o) => o.id === 'ember-points-pay')!;
+  const catalog = buildCatalog();
+  const ember = catalog.find((o) => o.id === 'ember-flat-white')!;
+  const thisWeek = catalog.filter((o) => (new Date(o.expiresAt).getTime() - Date.now()) / 86400_000 <= 7).length;
   const weekday = new Date(ember.expiresAt).toLocaleDateString('en-US', { weekday: 'long' });
   return (
-    <figure className="spread" aria-label="Perkly app preview: Home shows three rewards for Maya, and the open reward explains its conditions next to the Use Reward button. Demo data.">
+    <figure className="spread" aria-label="Perkly app preview: Home shows partner rewards picked for Maya, and the open reward lists its conditions above the Use Reward buttons. Demo data.">
       <div className="spread-app" inert>
         <p className="spread-date">{longDateline()}</p>
         <p className="display spread-greet">Good morning, Maya.</p>
         <p className="spread-lede">Three rewards fit your morning. One expires on {weekday}.</p>
         <dl className="spread-balances tabular">
-          <div><dt>Ember Rewards</dt><dd>140 pts</dd><dd className="sub">$28.00 value</dd></div>
-          <div><dt>Greenleaf Plus</dt><dd>6,200 pts</dd><dd className="sub">$62.00 value</dd></div>
-          <div><dt>Northwind Miles</dt><dd>48,500</dd><dd className="sub">Value varies</dd></div>
+          <div><dt>Partner rewards</dt><dd>{catalog.length}</dd><dd className="sub">With your membership</dd></div>
+          <div><dt>Expiring this week</dt><dd>{thisWeek}</dd><dd className="sub">Across partners</dd></div>
+          <div><dt>Saved so far</dt><dd>$19.00</dd><dd className="sub">Estimated</dd></div>
         </dl>
         <div className="spread-recs">
           <div className="spread-rec is-active">
             <span className="monogram sm">EO</span>
             <div>
-              <p className="display">Put your Ember points toward this morning’s coffee</p>
+              <p className="display">$2 off your morning flat white</p>
               <p className="why">Recommended because you frequently buy coffee.</p>
             </div>
           </div>
@@ -157,19 +159,19 @@ function HeroSpread() {
 
       <div className="spread-detail" inert>
         <div className="sd-brand"><span className="monogram sm">EO</span> Ember &amp; Oak Coffee <span className="sd-exp">Expires {shortDate(ember.expiresAt)}</span></div>
-        <p className="display sd-head">Put your Ember points toward this morning’s coffee</p>
+        <p className="display sd-head">$2 off your morning flat white</p>
         <dl className="sd-terms">
-          <div><dt>What you get</dt><dd>10 points = $2.00 off any order</dd></div>
-          <div><dt>What you pay</dt><dd>No minimum. The rest of your order.</dd></div>
-          <div><dt>Valid</dt><dd>All cafés, in store and in the app</dd></div>
+          <div><dt>What you get</dt><dd>$2.00 off any handcrafted drink</dd></div>
+          <div><dt>What you pay</dt><dd>Menu price minus $2.00. No minimum.</dd></div>
+          <div><dt>Valid</dt><dd>All cafés and online ordering</dd></div>
           <div><dt>Not valid</dt><dd>Merchandise, gift cards, delivery apps</dd></div>
+          <div><dt>How to use it</dt><dd>Online, the code is applied for you</dd></div>
+          <div><dt>Combining</dt><dd>One Perkly reward per order</dd></div>
         </dl>
-        <div className="sd-split tabular">
-          <div><span>Purchase total</span><span>$10.00</span></div>
-          <div><span>10 points applied</span><span>−$2.00</span></div>
-          <div className="t"><span>Remaining, Apple Pay</span><span>$8.00</span></div>
+        <div className="sd-actions">
+          <div className="sd-use">Use Reward online</div>
+          <div className="sd-use sd-use-alt">Use Reward in store</div>
         </div>
-        <div className="sd-use">Use Reward</div>
       </div>
       <figcaption className="spread-cap"><DemoTag>Demo data</DemoTag></figcaption>
     </figure>
@@ -183,14 +185,14 @@ function Problem() {
         <h2 id="problem-h" className="display section-h">You earned the rewards. Why is using them so complicated?</h2>
         <div className="problem-list">
           <div className="problem-item">
-            <h3>Rewards are scattered across programs.</h3>
-            <p>Points in one app, miles in another, cashback somewhere else. Nobody keeps a single list.</p>
+            <h3>Good offers are scattered everywhere.</h3>
+            <p>A different app for every brand, codes buried in your inbox, and deals you never hear about until they’ve ended.</p>
             <div className="frag frag-scatter tabular" aria-hidden>
-              <span>Ember Rewards 140</span>
-              <span>Greenleaf Plus 6,200</span>
-              <span>Northwind 48,500 mi</span>
-              <span>Maison Circle 220</span>
-              <span>Cashback $14.60</span>
+              <span>Brand app</span>
+              <span>Promo email</span>
+              <span>Receipt coupon</span>
+              <span>Loyalty card</span>
+              <span>Social post</span>
             </div>
           </div>
           <div className="problem-item">
@@ -203,9 +205,9 @@ function Problem() {
           </div>
           <div className="problem-item">
             <h3>Too many steps between finding a reward and using it.</h3>
-            <p>Find it, activate it, switch apps, copy a code, then pay. Most rewards are lost somewhere along the way.</p>
+            <p>Find it, check it, copy the code, then hope it works at checkout. Most rewards are lost somewhere along the way.</p>
             <ol className="frag frag-steps" aria-hidden>
-              <li>Open app</li><li>Search</li><li>Read terms</li><li>Activate</li><li>Switch apps</li><li>Copy code</li><li>Pay</li>
+              <li>Search</li><li>Find a code</li><li>Read terms</li><li>Check it’s still valid</li><li>Copy code</li><li>Paste at checkout</li>
             </ol>
           </div>
         </div>
@@ -222,7 +224,7 @@ function Solution() {
         <div className="pillars">
           <div>
             <h3>Discover</h3>
-            <p>Relevant rewards from participating brands, personalized to your preferences and the way you spend.</p>
+            <p>Every partner brand’s rewards, included with one free membership and ranked for what you actually buy.</p>
           </div>
           <div>
             <h3>Decide</h3>
@@ -230,7 +232,7 @@ function Solution() {
           </div>
           <div>
             <h3>Redeem</h3>
-            <p>One clear action takes you into the supported payment or redemption flow, on the same screen.</p>
+            <p>One clear action takes you to the brand’s site with the code applied, or gives you a code to show in store.</p>
           </div>
         </div>
         <SolutionDemo />
@@ -261,15 +263,15 @@ function Redemption() {
     <section id="redeem" className="band redemption" aria-labelledby="redeem-h">
       <div className="wrap redemption-grid">
         <div className="section-intro sticky-intro">
-          <h2 id="redeem-h" className="display section-h">Decide and redeem on one screen.</h2>
+          <h2 id="redeem-h" className="display section-h">Every condition, before you commit.</h2>
           <p className="section-lede">
-            What you get, what you pay, what’s valid and what isn’t, sit right above the Use Reward button. Split a bill between points and
-            money, pick how to pay the rest, and the in-store code appears only when you choose to pay in store.
+            What you get, what you pay, what’s valid and what isn’t, all in one pop-up, in plain words, with nothing in fine print. Then one
+            button takes you to the brand, or gives you a code for the register.
           </p>
           <ul className="check-list">
-            <li><Check aria-hidden /> Drag the points to split the $10.00 bill.</li>
-            <li><Check aria-hidden /> Switch between Apple Pay, a saved card and paying in store.</li>
-            <li><Check aria-hidden /> Use Reward runs a labeled demo. Nothing is charged.</li>
+            <li><Check aria-hidden /> Online: the brand’s site opens with your code applied.</li>
+            <li><Check aria-hidden /> In store: show a QR code to the cashier.</li>
+            <li><Check aria-hidden /> You pay the brand directly. Perkly never handles payment.</li>
           </ul>
         </div>
         <RedemptionDemo />
@@ -285,8 +287,8 @@ function Control() {
         <div className="section-intro">
           <h2 id="control-h" className="display section-h">Personal, on your terms.</h2>
           <p className="section-lede">
-            Perkly uses the interests and brands you choose. Spending-based picks, location and alerts are each a separate switch, and location
-            is off until you turn it on. Change any of it later in Profile.
+            Perkly ranks partner rewards by the interests and brands you choose. Spending-based picks, location and alerts are each a separate
+            switch, and location is off until you turn it on. Change any of it later in Profile.
           </p>
         </div>
         <ControlDemo />
@@ -297,10 +299,10 @@ function Control() {
 
 function HowItWorks() {
   const steps = [
-    ['Set your interests and connect supported reward programs.', 'Choose categories and favorite brands, then link the programs you already belong to.'],
-    ['Discover rewards that fit your spending and preferences.', 'Home shows what matters today. Explore holds everything else.'],
+    ['Join free and tell Perkly what you’re into.', 'Pick categories and favorite brands. It takes a minute, and you can skip any of it.'],
+    ['Discover partner rewards that fit you.', 'Home shows what matters today. Explore holds every reward in the network.'],
     ['Understand the benefit and conditions instantly.', 'Every reward shows what you get, what you pay, and what doesn’t count.'],
-    ['Use the reward through a supported method.', 'Apple Pay, a saved card, points plus money, or a code in store, where the offer allows it.'],
+    ['Use it online or in store.', 'Go to the brand’s site with the code applied, or show a QR code at the register.'],
   ];
   return (
     <section id="how" className="band how" aria-labelledby="how-h">
@@ -321,16 +323,16 @@ function HowItWorks() {
 }
 
 const FAQS: [string, string][] = [
-  ['What is Perkly?', 'Perkly brings rewards from participating brands and the programs you already use into one place, explains their conditions, and helps you use them in one step where the provider supports it.'],
-  ['Is Perkly a bank?', 'No. Perkly isn’t a bank, lender or card issuer. It doesn’t hold your money. Payments are processed by the payment provider you choose.'],
-  ['Does Perkly issue its own points?', 'No. Perkly has no points currency. It works with the points, miles, cashback and offers you already have.'],
-  ['How does AI personalize recommendations?', 'A transparent scoring service ranks rewards using only what you allow: the categories and brands you pick, spending categories if you switch them on, expiry dates, time of day, and location if you turn it on. Each recommendation says why it appears. The current version uses clear rules rather than a trained model, so it can explain every result.'],
-  ['Does Perkly need access to my location?', 'No. Location is off by default. If you turn it on, Perkly can show participating places nearby. You can turn it off at any time.'],
-  ['How do saved payment methods work?', 'In a live version, cards are added through a payment provider’s secure form and Perkly keeps only a token. This prototype uses demo methods like “Demo Visa ending in 4242” and never asks for real card details.'],
-  ['Can I use rewards without Apple Pay?', 'Yes. Depending on the offer, you can pay with a saved card, online banking, or in store with cash or a physical card using a code.'],
-  ['Does every reward support one-step redemption?', 'No. Some rewards need activation, a booking on the provider’s site, or a code at the register. Perkly tells you which steps each reward needs instead of pretending they don’t exist.'],
-  ['Does Perkly store my card details?', 'No. Perkly is designed never to store card numbers or security codes. A live version would store only a payment provider’s token. This prototype stores demo references only.'],
-  ['Is the current demonstration connected to real accounts?', 'No. Every brand, offer, balance and transaction is fictional. Payments, point redemptions and program connections are simulated and clearly labeled. No real money or points move.'],
+  ['What is Perkly?', 'Perkly is a free membership. Brands partner with Perkly to offer rewards to its members, and Perkly shows you the ones that fit you, with every condition explained before you use them.'],
+  ['Which brands partner with Perkly?', 'In this prototype, none yet: every partner and reward shown is fictional, so you can see how the product would work. Real partners would be listed here and labeled in the app.'],
+  ['How much does membership cost?', 'Nothing. Membership is free.'],
+  ['How does Perkly make money?', 'Partner brands may pay Perkly a commission when a member uses a reward. That never changes how rewards are ranked, and sponsored placements are always labeled.'],
+  ['Does Perkly handle my payment?', 'No. You pay the brand directly on its own site or at its register. Perkly never sees or stores your card details.'],
+  ['Is Perkly a bank or a points program?', 'Neither. Perkly doesn’t hold money, issue cards, or run a points currency. It connects members with partner rewards.'],
+  ['How does AI personalize recommendations?', 'A transparent scoring service ranks rewards using only what you allow: the categories and brands you pick, spending categories if you switch them on, expiry dates, time of day, and location if you turn it on. Each recommendation says why it appears. It uses clear rules rather than a trained model, so it can explain every result.'],
+  ['Does Perkly need my location?', 'No. Location is off by default. If you turn it on, Perkly can point out partners nearby. You can turn it off at any time.'],
+  ['How do I use a reward in store?', 'Open the reward and choose “Use Reward in store”. Perkly shows a QR code and a member code to give the cashier before you pay.'],
+  ['Is the current demonstration connected to real brands?', 'No. Every partner, reward and saving is fictional, and partner sites and purchases are simulated and labeled. Nothing you do in the demo is real.'],
 ];
 
 function Faq() {
@@ -369,7 +371,7 @@ function FinalCta() {
           </button>
         </div>
         {demo.error && <p className="final-err" role="alert">{demo.error}</p>}
-        <p className="final-note">The demo opens a fictional account with sample rewards. Nothing you do there is real.</p>
+        <p className="final-note">Membership is free. The demo opens a fictional account with sample partner rewards; nothing you do there is real.</p>
       </div>
     </section>
   );
@@ -383,8 +385,8 @@ export function SiteFooter() {
           <Logo />
           <p>All your perks. One place.</p>
           <p className="footer-small">
-            A student prototype by [Group name] for [Course or competition name]. Perkly is not a registered company, a bank, or a card issuer,
-            and has no partnerships with the brands shown.
+            A student prototype by [Group name] for [Course or competition name]. Perkly is not a registered company. The partner brands shown
+            are fictional; Perkly has no real brand partnerships yet. Perkly may earn a commission from partners when you use a reward.
           </p>
         </div>
         <nav aria-label="Legal and support" className="footer-links">
@@ -400,7 +402,7 @@ export function SiteFooter() {
       <div className="wrap">
         <div className="footer-base">
           <span>© 2026 [Group name]. All rights reserved.</span>
-          <span>Demo data throughout. Apple Pay is a trademark of Apple Inc.; it is simulated here and not affiliated.</span>
+          <span>Demo data throughout.</span>
         </div>
       </div>
     </footer>

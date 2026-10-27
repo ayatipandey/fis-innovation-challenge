@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { DEMO_NOTICE, DEMO_PROGRAM_BALANCES, PERSONAS } from '../../../shared/demo-data';
+import { DEMO_NOTICE, PERSONAS } from '../../../shared/demo-data';
 import type { CatalogSource } from '../services/catalog';
 import { catalogMeta } from '../services/catalog';
 import { recommend, serviceHealth } from '../services/recommender';
@@ -30,9 +30,7 @@ export function publicRoutes(catalog: CatalogSource) {
         favoriteBrands: persona.favoriteBrands,
         spending: persona.spending,
         brandHistory: {},
-        paymentMethods: ['apple_pay', 'saved_card'],
         personalization: true,
-        balances: DEMO_PROGRAM_BALANCES,
       },
       catalog.list(),
       { now: now.toISOString(), weekday: 1, hour: 8 },

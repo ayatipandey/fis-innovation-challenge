@@ -28,18 +28,8 @@ class Nearby(Loose):
     distanceMeters: int
 
 
-class SplitRules(Loose):
-    programId: str
-    unitValue: float
-    minUnits: int
-    step: int
-    maxUnits: Optional[int] = None
-
-
 class Redemption(Loose):
-    methods: list[str] = Field(default_factory=list)
-    split: Optional[SplitRules] = None
-    providerOnly: bool = False
+    url: Optional[str] = None
 
 
 class YouPay(Loose):
@@ -49,8 +39,6 @@ class YouPay(Loose):
 
 class Valid(Loose):
     channels: list[str] = Field(default_factory=list)
-    paymentMethods: list[str] = Field(default_factory=list)
-    accounts: list[str] = Field(default_factory=list)
 
 
 class RewardIn(Loose):
@@ -59,7 +47,6 @@ class RewardIn(Loose):
     id: str
     brandId: str
     brandName: str
-    programId: Optional[str] = None
     category: str
     headline: str = ""
     benefit: Benefit
@@ -68,13 +55,12 @@ class RewardIn(Loose):
     maxBenefit: Optional[float] = None
     validFrom: str
     expiresAt: str
-    redemption: Redemption
+    redemption: Redemption = Field(default_factory=Redemption)
     youPay: YouPay = Field(default_factory=YouPay)
     valid: Valid = Field(default_factory=Valid)
     nearby: Optional[Nearby] = None
     routine: list[str] = Field(default_factory=list)
     sponsored: bool = False
-    demoPurchaseTotal: Optional[float] = None
 
 
 class Spending(Loose):
@@ -90,9 +76,7 @@ class UserSummary(Loose):
     favoriteBrands: list[str] = Field(default_factory=list)
     spending: Optional[Spending] = None
     brandHistory: dict[str, int] = Field(default_factory=dict)
-    paymentMethods: list[str] = Field(default_factory=list)
     personalization: bool = True
-    balances: dict[str, float] = Field(default_factory=dict)
 
 
 class TimeContext(Loose):
@@ -128,91 +112,10 @@ class RecommendationResponse(BaseModel):
     note: str
 
 
-class RedemptionOption(Loose):
-    label: str
-    unitsRequired: float = Field(gt=0)
-    unit: Literal["points", "miles"] = "miles"
-    cashPrice: Optional[float] = Field(default=None, ge=0)
-    fees: float = Field(default=0, ge=0)
-    restrictions: list[str] = Field(default_factory=list)
-    expiresAt: Optional[str] = None
-    flexibility: Optional[str] = None
-
-
-class CompareRequest(Loose):
-    options: list[RedemptionOption] = Field(min_length=1, max_length=10)
-    balance: Optional[float] = None
-
-
-class ComparedOption(BaseModel):
-    label: str
-    unitsRequired: float
-    cashPrice: Optional[float]
-    fees: float
-    valuePerUnitCents: Optional[float]
-    affordable: Optional[bool]
-    restrictions: list[str]
-    expiresAt: Optional[str]
-    flexibility: Optional[str]
-
-
-class CompareResponse(BaseModel):
-    options: list[ComparedOption]
-    formula: str
-    summary: str
-    assumptions: list[str]
-    limitations: list[str]
-
-
-class EligibilityConditions(Loose):
-    channels: list[str] = Field(default_factory=list)
-    paymentMethods: list[str] = Field(default_factory=list)
-    minSpend: Optional[float] = None
-    validFrom: Optional[str] = None
-    expiresAt: Optional[str] = None
-    requiresProgram: Optional[str] = None
-    activationRequired: bool = False
-    excludedTransactions: list[str] = Field(default_factory=list)
-
-
-class EligibilityContext(Loose):
-    now: str
-    channel: Optional[str] = None
-    paymentMethod: Optional[str] = None
-    purchaseTotal: Optional[float] = None
-    connectedPrograms: Optional[list[str]] = None
-    activated: Optional[bool] = None
-
-
-class EligibilityRequest(Loose):
-    conditions: EligibilityConditions
-    context: EligibilityContext
-
-
-class EligibilityCheck(BaseModel):
-    rule: str
-    result: Literal["pass", "fail", "unknown"]
-    reason: str
-
-
-class EligibilityResponse(BaseModel):
-    status: Literal["eligible", "ineligible", "unknown"]
-    checks: list[EligibilityCheck]
-    summary: str
-
-
-class Program(Loose):
-    id: str
-    name: str
-    unit: str
-    unitValue: Optional[float] = None
-
-
 class CopilotRequest(Loose):
     message: str = Field(min_length=1, max_length=1000)
     user: UserSummary
     rewards: list[RewardIn] = Field(max_length=500)
-    programs: list[Program] = Field(default_factory=list)
     time: TimeContext
     location: Optional[LocationContext] = None
 

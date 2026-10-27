@@ -1,10 +1,10 @@
-import type { PaymentMethodKind, RedemptionRecord } from '@shared/types';
+import type { Channel, RewardUse } from '@shared/types';
 import { Compass, Home as HomeIcon, LogOut, MessageCircle, UserRound } from 'lucide-react';
 import { useCallback } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { DemoTag, Logo } from '../../components/bits';
 import { Dialog } from '../../components/Dialog';
-import { RewardDetail, type EligibilityResult, type RedeemRequest } from '../../components/RewardDetail';
+import { RewardDetail } from '../../components/RewardDetail';
 import { api } from '../../lib/api';
 import { DataProvider, useData } from '../../state/data';
 import { useSession } from '../../state/session';
@@ -44,7 +44,7 @@ function Shell() {
           {user?.isDemo ? (
             <p className="side-demo"><DemoTag>Demo account</DemoTag> A fictional account. Everything here is simulated.</p>
           ) : (
-            <p className="side-demo"><DemoTag>Demo offers</DemoTag> Offers and balances are sample data.</p>
+            <p className="side-demo"><DemoTag>Demo partners</DemoTag> Partner brands and rewards are sample data.</p>
           )}
           <button
             type="button"
@@ -61,7 +61,7 @@ function Shell() {
 
       <header className="topbar">
         <Logo to="/app" label="Perkly Home" />
-        <DemoTag>{user?.isDemo ? 'Demo account' : 'Demo offers'}</DemoTag>
+        <DemoTag>{user?.isDemo ? 'Demo account' : 'Demo partners'}</DemoTag>
       </header>
 
       <main id="app-main" className="app-main" tabIndex={-1}>
@@ -87,57 +87,30 @@ function RewardSheet() {
   const id = d.openId;
   const offer = id ? d.offer(id) : undefined;
   const brand = offer ? d.brand(offer.brandId) : undefined;
-  const wallet = d.wallet.status === 'ready' ? d.wallet.data : null;
   const rec = d.recs.status === 'ready' && id ? d.recs.data.items.find((r) => r.offerId === id) : undefined;
-  const split = offer?.redemption.split;
-  const link = split && wallet ? wallet.programs.find((p) => p.programId === split.programId && p.status === 'connected') : undefined;
 
-  const onRedeem = useCallback(
-    async (req: RedeemRequest) => {
-      const r = await api<RedemptionRecord>('/me/redemptions', { method: 'POST', body: req });
+  const onUse = useCallback(
+    async (channel: Channel) => {
+      const r = await api<{ use: RewardUse }>(`/me/rewards/${encodeURIComponent(id!)}/use`, { method: 'POST', body: { channel } });
       void d.refreshWallet();
-      return r;
+      return r.use;
     },
-    [d],
-  );
-  const onRecover = useCallback(
-    async (rid: string) => {
-      const r = await api<RedemptionRecord>(`/me/redemptions/${rid}/recover`, { method: 'POST' });
-      void d.refreshWallet();
-      return r;
-    },
-    [d],
-  );
-  const checkEligibility = useCallback(
-    (q: { offerId: string; paymentMethod?: PaymentMethodKind; purchaseTotal?: number; channel?: string }) =>
-      api<EligibilityResult>('/me/eligibility', { method: 'POST', body: q }),
-    [],
+    [d, id],
   );
 
   return (
-    <Dialog open={!!offer && !!brand} onClose={d.closeReward} labelledBy="reward-sheet-h" className="drawer">
-      {offer && brand && wallet && (
+    <Dialog open={!!offer && !!brand} onClose={d.closeReward} labelledBy="reward-sheet-h" className="reward-modal">
+      {offer && brand && (
         <RewardDetail
           key={offer.id}
           headingId="reward-sheet-h"
           offer={offer}
           brand={brand}
-          splitProgram={split ? d.program(split.programId) : undefined}
-          balance={link ? link.balance : null}
-          paymentMethods={wallet.paymentMethods}
           reasons={rec?.reasons}
           warnings={rec?.warnings}
-          activated={wallet.activated.includes(offer.id)}
           favorite={{ active: d.isFavorite(offer.id), toggle: () => d.toggleFavorite(offer.id) }}
-          onActivate={async () => {
-            await api(`/me/activations/${offer.id}`, { method: 'POST' });
-            d.setWallet((w) => ({ ...w, activated: [...w.activated, offer.id] }));
-          }}
-          onRedeem={onRedeem}
-          onRecover={onRecover}
-          checkEligibility={checkEligibility}
+          onUse={onUse}
           onClose={d.closeReward}
-          showScenario
         />
       )}
     </Dialog>

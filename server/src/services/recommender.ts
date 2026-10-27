@@ -11,9 +11,7 @@ export interface UserSummary {
   favoriteBrands: string[];
   spending: SpendingSummary | null;
   brandHistory: Record<string, number>;
-  paymentMethods: string[];
   personalization: boolean;
-  balances: Record<string, number>;
 }
 
 export interface TimeContext {
@@ -99,8 +97,6 @@ export function localFallback(user: UserSummary, offers: Offer[], time: TimeCont
   };
 }
 
-export const compareRedemptions = (body: unknown) => post<unknown>('/api/compare-redemptions', body);
-export const eligibilityCheck = (body: unknown) => post<unknown>('/api/eligibility-check', body);
 export const copilot = (body: unknown) => post<unknown>('/api/copilot', body);
 
 export async function serviceHealth(): Promise<boolean> {

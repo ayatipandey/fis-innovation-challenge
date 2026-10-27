@@ -1,23 +1,20 @@
 import { BRANDS, CATEGORIES } from '@shared/demo-data';
-import type { Activity, CategoryId, Preferences, RedemptionRecord } from '@shared/types';
-import { Download, Heart, LogOut, Minus, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import type { Activity, CategoryId, Preferences, RewardUse } from '@shared/types';
+import { Download, Heart, LogOut, Minus, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate, useParams } from 'react-router-dom';
 import { DemoTag, ErrorState, SwitchRow } from '../../components/bits';
 import { Dialog } from '../../components/Dialog';
 import { api } from '../../lib/api';
-import { METHOD_LABEL, money, shortDate } from '../../lib/format';
+import { money, shortDate } from '../../lib/format';
 import { useData } from '../../state/data';
 import { useSession } from '../../state/session';
 import { useToast } from '../../state/toast';
-import { PaymentMethodsEditor, ProgramsList } from '../onboarding/Onboarding';
 
 const SECTIONS = [
   { id: 'account', label: 'Account' },
-  { id: 'programs', label: 'Reward programs' },
-  { id: 'payments', label: 'Payment methods' },
   { id: 'favorites', label: 'Favorites' },
-  { id: 'history', label: 'Reward history' },
+  { id: 'history', label: 'Rewards used' },
   { id: 'notifications', label: 'Notifications' },
   { id: 'privacy', label: 'Privacy' },
   { id: 'accessibility', label: 'Accessibility' },
@@ -56,21 +53,6 @@ function SectionBody({ id }: { id: SectionId }) {
   switch (id) {
     case 'account':
       return <Account />;
-    case 'programs':
-      return (
-        <>
-          <p className="pf-lede">Connect the programs you belong to. Perkly reads balances and, where a brand allows it, redeems points you choose to apply.</p>
-          <div className="notice"><ShieldCheck aria-hidden /><span>Simulated connections with made-up balances. A live version would use each program’s own sign-in and read-only access, and you could disconnect at any time.</span></div>
-          <ProgramsList />
-        </>
-      );
-    case 'payments':
-      return (
-        <>
-          <p className="pf-lede">Payment methods let you pay the part of a bill your rewards don’t cover. Only demo references are stored.</p>
-          <PaymentMethodsEditor />
-        </>
-      );
     case 'favorites':
       return <Favorites />;
     case 'history':
@@ -105,7 +87,7 @@ function Account() {
     <div className="pf-stack">
       <dl className="pf-dl">
         <div><dt>Email</dt><dd>{user?.isDemo ? 'Demo account (no email)' : user?.email}</dd></div>
-        <div><dt>Account type</dt><dd>{user?.isDemo ? <><DemoTag>Demo account</DemoTag> Fictional data, separate from real accounts.</> : 'Personal prototype account. Offers and balances are demo data.'}</dd></div>
+        <div><dt>Account type</dt><dd>{user?.isDemo ? <><DemoTag>Demo account</DemoTag> Fictional data, separate from real accounts.</> : 'Free member account. Partner rewards are demo data.'}</dd></div>
       </dl>
       <form
         className="pf-inline-form"
@@ -124,9 +106,7 @@ function Account() {
         <div className="notice">
           <span>
             You skipped some setup steps: {skipped.join(', ')}. Finish them here in{' '}
-            {skipped.includes('programs') && <Link to="/app/profile/programs">Reward programs</Link>}
-            {skipped.includes('payment') && <> <Link to="/app/profile/payments">Payment methods</Link></>}
-            {(skipped.includes('interests') || skipped.includes('brands')) && <> <Link to="/app/profile/favorites">Favorites</Link></>}
+            {(skipped.includes('interests') || skipped.includes('brands')) && <Link to="/app/profile/favorites">Favorites</Link>}
             {skipped.includes('notifications') && <> <Link to="/app/profile/notifications">Notifications</Link></>}
             {skipped.includes('accessibility') && <> <Link to="/app/profile/accessibility">Accessibility</Link></>}.
           </span>
@@ -205,58 +185,55 @@ function Favorites() {
   );
 }
 
-const KIND_LABEL: Record<Activity['kind'], string> = { earned: 'Earned', redeemed: 'Redeemed', cashback: 'Cashback received', expired: 'Expired', pending: 'Pending' };
-const STATUS_LABEL: Record<RedemptionRecord['status'], string> = {
-  completed_demo: 'Completed (demo)',
-  failed_demo: 'Not completed',
-  partial_failure_demo: 'Needs attention',
-};
+const KIND_LABEL: Record<Activity['kind'], string> = { used: 'Used', saved: 'Saved', expired: 'Expired' };
 
 function History() {
   const d = useData();
-  const [data, setData] = useState<{ redemptions: RedemptionRecord[]; activity: Activity[] } | null>(null);
+  const [data, setData] = useState<{ uses: RewardUse[]; activity: Activity[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | Activity['kind']>('all');
   const load = () => {
     setError(null);
-    api<{ redemptions: RedemptionRecord[]; activity: Activity[] }>('/me/history').then(setData).catch((e) => setError((e as Error).message));
+    api<{ uses: RewardUse[]; activity: Activity[] }>('/me/history').then(setData).catch((e) => setError((e as Error).message));
   };
   useEffect(load, []);
   if (error) return <ErrorState message={error} onRetry={load} />;
   if (!data) return <div className="skeleton" style={{ height: 300 }} />;
   const acts = data.activity.filter((a) => filter === 'all' || a.kind === filter);
+  const saved = data.uses.reduce((n, u) => n + (u.estimatedSaving ?? 0), 0);
   return (
     <div className="pf-stack">
       <div className="pf-group">
-        <h3 className="h3">Redemptions in Perkly</h3>
-        {data.redemptions.length === 0 ? (
-          <p className="muted">Rewards you use with Use Reward will be listed here.</p>
+        <h3 className="h3">Rewards you’ve used</h3>
+        {data.uses.length === 0 ? (
+          <p className="muted">When a partner reports that you used a reward, it appears here.</p>
         ) : (
-          <ul className="history-list">
-            {data.redemptions.map((r) => {
-              const o = d.offer(r.offerId);
-              return (
-                <li key={r.id}>
-                  <div>
-                    <p className="hl-title">{o ? `${d.brand(o.brandId)?.name}: ${o.benefit.summary}` : r.offerId}</p>
-                    <p className="hint tabular">
-                      {shortDate(r.createdAt)}. Total {money(r.purchaseTotal)}
-                      {r.unitsApplied ? `, ${r.unitsApplied.toLocaleString('en-US')} points (${money(r.rewardValueApplied)})` : ''}
-                      {r.paymentMethod ? `, ${METHOD_LABEL[r.paymentMethod]}` : ''}.
-                    </p>
-                    {r.status !== 'completed_demo' && <p className="hint">{r.message}</p>}
-                  </div>
-                  <span className={`tag ${r.status === 'completed_demo' ? 'tag-ok' : 'tag-urgent'}`}>{STATUS_LABEL[r.status]}</span>
-                </li>
-              );
-            })}
-          </ul>
+          <>
+            <p className="hint tabular">{data.uses.length} used, about {money(saved)} saved in total (estimated).</p>
+            <ul className="history-list">
+              {data.uses.map((u) => {
+                const o = d.offer(u.offerId);
+                return (
+                  <li key={u.id}>
+                    <div>
+                      <p className="hl-title">{o ? `${d.brand(o.brandId)?.name}: ${o.benefit.summary}` : u.offerId}</p>
+                      <p className="hint tabular">
+                        {shortDate(u.createdAt)}, {u.channel === 'online' ? 'online' : 'in store'}
+                        {u.estimatedSaving != null ? `, about ${money(u.estimatedSaving)} saved` : ''}.
+                      </p>
+                    </div>
+                    <span className="tag tag-ok">Reported (demo)</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         )}
       </div>
       <div className="pf-group">
         <h3 className="h3">Activity</h3>
         <div className="chips-scroll" role="group" aria-label="Filter activity">
-          {(['all', 'earned', 'redeemed', 'cashback', 'expired', 'pending'] as const).map((k) => (
+          {(['all', 'used', 'expired'] as const).map((k) => (
             <button key={k} type="button" className="chip" aria-pressed={filter === k} onClick={() => setFilter(k)}>
               {k === 'all' ? 'All' : KIND_LABEL[k]}
             </button>
@@ -276,7 +253,7 @@ function History() {
             ))}
           </ul>
         )}
-        <p className="hint">Demo history. No real transactions are shown.</p>
+        <p className="hint">Demo history. Partner reports are simulated and no real purchases are shown.</p>
       </div>
     </div>
   );
@@ -307,7 +284,7 @@ function NotificationSettings() {
       <SwitchRow
         id="nf-loc"
         label="Location-based alerts"
-        hint={p.privacy.location ? 'When you’re near a participating place.' : <>Needs location access, which is off. <Link to="/app/profile/privacy">Privacy settings</Link></>}
+        hint={p.privacy.location ? 'When you’re near a partner.' : <>Needs location access, which is off. <Link to="/app/profile/privacy">Privacy settings</Link></>}
         checked={n.locationAlerts && p.privacy.location}
         disabled={!p.privacy.location}
         onChange={(v) => set({ locationAlerts: v })}
@@ -353,14 +330,12 @@ function NotificationSettings() {
 function Privacy() {
   const { p, update } = usePrefs();
   const { setSession } = useSession();
-  const d = useData();
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const set = (patch: Partial<Preferences['privacy']>) => update((x) => ({ ...x, privacy: { ...x.privacy, ...patch } }));
-  const connected = d.wallet.status === 'ready' ? d.wallet.data.programs.filter((l) => l.status === 'connected') : [];
 
   async function del() {
     setBusy(true);
@@ -378,31 +353,19 @@ function Privacy() {
   return (
     <div className="pf-stack">
       <SwitchRow id="pv-p" label="Personalized recommendations" hint="Use your interests, favorites and history to rank rewards. Off means rewards are ranked by expiry and value only." checked={p.privacy.personalization} onChange={(v) => set({ personalization: v })} />
-      <SwitchRow id="pv-s" label="Spending data" hint="Use spending categories from connected accounts. In this prototype that’s a synthetic summary, never real transactions." checked={p.privacy.spendingData} onChange={(v) => set({ spendingData: v })} />
+      <SwitchRow id="pv-s" label="Spending data" hint="Use a summary of what you spend by category, if you share one. In this prototype it’s synthetic, never real transactions." checked={p.privacy.spendingData} onChange={(v) => set({ spendingData: v })} />
       <SwitchRow
         id="pv-l"
         label="Location"
-        hint="Show participating places nearby. In this prototype a fixed demo location is used; your device location is never read."
+        hint="Show partners nearby. In this prototype a fixed demo location is used; your device location is never read."
         checked={p.privacy.location}
         onChange={(v) => update((x) => ({ ...x, privacy: { ...x.privacy, location: v }, notifications: { ...x.notifications, locationAlerts: v ? x.notifications.locationAlerts : false } }))}
       />
       <SwitchRow id="pv-m" label="Product news by email" hint="Occasional updates about Perkly. Never shared with brands." checked={p.privacy.marketing} onChange={(v) => set({ marketing: v })} />
 
       <div className="pf-group">
-        <h3 className="h3">Connected account access</h3>
-        {connected.length === 0 ? (
-          <p className="muted">No programs are connected.</p>
-        ) : (
-          <ul className="plain-list">
-            {connected.map((l) => <li key={l.programId}>{d.program(l.programId)?.name}: balance and redemption, simulated.</li>)}
-          </ul>
-        )}
-        <Link to="/app/profile/programs">Manage connections</Link>
-      </div>
-
-      <div className="pf-group">
         <h3 className="h3">Your data</h3>
-        <p className="hint">Perkly doesn’t sell personal spending data. Sponsored offers are labeled and never ranked higher for being sponsored.</p>
+        <p className="hint">Perkly doesn’t sell personal data. Partner brands may pay Perkly a commission when you use a reward; that never changes rankings, and sponsored rewards are labeled.</p>
         <div className="pf-actions">
           <a className="btn" href="/api/me/export" download>
             <Download aria-hidden /> Download my data
@@ -416,7 +379,7 @@ function Privacy() {
       <Dialog open={confirmOpen} onClose={() => !busy && setConfirmOpen(false)} labelledBy="del-h">
         <div className="consent">
           <h2 id="del-h" className="display consent-h">Delete your account?</h2>
-          <p>This permanently removes your account, preferences, favorites, connections, payment references and history. It can’t be undone.</p>
+          <p>This permanently removes your account, preferences, favorites and history. It can’t be undone.</p>
           <div className="field">
             <label htmlFor="del-type">Type DELETE to confirm</label>
             <input id="del-type" value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" />

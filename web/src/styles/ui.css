@@ -399,6 +399,27 @@ dialog.sheet.drawer {
 }
 @keyframes sheet-in { from { transform: translateX(40px); opacity: 0; } }
 
+/* Reward pop-up: centered and wide enough to show every condition at once. */
+dialog.sheet.reward-modal {
+  margin: auto;
+  width: min(1040px, calc(100vw - 48px));
+  max-height: calc(100dvh - 48px);
+  border-radius: var(--r-sheet);
+  box-shadow: var(--shadow-sheet);
+  display: flex;
+  flex-direction: column;
+}
+dialog.sheet.reward-modal[open] { animation: modal-in var(--dur-slow) var(--ease-out); }
+dialog.sheet.reward-modal > .reward { flex: 1; min-height: 0; }
+@media (max-width: 720px) {
+  dialog.sheet.reward-modal {
+    margin: auto 0 0 0;
+    width: 100vw;
+    max-height: calc(100dvh - 12px);
+    border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+  }
+}
+
 dialog.sheet.modal {
   margin: auto;
   width: min(520px, calc(100vw - 32px));

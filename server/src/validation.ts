@@ -54,18 +54,7 @@ export const registerSchema = z
 
 export const loginSchema = z.object({ email: z.string().trim().toLowerCase().max(254), password: z.string().max(128) }).strict();
 
-export const redeemSchema = z
-  .object({
-    offerId: z.string().max(80),
-    purchaseTotal: z.number().min(0).max(100000),
-    unitsApplied: z.number().int().min(0).max(10_000_000),
-    method: z.enum(['apple_pay', 'saved_card', 'online_banking', 'in_store', 'rewards_only']).nullable(),
-    scenario: z.enum(['normal', 'payment_declined', 'reward_unavailable', 'reversal_failed']).default('normal'),
-  })
-  .strict();
-
-/** Only a method kind is accepted. Card numbers and CVVs are rejected by shape, not by trust. */
-export const paymentMethodSchema = z.object({ kind: z.enum(['apple_pay', 'saved_card', 'online_banking']) }).strict();
+export const useSchema = z.object({ channel: z.enum(['online', 'in_store']) }).strict();
 
 export const timeQuery = z.object({
   weekday: z.coerce.number().int().min(0).max(6).optional(),
@@ -77,15 +66,6 @@ export const copilotSchema = z
     message: z.string().trim().min(1, 'Type a question first.').max(1000),
     weekday: z.number().int().min(0).max(6).optional(),
     hour: z.number().int().min(0).max(23).optional(),
-  })
-  .strict();
-
-export const eligibilitySchema = z
-  .object({
-    offerId: z.string().max(80),
-    channel: z.enum(['in_store', 'online', 'app']).optional(),
-    paymentMethod: z.enum(['apple_pay', 'saved_card', 'online_banking', 'in_store']).optional(),
-    purchaseTotal: z.number().min(0).max(100000).optional(),
   })
   .strict();
 

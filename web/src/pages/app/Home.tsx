@@ -14,11 +14,11 @@ function partOfDay(h = new Date().getHours()) {
 
 function whatToDo(o: Offer) {
   const by = `by ${new Date(o.expiresAt).toLocaleDateString('en-US', { weekday: 'long' })}`;
-  if (o.redemption.providerOnly) return `Book it with the provider ${by}.`;
-  if (o.howToUse.activationRequired) return `Activate it, then pay with your linked card ${by}.`;
-  if (o.redemption.split) return `Use your points at checkout ${by}.`;
-  if (o.redemption.couponCode) return `Show the code in store ${by}.`;
-  return `Use it at checkout ${by}.`;
+  const online = o.valid.channels.includes('online');
+  const inStore = o.valid.channels.includes('in_store');
+  if (online && inStore) return `Use it online or in store ${by}.`;
+  if (online) return `Use it on ${o.redemption.url ? new URL(o.redemption.url).host : 'the brand’s site'} ${by}.`;
+  return `Show your code in store ${by}.`;
 }
 
 export function Home() {
@@ -68,7 +68,7 @@ export function Home() {
         </div>
       </header>
 
-      <Balances />
+      <Summary />
 
       <div className="home-grid">
         <section className="home-recs" aria-labelledby="recs-h">
@@ -166,40 +166,40 @@ function RecRow({ id, reason, warning, size }: { id: string; reason?: string; wa
   );
 }
 
-function Balances() {
+/** Member summary: what Perkly has to offer today, and what it has saved so far. */
+function Summary() {
   const d = useData();
   if (d.wallet.status === 'loading' || d.catalog.status !== 'ready') return <div className="skeleton" style={{ height: 96, marginBottom: 48 }} />;
-  if (d.wallet.status === 'error') return <ErrorState message={`Balances didn’t load. ${d.wallet.message}`} onRetry={d.refreshWallet} />;
+  if (d.wallet.status === 'error') return <ErrorState message={`Your summary didn’t load. ${d.wallet.message}`} onRetry={d.refreshWallet} />;
   const w = d.wallet.data;
-  const connected = w.programs.filter((p) => p.status === 'connected');
+  const live = d.catalog.data.offers.filter((o) => daysUntil(o.expiresAt) >= 0);
+  const thisWeek = live.filter((o) => daysUntil(o.expiresAt) <= 7).length;
   return (
     <section className="ledger" aria-labelledby="ledger-h">
-      <h2 id="ledger-h" className="visually-hidden">Your balances</h2>
-      {connected.length === 0 ? (
-        <div className="ledger-empty">
-          <p>No reward programs connected yet. Connect one to see balances and pay with points.</p>
-          <Link to="/app/profile/programs" className="btn btn-sm">Connect programs</Link>
+      <h2 id="ledger-h" className="visually-hidden">Your membership</h2>
+      <dl className="ledger-list tabular">
+        <div>
+          <dt>Partner rewards for you</dt>
+          <dd className="ledger-num">{live.length}</dd>
+          <dd className="ledger-sub">Included with your membership</dd>
         </div>
-      ) : (
-        <dl className="ledger-list tabular">
-          {connected.map((l) => {
-            const p = d.program(l.programId)!;
-            return (
-              <div key={l.programId}>
-                <dt>{p.name}</dt>
-                <dd className="ledger-num">{l.balance.toLocaleString('en-US')} <span>{p.unit}</span></dd>
-                <dd className="ledger-sub">{p.unitValue != null ? `${money(l.balance * p.unitValue)} value` : 'Value varies by redemption'}</dd>
-              </div>
-            );
-          })}
-          <div>
-            <dt>Cashback</dt>
-            <dd className="ledger-num">{money(w.cashback.available)}</dd>
-            <dd className="ledger-sub">{w.cashback.pending > 0 ? `${money(w.cashback.pending)} pending` : 'Nothing pending'}</dd>
-          </div>
-        </dl>
-      )}
-      {connected.length > 0 && <p className="ledger-note">Demo balances. Values use each program’s published demo rate; programs without a fixed rate show none.</p>}
+        <div>
+          <dt>Expiring this week</dt>
+          <dd className="ledger-num">{thisWeek}</dd>
+          <dd className="ledger-sub">Across all partners</dd>
+        </div>
+        <div>
+          <dt>Saved for later</dt>
+          <dd className="ledger-num">{w.favorites.length}</dd>
+          <dd className="ledger-sub">{w.favorites.length ? <Link to="/app/explore?saved=1">See saved rewards</Link> : 'Tap the heart to save one'}</dd>
+        </div>
+        <div>
+          <dt>Saved so far</dt>
+          <dd className="ledger-num">{money(w.summary.estimatedSaved)}</dd>
+          <dd className="ledger-sub">Estimated, {w.summary.rewardsUsed} {w.summary.rewardsUsed === 1 ? 'reward' : 'rewards'} used</dd>
+        </div>
+      </dl>
+      <p className="ledger-note">Demo partners. Savings are estimates from each reward’s stated value.</p>
     </section>
   );
 }
@@ -268,12 +268,12 @@ function RecentActivity() {
         <Link to="/app/profile/history" className="link-more">History <ArrowRight aria-hidden /></Link>
       </div>
       {items.length === 0 ? (
-        <p className="muted">Earned, redeemed and expired rewards will show up here.</p>
+        <p className="muted">Rewards you use will show up here.</p>
       ) : (
         <ul className="activity-list">
           {items.map((a) => (
             <li key={a.id}>
-              <span className={`act-kind act-${a.kind}`}>{({ earned: 'Earned', redeemed: 'Redeemed', cashback: 'Cashback', expired: 'Expired', pending: 'Pending' })[a.kind]}</span>
+              <span className={`act-kind act-${a.kind}`}>{({ used: 'Used', saved: 'Saved', expired: 'Expired' })[a.kind]}</span>
               <span className="act-label">{a.label}</span>
               <span className="act-amt tabular">{a.amount}</span>
               <span className="act-date">{shortDate(a.date)}</span>

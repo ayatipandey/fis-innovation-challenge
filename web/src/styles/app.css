@@ -222,7 +222,7 @@
   font-size: var(--fs-sm);
 }
 .act-kind { grid-area: kind; font-size: var(--fs-xs); font-weight: 700; color: var(--text-2); }
-.act-earned, .act-cashback { color: var(--success); }
+.act-used, .act-saved { color: var(--success); }
 .act-expired { color: var(--urgent); }
 .act-label { grid-area: label; }
 .act-amt { grid-area: amt; font-weight: 600; text-align: right; }

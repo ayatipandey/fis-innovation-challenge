@@ -1,25 +1,13 @@
-import type {
-  Activity,
-  Brand,
-  Category,
-  Offer,
-  PaymentMethod,
-  Program,
-  ProgramLink,
-  RecommendationResult,
-} from '@shared/types';
+import type { Activity, Brand, Category, Offer, RecommendationResult } from '@shared/types';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, localTime } from '../lib/api';
 import { useSession } from './session';
 import { useToast } from './toast';
 
 export interface Wallet {
-  programs: ProgramLink[];
-  cashback: { available: number; pending: number; isDemo: boolean };
+  summary: { rewardsUsed: number; estimatedSaved: number; isDemo: boolean };
   activity: Activity[];
-  paymentMethods: PaymentMethod[];
   favorites: string[];
-  activated: string[];
   recentlyViewed: string[];
   spendingSource: 'synthetic_demo' | 'none';
 }
@@ -27,7 +15,6 @@ export interface Wallet {
 interface Catalog {
   offers: Offer[];
   brands: Brand[];
-  programs: Program[];
   categories: Category[];
 }
 
@@ -39,7 +26,6 @@ interface DataState {
   recs: Load<RecommendationResult & { location: string | null }>;
   offer: (id: string) => Offer | undefined;
   brand: (id: string) => Brand | undefined;
-  program: (id: string | null) => Program | undefined;
   isFavorite: (offerId: string) => boolean;
   toggleFavorite: (offerId: string) => void;
   openReward: (offerId: string) => void;
@@ -144,7 +130,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       recs,
       offer: (id) => c?.offers.find((o) => o.id === id),
       brand: (id) => c?.brands.find((b) => b.id === id),
-      program: (id) => c?.programs.find((p) => p.id === id),
       isFavorite: (id) => favs.includes(id),
       toggleFavorite,
       openReward,

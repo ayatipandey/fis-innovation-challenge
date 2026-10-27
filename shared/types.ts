@@ -1,4 +1,8 @@
 // Shared domain types for Perkly. Imported by the web app and the Node API.
+//
+// Perkly is a free membership network: partner brands offer rewards to Perkly
+// members. Members use a reward on the brand's own website, or in store with a
+// code. Perkly never takes payment and issues no points.
 
 export type CategoryId =
   | 'food'
@@ -21,20 +25,7 @@ export interface Category {
   subcategories: string[];
 }
 
-/** How a user can complete a reward. Not every offer supports every method. */
-export type PaymentMethodKind = 'apple_pay' | 'saved_card' | 'online_banking' | 'in_store';
-
-export type Channel = 'in_store' | 'online' | 'app';
-
-export interface Program {
-  id: string;
-  name: string;
-  brandId: string | null;
-  unit: 'points' | 'miles';
-  /** Dollar value of one unit when the program publishes a fixed rate. null = varies by redemption. */
-  unitValue: number | null;
-  unitValueBasis: string;
-}
+export type Channel = 'online' | 'in_store';
 
 export interface Brand {
   id: string;
@@ -42,44 +33,23 @@ export interface Brand {
   category: CategoryId;
   /** Two-letter monogram used instead of a logo. Brands are fictional. */
   monogram: string;
+  /** The partner's website. Demo brands use reserved .example domains. */
+  website: string;
 }
 
-export type BenefitKind =
-  | 'amount_off'
-  | 'percent_off'
-  | 'points_pay'
-  | 'points_multiplier'
-  | 'freebie'
-  | 'cashback'
-  | 'miles_redemption'
-  | 'points_redemption'
-  | 'service';
-
-export interface SplitRules {
-  programId: string;
-  /** Dollar value per point at the time of redemption, supplied by the program. */
-  unitValue: number;
-  minUnits: number;
-  step: number;
-  /** Optional cap on units per transaction. */
-  maxUnits: number | null;
-  note: string;
-}
+export type BenefitKind = 'amount_off' | 'percent_off' | 'freebie' | 'service';
 
 export interface Offer {
   id: string;
   brandId: string;
-  programId: string | null;
   category: CategoryId;
   subcategory: string;
   /** Editorial headline, e.g. "$2 off your morning flat white". */
   headline: string;
   benefit: {
     kind: BenefitKind;
-    /** Dollars for amount_off/cashback, percent for percent_off, multiplier for points_multiplier, units for miles/points redemptions. */
+    /** Dollars for amount_off, percent for percent_off. */
     value: number | null;
-    /** Set when a cashback value is a percentage rather than dollars. */
-    unit?: 'percent';
     summary: string;
   };
   valueEstimate: { amount: number | null; basis: string };
@@ -92,8 +62,8 @@ export interface Offer {
     items: string[];
     locations: string[];
     channels: Channel[];
-    paymentMethods: PaymentMethodKind[];
-    accounts: string[];
+    /** Who qualifies, e.g. "All Perkly members", "New customers only". */
+    who: string[];
   };
   notValid: {
     exclusions: string[];
@@ -101,24 +71,15 @@ export interface Offer {
     transactions: string[];
     stacking: string;
   };
-  howToUse: {
-    activationRequired: boolean;
-    applies: 'automatic' | 'at_checkout' | 'code' | 'provider';
-    pointsRedemption: boolean;
-    manualStep: string | null;
-    credit: 'immediate' | 'later' | 'unknown';
-    creditNote: string;
-  };
+  /** Plain-language steps for each channel the offer supports. */
+  howToUse: { online: string | null; inStore: string | null; whenYouGetIt: string };
   redemption: {
-    methods: PaymentMethodKind[];
-    /** Only shown when the user picks in-store payment. */
-    couponCode: string | null;
-    split: SplitRules | null;
-    splitUnsupportedReason: string | null;
-    /** Offers whose redemption happens on the provider's side (award seats, hotel nights). */
-    providerOnly: boolean;
+    /** Deep link to the partner's site. Demo links point at .example domains and are simulated. */
+    url: string | null;
+    /** Member code, shown for in-store use and applied automatically online when supported. */
+    code: string;
+    codeAutoAppliedOnline: boolean;
   };
-  demoPurchaseTotal: number | null;
   nearby: { label: string; distanceMeters: number } | null;
   routine: Array<'weekday_morning' | 'evening' | 'weekend'>;
   sponsored: boolean;
@@ -175,24 +136,6 @@ export interface Preferences {
   };
 }
 
-export interface PaymentMethod {
-  id: string;
-  kind: PaymentMethodKind;
-  label: string;
-  /** Opaque provider reference. Never a card number. */
-  tokenRef: string;
-  preferred: boolean;
-  isDemo: boolean;
-}
-
-export interface ProgramLink {
-  programId: string;
-  status: 'connected' | 'disconnected';
-  balance: number;
-  linkedAt: string | null;
-  isDemo: boolean;
-}
-
 export interface Recommendation {
   offerId: string;
   score: number;
@@ -207,28 +150,21 @@ export interface RecommendationResult {
   note: string;
 }
 
-export type StepStatus = 'succeeded' | 'failed' | 'skipped' | 'reversed';
-
-export interface RedemptionRecord {
+/** A reward a member used. In the demo the partner's report is simulated. */
+export interface RewardUse {
   id: string;
   offerId: string;
+  channel: Channel;
   createdAt: string;
-  purchaseTotal: number;
-  discount: number;
-  unitsApplied: number;
-  rewardValueApplied: number;
-  amountDue: number;
-  paymentMethod: PaymentMethodKind | 'rewards_only' | null;
-  status: 'completed_demo' | 'partial_failure_demo' | 'failed_demo';
-  steps: { reward: StepStatus; payment: StepStatus };
-  message: string;
-  remainingBalance: number | null;
+  /** Estimated saving from the offer's stated value, when one exists. */
+  estimatedSaving: number | null;
+  status: 'reported_demo';
   isDemo: true;
 }
 
 export interface Activity {
   id: string;
-  kind: 'earned' | 'redeemed' | 'cashback' | 'expired' | 'pending';
+  kind: 'used' | 'saved' | 'expired';
   label: string;
   amount: string;
   date: string;

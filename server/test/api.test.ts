@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { before, describe, it } from 'node:test';
+import { describe, it } from 'node:test';
 import request from 'supertest';
 
 // Point at a closed port so the fallback ranking path is exercised.
@@ -65,79 +65,39 @@ describe('accounts', () => {
   });
 });
 
-describe('payment methods', () => {
-  it('never accepts card details', async () => {
+describe('using a reward', () => {
+  it('records an in-store use with its estimated saving', async () => {
     const agent = await demoAgent();
-    const res = await agent.post('/api/me/payment-methods').set(H).send({ kind: 'saved_card', number: '4242424242424242', cvv: '123' });
-    assert.equal(res.status, 400);
-  });
-});
-
-describe('split redemption', () => {
-  it('splits a $10 bill into 10 points ($2) and $8 by card', async () => {
-    const agent = await demoAgent();
-    const res = await agent.post('/api/me/redemptions').set(H).send({ offerId: 'ember-points-pay', purchaseTotal: 10, unitsApplied: 10, method: 'saved_card' });
-    assert.equal(res.status, 201, JSON.stringify(res.body));
-    assert.equal(res.body.rewardValueApplied, 2);
-    assert.equal(res.body.amountDue, 8);
-    assert.equal(res.body.status, 'completed_demo');
-    assert.equal(res.body.remainingBalance, 130);
-    assert.equal(res.body.isDemo, true);
-  });
-
-  it('allows rewards-only when points cover the bill', async () => {
-    const agent = await demoAgent();
-    const res = await agent.post('/api/me/redemptions').set(H).send({ offerId: 'ember-points-pay', purchaseTotal: 10, unitsApplied: 50, method: 'rewards_only' });
+    const before = (await agent.get('/api/me/wallet')).body.summary;
+    const res = await agent.post('/api/me/rewards/ember-flat-white/use').set(H).send({ channel: 'in_store' });
     assert.equal(res.status, 201);
-    assert.equal(res.body.amountDue, 0);
-    assert.equal(res.body.paymentMethod, 'rewards_only');
+    assert.equal(res.body.use.estimatedSaving, 2);
+    assert.equal(res.body.use.status, 'reported_demo');
+    assert.equal(res.body.simulated, true);
+    const after = (await agent.get('/api/me/wallet')).body.summary;
+    assert.equal(after.rewardsUsed, before.rewardsUsed + 1);
+    assert.equal(after.estimatedSaved, Math.round((before.estimatedSaved + 2) * 100) / 100);
   });
 
-  it('returns points when the payment fails', async () => {
+  it('refuses a channel the partner doesn’t accept', async () => {
     const agent = await demoAgent();
-    const res = await agent.post('/api/me/redemptions').set(H).send({ offerId: 'ember-points-pay', purchaseTotal: 10, unitsApplied: 10, method: 'saved_card', scenario: 'payment_declined' });
-    assert.equal(res.body.status, 'failed_demo');
-    assert.equal(res.body.steps.reward, 'reversed');
-    assert.equal(res.body.remainingBalance, 140);
-  });
-
-  it('reports a partial failure honestly and offers recovery', async () => {
-    const agent = await demoAgent();
-    const res = await agent.post('/api/me/redemptions').set(H).send({ offerId: 'ember-points-pay', purchaseTotal: 10, unitsApplied: 10, method: 'saved_card', scenario: 'reversal_failed' });
-    assert.equal(res.body.status, 'partial_failure_demo');
-    assert.equal(res.body.remainingBalance, 130);
-    const fixed = await agent.post(`/api/me/redemptions/${res.body.id}/recover`).set(H);
-    assert.equal(fixed.body.status, 'failed_demo');
-    assert.equal(fixed.body.remainingBalance, 140);
-  });
-
-  it('does not take payment when the reward step fails', async () => {
-    const agent = await demoAgent();
-    const res = await agent.post('/api/me/redemptions').set(H).send({ offerId: 'ember-points-pay', purchaseTotal: 10, unitsApplied: 10, method: 'saved_card', scenario: 'reward_unavailable' });
-    assert.equal(res.body.status, 'failed_demo');
-    assert.equal(res.body.steps.payment, 'skipped');
-  });
-
-  it('rejects more points than allowed and below-minimum spend', async () => {
-    const agent = await demoAgent();
-    const tooMany = await agent.post('/api/me/redemptions').set(H).send({ offerId: 'ember-points-pay', purchaseTotal: 10, unitsApplied: 55, method: 'rewards_only' });
-    assert.equal(tooMany.status, 422);
-    const short = await agent.post('/api/me/redemptions').set(H).send({ offerId: 'greenleaf-10-off-75', purchaseTotal: 60, unitsApplied: 0, method: 'saved_card' });
-    assert.equal(short.status, 422);
-    assert.match(short.body.error, /\$15\.00/);
-  });
-
-  it('tells in-store users to pay the merchant', async () => {
-    const agent = await demoAgent();
-    const res = await agent.post('/api/me/redemptions').set(H).send({ offerId: 'ember-points-pay', purchaseTotal: 10, unitsApplied: 10, method: 'in_store' });
-    assert.equal(res.body.steps.payment, 'skipped');
-    assert.match(res.body.message, /Pay \$8\.00 to the merchant/);
-  });
-
-  it('refuses provider-only rewards', async () => {
-    const agent = await demoAgent();
-    const res = await agent.post('/api/me/redemptions').set(H).send({ offerId: 'northwind-upgrade', purchaseTotal: 0, unitsApplied: 0, method: null });
+    const res = await agent.post('/api/me/rewards/kin-noodle-online/use').set(H).send({ channel: 'in_store' });
     assert.equal(res.status, 409);
+    assert.match(res.body.error, /online/);
+  });
+
+  it('rejects unknown rewards and channels', async () => {
+    const agent = await demoAgent();
+    assert.equal((await agent.post('/api/me/rewards/nope/use').set(H).send({ channel: 'online' })).status, 404);
+    assert.equal((await agent.post('/api/me/rewards/ember-flat-white/use').set(H).send({ channel: 'mail' })).status, 400);
+  });
+
+  it('lists uses in history', async () => {
+    const agent = await demoAgent();
+    await agent.post('/api/me/rewards/atelier-outerwear/use').set(H).send({ channel: 'online' });
+    const h = await agent.get('/api/me/history');
+    assert.equal(h.body.uses[0].offerId, 'atelier-outerwear');
+    assert.equal(h.body.uses[0].channel, 'online');
   });
 });
 
@@ -163,7 +123,7 @@ describe('data rights', () => {
     const exp = await agent.get('/api/me/export');
     assert.equal(exp.status, 200);
     assert.ok(!JSON.stringify(exp.body).includes('password_hash'));
-    assert.ok(!JSON.stringify(exp.body).includes('pm_demo_'));
+    assert.ok(Array.isArray(exp.body.rewardsUsed));
     const del = await agent.delete('/api/me/account').set(H).send({ confirm: 'DELETE' });
     assert.equal(del.status, 200);
     assert.equal((await agent.get('/api/me/wallet')).status, 401);

@@ -18,7 +18,7 @@ type Msg = { id: number; role: 'user'; text: string } | { id: number; role: 'ass
 const SUGGESTED = [
   'Find food rewards relevant to me.',
   'Which of my rewards expires soon?',
-  'Should I use miles for a seat upgrade or save them for a ticket?',
+  'How much would I save on a $90 grocery shop?',
   'Which of these offers gives me better value?',
   'Find rewards from my favorite brands.',
   'Is this offer worth the minimum spend?',
@@ -89,7 +89,7 @@ export function Copilot() {
       <header className="page-head copilot-head">
         <div>
           <h1 className="display page-h">AI Copilot</h1>
-          <p className="page-lede">Ask about your rewards. Answers use your demo rewards, balances and the preferences you’ve allowed.</p>
+          <p className="page-lede">Ask about partner rewards. Answers use the demo rewards and the preferences you’ve allowed.</p>
         </div>
         <p className="cp-engine"><Info aria-hidden /> Rule-based assistant. No language model is connected, so it answers a set of reward questions rather than anything at all.</p>
       </header>
@@ -182,7 +182,7 @@ export function Copilot() {
           ref={inputRef}
           rows={1}
           maxLength={1000}
-          placeholder="Ask about a reward, a balance, or a comparison"
+          placeholder="Ask about a reward, a saving, or a comparison"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {

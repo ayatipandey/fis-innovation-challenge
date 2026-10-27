@@ -46,7 +46,7 @@ export function createApp(db: DB, catalog: CatalogSource, opts = { rateLimit: tr
 
   app.use('/api', requireClientHeader, loadSession(db));
   app.use('/api', publicRoutes(catalog));
-  app.use('/api/auth', authRoutes(db, opts));
+  app.use('/api/auth', authRoutes(db, catalog, opts));
   app.use('/api/me', meRoutes(db, catalog, opts));
   app.use('/api', (_req, res) => {
     res.status(404).json({ error: 'Not found.' });
