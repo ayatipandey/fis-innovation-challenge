@@ -9,6 +9,11 @@ function recommenderUrl() {
   return 'http://127.0.0.1:8001';
 }
 
+/** Only libSQL addresses work here; a Postgres DATABASE_URL from another integration is ignored. */
+function libsqlUrl(url: string | undefined) {
+  return url && /^(libsql|https?|wss?|file):/.test(url) ? url : undefined;
+}
+
 export const config = {
   port: Number(env.PORT ?? 4000),
   isProduction: env.NODE_ENV === 'production' || !!env.VERCEL,
@@ -18,7 +23,7 @@ export const config = {
    * temporary, so data can disappear. Connect Turso for a stable demo.
    */
   databaseUrl:
-    env.TURSO_DATABASE_URL ?? env.DATABASE_URL ?? (env.VERCEL ? 'file:/tmp/perkly.db' : `file:${resolve(process.cwd(), 'data/perkly.db')}`),
+    env.TURSO_DATABASE_URL ?? libsqlUrl(env.DATABASE_URL) ?? (env.VERCEL ? 'file:/tmp/perkly.db' : `file:${resolve(process.cwd(), 'data/perkly.db')}`),
   databaseToken: env.TURSO_AUTH_TOKEN ?? env.DATABASE_AUTH_TOKEN,
   recommenderUrl: recommenderUrl(),
   recommenderKey: env.RECOMMENDER_SERVICE_KEY ?? '',
