@@ -27,7 +27,7 @@ const SessionContext = createContext<SessionState | null>(null);
 const THEME_KEY = 'perkly-theme';
 
 /** Theme and accessibility live on <html>. The theme is also remembered locally so it doesn't flash on reload. */
-function applyPreferences(p: Preferences | null) {
+export function applyPreferences(p: Preferences | null) {
   const root = document.documentElement;
   const a = p?.accessibility;
   let theme: string = p?.theme ?? DEFAULT_THEME;

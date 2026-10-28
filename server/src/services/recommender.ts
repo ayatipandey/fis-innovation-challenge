@@ -227,7 +227,8 @@ export function fallbackMoment(req: MomentRequest): MomentResult {
       const m = here && c.merchants.length ? [...c.merchants].sort((a, b) => distanceM(here, a) - distanceM(here, b))[0] : c.merchants[0];
       const dist = here && m ? distanceM(here, m) : null;
       const open = !m || (m.opens <= ctx.hour && ctx.hour < m.closes);
-      const eligible = c.merchants.length ? (dist != null ? dist <= 600 && open : c.channels.includes('online')) : c.channels.includes('online');
+      const expiringSoon = c.expiringPoints > 0 && c.daysToExpiry != null && c.daysToExpiry <= 14;
+      const eligible = c.merchants.length ? (dist != null ? dist <= 600 && open : c.channels.includes('online')) : c.channels.includes('online') && expiringSoon;
       const urgency = c.expiringPoints > 0 && c.daysToExpiry != null && c.daysToExpiry <= 14 ? 2 : 1;
       return { c, m, dist, eligible, score: c.value * urgency * (dist != null ? 1.5 : 1) };
     })

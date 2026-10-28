@@ -18,6 +18,7 @@ from .models import Candidate, MomentDecision, MomentRequest, MomentResponse, Sc
 MODEL = json.loads((Path(__file__).parent / "model" / "uplift_model.json").read_text())
 THRESHOLD = MODEL["threshold"]
 NEAR_ENOUGH_M = 600
+EXPIRY_MOMENT_DAYS = 14
 
 CATEGORY_NOUN = {
     "coffee": "coffee",
@@ -102,7 +103,9 @@ def evaluate(req: MomentRequest) -> MomentResponse:
     # In-store rewards only count as a "moment" when the member is close and the shop is open.
     def eligible(s):
         if not s["c"].merchants:
-            return "online" in s["c"].channels
+            # No shop to be near: only worth a moment when its points are about to expire.
+            c = s["c"]
+            return "online" in c.channels and c.expiringPoints > 0 and c.daysToExpiry is not None and c.daysToExpiry <= EXPIRY_MOMENT_DAYS
         if "in_store" in s["c"].channels and s["dist"] is not None:
             return s["dist"] <= NEAR_ENOUGH_M and s["open"]
         return "online" in s["c"].channels
@@ -147,7 +150,7 @@ def evaluate(req: MomentRequest) -> MomentResponse:
     )
     lead = "and have" if near_txt.startswith("You’re") else "can get you"
     body = f"{near_txt} {lead} {c.title[0].lower() + c.title[1:]} worth {money(c.value)}{exp_txt}."
-    title = f"{place}: {c.title}"
+    title = c.title if place.lower() in c.title.lower() else f"{place}: {c.title}"
 
     reasons = []
     if dist is not None and dist <= NEAR_ENOUGH_M:

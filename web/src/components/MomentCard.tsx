@@ -52,7 +52,7 @@ export function MomentCard(p: { moment: Moment; onUse?: (optionId: string) => vo
         <details className="moment-why">
           <summary>Why {m.sent ? 'now' : 'not'}</summary>
           <ul>
-            {m.reasons.map((r) => <li key={r}>{r}</li>)}
+            {m.reasons.filter((r) => !r.startsWith('Model:')).map((r) => <li key={r}>{r}</li>)}
           </ul>
           <p className="moment-model tabular">
             Chance you’d use it: {Math.round(m.pIfNotified * 100)}% with a reminder, {Math.round(m.pIfNot * 100)}% without

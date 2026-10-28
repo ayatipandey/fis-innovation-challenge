@@ -285,14 +285,87 @@ export function syntheticPurchases(seed: string, programId: string, now = new Da
   return out.sort((a, b) => a.at.localeCompare(b.at));
 }
 
-/** Stops for "Simulate a day": a student's route past the sample merchants. */
-export const DAY_STOPS = [
-  { id: 'morning', time: '08:10', label: 'Walking into the Student Union', lat: 30.2723, lng: -81.5081 },
-  { id: 'lunch', time: '12:30', label: 'Lunch break on College Row', lat: 30.2778, lng: -81.5008 },
-  { id: 'afternoon', time: '15:40', label: 'Between classes on Campus Walk', lat: 30.2743, lng: -81.5043 },
-  { id: 'evening', time: '18:20', label: 'Heading home past Beach Parkway', lat: 30.2806, lng: -81.4991 },
-  { id: 'late', time: '22:40', label: 'Leaving a late study group', lat: 30.2836, lng: -81.4956 },
+export interface DayStop {
+  id: string;
+  time: string;
+  label: string;
+  lat: number;
+  lng: number;
+}
+
+export interface DayRoute {
+  id: string;
+  name: string;
+  blurb: string;
+  /** 0 = Monday. */
+  weekday: number;
+  stops: DayStop[];
+}
+
+/** Routes for "Simulate a day": invented days past the sample shops, each in a different part of town. */
+export const DAY_ROUTES: DayRoute[] = [
+  {
+    id: 'campus',
+    name: 'Tuesday on campus',
+    blurb: 'Classes, a coffee habit and a late study group.',
+    weekday: 1,
+    stops: [
+      { id: 'morning', time: '08:10', label: 'Walking into the Student Union', lat: 30.2723, lng: -81.5081 },
+      { id: 'lunch', time: '12:30', label: 'Lunch break on College Row', lat: 30.2778, lng: -81.5008 },
+      { id: 'afternoon', time: '15:40', label: 'Between classes on Campus Walk', lat: 30.2743, lng: -81.5043 },
+      { id: 'evening', time: '18:20', label: 'Heading home past Beach Parkway', lat: 30.2806, lng: -81.4991 },
+      { id: 'late', time: '22:40', label: 'Leaving a late study group', lat: 30.2836, lng: -81.4956 },
+    ],
+  },
+  {
+    id: 'errands',
+    name: 'Saturday errands',
+    blurb: 'Groceries, a bookshop browse and a movie, no classes.',
+    weekday: 5,
+    stops: [
+      { id: 'groceries', time: '10:15', label: 'Parking at the Beach Parkway shops', lat: 30.2811, lng: -81.4983 },
+      { id: 'books', time: '13:05', label: 'Walking down Campus Walk', lat: 30.2748, lng: -81.5036 },
+      { id: 'coffee', time: '15:30', label: 'Studying at the library', lat: 30.2699, lng: -81.5095 },
+      { id: 'movie', time: '19:45', label: 'Meeting friends by the cinema', lat: 30.2843, lng: -81.4954 },
+    ],
+  },
+  {
+    id: 'exams',
+    name: 'Exam week',
+    blurb: 'Early starts and long library hours.',
+    weekday: 3,
+    stops: [
+      { id: 'early', time: '07:20', label: 'First into the Student Union', lat: 30.2725, lng: -81.5083 },
+      { id: 'library', time: '11:40', label: 'Settling into the library', lat: 30.2695, lng: -81.5101 },
+      { id: 'break', time: '16:10', label: 'Stretching legs on Campus Walk', lat: 30.2741, lng: -81.5046 },
+      { id: 'night', time: '20:50', label: 'Back at the library for the evening', lat: 30.2698, lng: -81.5096 },
+    ],
+  },
+  {
+    id: 'friday',
+    name: 'Friday night out',
+    blurb: 'Dinner on College Row, then a late film.',
+    weekday: 4,
+    stops: [
+      { id: 'after-class', time: '16:45', label: 'Leaving the last class', lat: 30.2719, lng: -81.5072 },
+      { id: 'dinner', time: '18:30', label: 'Arriving on College Row', lat: 30.2783, lng: -81.5001 },
+      { id: 'film', time: '20:40', label: 'Walking to the cinema', lat: 30.2838, lng: -81.4953 },
+    ],
+  },
 ];
+
+/** The default route's stops. */
+export const DAY_STOPS = DAY_ROUTES[0].stops;
+
+/**
+ * For testing with a real device far from the demo campus: treat the first
+ * place the member checked from as the Student Union, and measure movement
+ * from there. Returns the position in demo-campus coordinates.
+ */
+export function toCampusSpace(here: { lat: number; lng: number }, anchor: { lat: number; lng: number }) {
+  const union = DAY_STOPS[0];
+  return { lat: union.lat + (here.lat - anchor.lat), lng: union.lng + (here.lng - anchor.lng) };
+}
 
 /** Great-circle distance in metres. */
 export function distanceM(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {

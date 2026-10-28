@@ -145,3 +145,14 @@ def test_service_key_is_enforced(monkeypatch):
     monkeypatch.setenv("RECOMMENDER_SERVICE_KEY", "secret")
     assert client.get("/insights").status_code == 401
     assert client.get("/insights", headers={"X-Service-Key": "secret"}).status_code == 200
+
+
+def test_online_only_rewards_need_expiring_points_to_be_a_moment():
+    credit = {"optionId": "nl-credit", "programId": "northline-card", "programName": "Northline Rewards Card", "title": "$10 statement credit",
+              "cost": 1000, "value": 10, "channels": ["online"], "available": 3150, "expiringPoints": 1200, "daysToExpiry": 21, "category": "shopping", "merchants": []}
+    d = moment([credit, latte()])["decision"]
+    assert d["optionId"] == "cc-latte"
+    alone = moment([credit])["decision"]
+    assert alone["optionId"] is None
+    soon = moment([{**credit, "daysToExpiry": 5}])["decision"]
+    assert soon["optionId"] == "nl-credit"

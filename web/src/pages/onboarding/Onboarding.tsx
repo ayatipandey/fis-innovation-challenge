@@ -6,7 +6,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { DemoTag, Logo, Mark, ProgramMark, SwitchRow } from '../../components/bits';
 import type { ProgramsResponse } from '../../lib/types';
 import { useApi } from '../../lib/useApi';
-import { useSession } from '../../state/session';
+import { applyPreferences, useSession } from '../../state/session';
 import { useToast } from '../../state/toast';
 
 const STEPS = [
@@ -39,6 +39,10 @@ export function Onboarding() {
   useEffect(() => {
     headingRef.current?.focus();
   }, [step, done]);
+  // Preview text size, contrast and motion while choosing, before they're saved.
+  useEffect(() => {
+    applyPreferences(draft);
+  }, [draft]);
 
   const current = STEPS[step];
   const linked = programs.data?.programs.filter((p) => p.link).length ?? 0;
