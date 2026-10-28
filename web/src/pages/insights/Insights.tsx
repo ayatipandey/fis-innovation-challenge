@@ -45,6 +45,13 @@ const SEGMENTS: { id: keyof Report['segments']; label: string; what: string }[] 
 /** Partner insights: not linked from the site. Open /insights directly during a presentation. */
 export function Insights() {
   const { data, error, reload } = useApi<InsightsResponse>('/insights');
+  const [updated, setUpdated] = useState(() => new Date());
+  // Live counts change as people use the demo, so refresh every 15 seconds.
+  useEffect(() => {
+    const t = setInterval(() => void reload().then(() => setUpdated(new Date())), 15_000);
+    return () => clearInterval(t);
+  }, [reload]);
+  const refresh = () => void reload().then(() => setUpdated(new Date()));
   useEffect(() => {
     document.title = 'Partner insights · Perkly';
   }, []);
@@ -65,13 +72,13 @@ export function Insights() {
 
         {error && <ErrorState message={error} onRetry={reload} />}
         {!data && !error && <SkeletonRows n={4} />}
-        {data && <Body r={data.model} live={data.live} notice={data.notice} />}
+        {data && <Body r={data.model} live={data.live} notice={data.notice} updated={updated} onRefresh={refresh} />}
       </main>
     </div>
   );
 }
 
-function Body({ r, live, notice }: { r: Report; live: InsightsResponse['live']; notice: string }) {
+function Body({ r, live, notice, updated, onRefresh }: { r: Report; live: InsightsResponse['live']; notice: string; updated: Date; onRefresh: () => void }) {
   const t = r.targeting;
   return (
     <>
@@ -169,7 +176,13 @@ function Body({ r, live, notice }: { r: Report; live: InsightsResponse['live']; 
       </section>
 
       <section className="glass panel" aria-labelledby="live-h">
-        <h2 className="h2" id="live-h">This demo, live</h2>
+        <div className="section-row">
+          <h2 className="h2" id="live-h">This demo, live</h2>
+          <span className="live-refresh">
+            <span className="hint" aria-live="polite">Updated {updated.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit' })}</span>
+            <button type="button" className="btn btn-sm" onClick={onRefresh}>Refresh</button>
+          </span>
+        </div>
         <dl className="live-grid tabular">
           <div><dt>Member accounts</dt><dd>{live.members}</dd></div>
           <div><dt>Programs linked</dt><dd>{live.linkedPrograms}</dd></div>

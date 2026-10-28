@@ -53,3 +53,4 @@
   .ins-tiles, .live-grid { grid-template-columns: 1fr; }
   .hbars li { grid-template-columns: 1fr; gap: 4px; }
 }
+.live-refresh { display: inline-flex; align-items: center; gap: var(--s-2); }
