@@ -64,10 +64,10 @@ export function SignIn() {
       aside={
         <div className="auth-aside-inner">
           <p className="display auth-aside-h">Just looking?</p>
-          <p>The demo opens a fictional member account with sample partner rewards and history, so you can try every screen.</p>
+          <p>The demo opens Maya, a fictional member with five sample programs, balances and purchase history, so you can try every screen.</p>
           <button type="button" className="btn btn-ink" onClick={demo} disabled={busy !== null}>
             {busy === 'demo' && <span className="spinner" aria-hidden />}
-            Try the Demo
+            Try the demo
           </button>
         </div>
       }

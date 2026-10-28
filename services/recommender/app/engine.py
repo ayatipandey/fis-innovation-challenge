@@ -59,6 +59,13 @@ def in_quiet_hours(hour: int, minute: int, start: str, end: str) -> bool:
     return s <= t < e if s < e else (t >= s or t < e)
 
 
+def distance_text(m: float) -> str:
+    """US units: feet when close, miles otherwise."""
+    if m < 161:
+        return f"{max(10, round(m * 3.28084 / 10) * 10)} ft"
+    return f"{m / 1609.344:.1f} mi"
+
+
 def money(n: float) -> str:
     return f"${n:,.2f}".replace(".00", "")
 
@@ -142,7 +149,7 @@ def evaluate(req: MomentRequest) -> MomentResponse:
     top = options[0]
     c, merchant, dist = top["c"], top["merchant"], top["dist"]
     place = merchant.name.split(",")[0] if merchant else c.programName
-    near_txt = f"You’re {dist} m from {place}" if dist is not None and dist <= NEAR_ENOUGH_M else f"Your {c.programName}"
+    near_txt = f"You’re {distance_text(dist)} from {place}" if dist is not None and dist <= NEAR_ENOUGH_M else f"Your {c.programName}"
     exp_txt = (
         f" that expires in {round(c.daysToExpiry)} {'day' if round(c.daysToExpiry) == 1 else 'days'}"
         if c.expiringPoints > 0 and c.daysToExpiry is not None and c.daysToExpiry <= 30
@@ -154,7 +161,7 @@ def evaluate(req: MomentRequest) -> MomentResponse:
 
     reasons = []
     if dist is not None and dist <= NEAR_ENOUGH_M:
-        reasons.append(f"You’re {dist} m away and it’s open.")
+        reasons.append(f"You’re {distance_text(dist)} away and it’s open.")
     if top["hour_share"] * 24 >= 1.5:
         reasons.append(f"You usually buy {CATEGORY_NOUN.get(c.category or '', 'here')} around this time.")
     if c.expiringPoints > 0 and c.daysToExpiry is not None and c.daysToExpiry <= 30:

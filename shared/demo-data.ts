@@ -368,6 +368,12 @@ export function toCampusSpace(here: { lat: number; lng: number }, anchor: { lat:
   return { lat: union.lat + (here.lat - anchor.lat), lng: union.lng + (here.lng - anchor.lng) };
 }
 
+/** US units for display: feet when close, miles otherwise. */
+export function distanceText(m: number) {
+  if (m < 161) return `${Math.max(10, Math.round((m * 3.28084) / 10) * 10)} ft`;
+  return `${(m / 1609.344).toFixed(1)} mi`;
+}
+
 /** Great-circle distance in metres. */
 export function distanceM(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 6371000;

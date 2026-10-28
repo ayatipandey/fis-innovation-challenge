@@ -51,3 +51,8 @@ Error: connect ECONNREFUSED 127.0.0.1:4000
 2:53:56 AM [vite] (client) hmr update /src/pages/app/Pilot.tsx
 2:53:56 AM [vite] (client) hmr update /src/pages/onboarding/Onboarding.tsx
 2:53:56 AM [vite] (client) hmr update /src/components/bits.tsx, /src/pages/app/Explore.tsx, /src/pages/mock/Checkout.tsx, /src/pages/onboarding/Onboarding.tsx, /src/pages/mock/Connect.tsx, /src/pages/app/Home.tsx, /src/pages/app/Pilot.tsx, /src/pages/app/Profile.tsx, /src/state/app.tsx, /src/components/MomentCard.tsx, /src/components/RedeemDialog.tsx
+2:57:26 AM [vite] (client) hmr update /src/components/bits.tsx, /src/pages/app/Explore.tsx, /src/pages/mock/Checkout.tsx, /src/pages/onboarding/Onboarding.tsx, /src/pages/mock/Connect.tsx, /src/pages/app/Home.tsx, /src/pages/app/Pilot.tsx, /src/pages/app/Profile.tsx, /src/state/app.tsx, /src/components/MomentCard.tsx, /src/components/RedeemDialog.tsx
+2:57:26 AM [vite] (client) hmr update /src/pages/app/Home.tsx
+2:57:26 AM [vite] (client) hmr update /src/pages/landing/Landing.tsx
+2:57:26 AM [vite] (client) hmr update /src/pages/onboarding/Onboarding.tsx
+2:57:41 AM [vite] (client) hmr update /src/pages/auth/SignIn.tsx

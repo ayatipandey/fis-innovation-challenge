@@ -179,7 +179,7 @@ describe('moments and ratings', () => {
     assert.equal(res.status, 200);
     assert.equal(res.body.fallback, true);
     assert.ok(res.body.moment);
-    assert.match(res.body.moment.body, /m from Campus Coffee/);
+    assert.match(res.body.moment.body, /ft from Campus Coffee/);
     assert.equal(res.body.moment.ratingKey, 'coffee:morning');
   });
 

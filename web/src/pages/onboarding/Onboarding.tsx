@@ -170,7 +170,7 @@ export function Onboarding() {
         {current.id === 'location' && (
           <div className="onb-body">
             <p className="onb-lede">
-              Location turns “you have a free latte” into “you’re 120 m from Campus Coffee and have a free latte that expires in 6 days.” Perkly checks distance while the app is open and doesn’t keep a record of where you’ve been.
+              Location turns “you have a free latte” into “you’re 400 ft from Campus Coffee and have a free latte that expires in 6 days.” Perkly checks distance while the app is open and doesn’t keep a record of where you’ve been.
             </p>
             <div className="onb-row">
               <button type="button" className="btn btn-primary" onClick={askLocation}><LocateFixed aria-hidden /> Allow location</button>

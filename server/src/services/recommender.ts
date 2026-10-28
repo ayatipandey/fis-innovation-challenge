@@ -1,7 +1,7 @@
 // Client for the Python AI service (moment engine + Perkly's Pilot), with a
 // simple rule-based fallback so the app keeps working when it is unreachable.
 
-import { MERCHANTS, distanceM, optionsFor, programById } from '../../../shared/demo-data.js';
+import { MERCHANTS, distanceM, distanceText, optionsFor, programById } from '../../../shared/demo-data.js';
 import type { Habits, LinkedProgram, UsePlan } from '../../../shared/types.js';
 import { config } from '../config.js';
 
@@ -248,7 +248,7 @@ export function fallbackMoment(req: MomentRequest): MomentResult {
   const { c, m, dist } = top;
   const place = m ? m.name.split(',')[0] : c.programName;
   const days = c.daysToExpiry != null && c.expiringPoints > 0 && c.daysToExpiry <= 30 ? Math.round(c.daysToExpiry) : null;
-  const lead = dist != null ? `You’re ${dist} m from ${place} and have` : `Your ${c.programName} can get you`;
+  const lead = dist != null ? `You’re ${distanceText(dist)} from ${place} and have` : `Your ${c.programName} can get you`;
   const body = `${lead} ${c.title.charAt(0).toLowerCase()}${c.title.slice(1)} worth $${c.value.toFixed(2).replace('.00', '')}${days != null ? ` that expires in ${days} ${days === 1 ? 'day' : 'days'}` : ''}.`;
   let suppressed: string | null = null;
   if (prefs.quietHours.enabled && inQuiet(ctx.hour, ctx.minute, prefs.quietHours.start, prefs.quietHours.end)) suppressed = 'It’s within your quiet hours, so this waits until morning.';

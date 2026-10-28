@@ -127,14 +127,14 @@ function Hero() {
 /** Illustration of the moment: a lock-screen notification over a balance. Described in text for screen readers. */
 function HeroPhone() {
   return (
-    <figure className="hero-phone" aria-label="Example: a notification says you’re 120 m from Campus Coffee and have a free latte worth $5 that expires in 6 days.">
+    <figure className="hero-phone" aria-label="Example: a notification says you’re 400 ft from Campus Coffee and have a free latte worth $5 that expires in 6 days.">
       <div className="phone" aria-hidden>
         <p className="phone-time tabular">8:10</p>
         <p className="phone-date">Tuesday</p>
         <div className="notif glass">
           <span className="notif-app"><Mark size={18} /> Perkly <span className="notif-now">now</span></span>
           <p className="notif-title">Campus Coffee: a free latte</p>
-          <p className="notif-body">You’re 120 m from Campus Coffee and have a free latte worth $5 that expires in 6 days.</p>
+          <p className="notif-body">You’re 400 ft from Campus Coffee and have a free latte worth $5 that expires in 6 days.</p>
         </div>
         <div className="phone-card glass">
           <p className="phone-card-h">Campus Coffee Rewards</p>

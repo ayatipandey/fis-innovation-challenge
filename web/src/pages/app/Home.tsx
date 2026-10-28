@@ -1,4 +1,4 @@
-import { CAMPUS, DAY_ROUTES, distanceM, merchantById, optionById, toCampusSpace, type DayStop } from '@shared/demo-data';
+import { CAMPUS, DAY_ROUTES, distanceM, distanceText, merchantById, optionById, toCampusSpace, type DayStop } from '@shared/demo-data';
 import type { Moment } from '@shared/types';
 import { AlertTriangle, ArrowRight, Clock, LocateFixed, MapPin, Play, QrCode } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -194,7 +194,7 @@ function RightNow({ onUse, onSent }: { onUse: (id: string) => void; onSent: () =
       pos = toCampusSpace(here, anchor.current);
       const moved = distanceM(here, anchor.current);
       setDeviceNote(
-        `You’re ${Math.round(away / 1000).toLocaleString('en-US')} km from the demo campus (the UNF area in Jacksonville, Florida), so Perkly placed the sample shops around you. Where you first checked counts as the Student Union${moved > 20 ? `; you’ve moved ${moved} m since` : ''}. Campus Coffee is about 20 m away, the library café about 330 m, the bookshop about 460 m and Olive & Ash about 1 km.`,
+        `You’re ${Math.round(away / 1609.344).toLocaleString('en-US')} miles from the demo campus (the UNF area in Jacksonville, Florida), so Perkly placed the sample shops around you. Where you first checked counts as the Student Union${moved > 20 ? `; you’ve moved ${distanceText(moved)} since` : ''}. Campus Coffee is about 70 ft away, the library café about 0.2 mi, the bookshop about 0.3 mi and Olive & Ash about 0.6 mi.`,
       );
     } else {
       setDeviceNote(null);
@@ -236,7 +236,7 @@ function RightNow({ onUse, onSent }: { onUse: (id: string) => void; onSent: () =
     );
   }
 
-  // While the page is open, re-check after moving 75 m or every 5 minutes. The phone app does this in the background.
+  // While the page is open, re-check after moving 75 m (about 250 ft) or every 5 minutes. The phone app does this in the background.
   useEffect(() => {
     if (!watching || !('geolocation' in navigator)) return;
     const id = navigator.geolocation.watchPosition(
@@ -356,7 +356,7 @@ function RightNow({ onUse, onSent }: { onUse: (id: string) => void; onSent: () =
                 </select>
               </label>
             </div>
-            <SwitchRow id="now-watch" label="Keep checking while this page is open" hint="Re-checks after you move about 75 m. The phone app will do this in the background." checked={watching} onChange={setWatching} />
+            <SwitchRow id="now-watch" label="Keep checking while this page is open" hint="Re-checks after you move about 250 ft. The phone app will do this in the background." checked={watching} onChange={setWatching} />
           </>
         ) : (
           <Link to="/app/profile/privacy" className="btn btn-quiet"><MapPin aria-hidden /> Turn on location</Link>

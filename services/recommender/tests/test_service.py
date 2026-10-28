@@ -52,7 +52,7 @@ def test_model_file_matches_the_feature_definitions():
 def test_near_with_expiring_points_sends_a_specific_notification():
     d = moment([latte()])["decision"]
     assert d["sent"] is True
-    assert "m from Campus Coffee" in d["body"] and "expires in 6 days" in d["body"]
+    assert "ft from Campus Coffee" in d["body"] and "expires in 6 days" in d["body"]
     assert d["uplift"] >= engine.THRESHOLD
     assert d["pIfNotified"] > d["pIfNot"]
 
@@ -82,7 +82,7 @@ def test_unaffordable_rewards_are_skipped():
 
 def test_location_off_means_no_distance():
     d = moment([latte()], prefs={"locationAllowed": False})["decision"]
-    assert d["distanceM"] is None and "m from" not in d["body"]
+    assert d["distanceM"] is None and " ft from" not in d["body"] and " mi from" not in d["body"]
 
 
 def pilot(message, **extra):
