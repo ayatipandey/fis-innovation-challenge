@@ -94,7 +94,7 @@ export function Pilot() {
         </div>
         <div className="cp-engine">
           <p><Info aria-hidden /> No language model is connected. The Pilot matches your question to a set of points questions, and every number comes from your linked programs, the planner and the moment engine.</p>
-          <p><MapPin aria-hidden /> {located ? `Location: demo campus (${DEMO_SPOT.label.replace('Walking into the ', '')})` : 'Location is off, so answers skip distance.'}</p>
+          <p><MapPin aria-hidden /> {located ? `Location: demo campus near UNF, Jacksonville (${DEMO_SPOT.label.replace('Walking into the ', '')})` : 'Location is off, so answers skip distance.'}</p>
         </div>
       </header>
 

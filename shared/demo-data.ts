@@ -80,6 +80,7 @@ export const PROGRAMS: Program[] = [
 export const programById = (id: string) => PROGRAMS.find((p) => p.id === id);
 
 /** A fictional campus neighbourhood. Coordinates are only used for distance. */
+/** The demo campus: the University of North Florida area, Jacksonville. The shops around it are fictional. */
 export const CAMPUS = { lat: 30.2716, lng: -81.5076, label: 'Campus' };
 
 export const MERCHANTS: Merchant[] = [

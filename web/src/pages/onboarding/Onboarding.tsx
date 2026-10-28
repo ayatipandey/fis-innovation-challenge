@@ -177,7 +177,7 @@ export function Onboarding() {
               {draft.privacy.location && <span className="tag tag-ok"><MapPin aria-hidden /> On</span>}
             </div>
             {locMsg && <p className="notice" role="status">{locMsg}</p>}
-            <p className="hint">The sample shops sit around a demo campus, so “Simulate a day” on Home shows the engine at work wherever you are.</p>
+            <p className="hint">The sample shops sit around a demo campus near UNF in Jacksonville, Florida, so “Simulate a day” on Home shows the engine at work wherever you are.</p>
           </div>
         )}
 

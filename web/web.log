@@ -47,3 +47,7 @@ Error: connect ECONNREFUSED 127.0.0.1:4000
 Error: connect ECONNREFUSED 127.0.0.1:4000
     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1637:16)
 2:52:15 AM [vite] (client) hmr update /src/pages/legal/Legal.tsx
+2:53:56 AM [vite] (client) hmr update /src/pages/app/Home.tsx
+2:53:56 AM [vite] (client) hmr update /src/pages/app/Pilot.tsx
+2:53:56 AM [vite] (client) hmr update /src/pages/onboarding/Onboarding.tsx
+2:53:56 AM [vite] (client) hmr update /src/components/bits.tsx, /src/pages/app/Explore.tsx, /src/pages/mock/Checkout.tsx, /src/pages/onboarding/Onboarding.tsx, /src/pages/mock/Connect.tsx, /src/pages/app/Home.tsx, /src/pages/app/Pilot.tsx, /src/pages/app/Profile.tsx, /src/state/app.tsx, /src/components/MomentCard.tsx, /src/components/RedeemDialog.tsx

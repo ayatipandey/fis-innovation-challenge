@@ -194,7 +194,7 @@ function RightNow({ onUse, onSent }: { onUse: (id: string) => void; onSent: () =
       pos = toCampusSpace(here, anchor.current);
       const moved = distanceM(here, anchor.current);
       setDeviceNote(
-        `You’re ${Math.round(away / 1000).toLocaleString('en-US')} km from the demo campus, so Perkly placed the sample shops around you. Where you first checked counts as the Student Union${moved > 20 ? `; you’ve moved ${moved} m since` : ''}. Campus Coffee is about 20 m away, the library café about 330 m, the bookshop about 460 m and Olive & Ash about 1 km.`,
+        `You’re ${Math.round(away / 1000).toLocaleString('en-US')} km from the demo campus (the UNF area in Jacksonville, Florida), so Perkly placed the sample shops around you. Where you first checked counts as the Student Union${moved > 20 ? `; you’ve moved ${moved} m since` : ''}. Campus Coffee is about 20 m away, the library café about 330 m, the bookshop about 460 m and Olive & Ash about 1 km.`,
       );
     } else {
       setDeviceNote(null);
