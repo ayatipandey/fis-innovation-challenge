@@ -102,10 +102,17 @@ const DOCS: Record<string, Doc> = {
         <ul>
           <li>We don’t sell or share your personal information for money or for cross-context advertising.</li>
           <li>We don’t use third-party analytics, advertising trackers or embedded social widgets.</li>
-          <li>Partner insights show only aggregate, invented results, never an individual member.</li>
+          <li>
+            The partner insights page shows the model’s results on invented data, plus live totals counted from Perkly’s own database (for example,
+            how many notifications were sent or rated Good). It shows totals only, never an individual member, and doesn’t track page views or
+            browsing.
+          </li>
         </ul>
         <h2>Service providers</h2>
-        <p>The prototype runs on {HOST}. Fonts are served from our own server.</p>
+        <p>
+          The prototype runs on {HOST}. Like any web host, Vercel keeps short-lived request logs (such as IP address, time and page requested) to
+          run and secure the service; we don’t use them to profile anyone. Fonts are served from our own server.
+        </p>
         <h2>Your rights</h2>
         <p>
           Wherever you live in the United States, you can download your data, unlink programs and delete your account from Profile. Residents of
@@ -141,6 +148,10 @@ const DOCS: Record<string, Doc> = {
         <p>Your browser remembers your chosen theme so the page doesn’t flash on reload. It holds nothing else.</p>
         <h2>What we don’t use</h2>
         <p>No analytics, advertising, social-media or other third-party cookies, pixels or fingerprinting.</p>
+        <p>
+          The partner insights page doesn’t use cookies or tracking either. Its live numbers are totals counted from Perkly’s own database, such
+          as notifications sent and ratings, not records of who visited which page.
+        </p>
         <h2>Controlling cookies</h2>
         <p>You can delete cookies in your browser settings. If you block the session cookie, you won’t be able to sign in.</p>
       </>
