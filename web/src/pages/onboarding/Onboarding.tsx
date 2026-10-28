@@ -170,14 +170,14 @@ export function Onboarding() {
         {current.id === 'location' && (
           <div className="onb-body">
             <p className="onb-lede">
-              Location turns “you have a free latte” into “you’re 400 ft from Campus Coffee and have a free latte that expires in 6 days.” Perkly checks distance while the app is open and doesn’t keep a record of where you’ve been.
+              Location turns “you have a free latte” into “you’re 400 ft from Starmucks and have a free latte that expires in 6 days.” Perkly checks distance while the app is open and doesn’t keep a record of where you’ve been.
             </p>
             <div className="onb-row">
               <button type="button" className="btn btn-primary" onClick={askLocation}><LocateFixed aria-hidden /> Allow location</button>
               {draft.privacy.location && <span className="tag tag-ok"><MapPin aria-hidden /> On</span>}
             </div>
             {locMsg && <p className="notice" role="status">{locMsg}</p>}
-            <p className="hint">The sample shops sit around a demo campus near UNF in Jacksonville, Florida, so “Simulate a day” on Home shows the engine at work wherever you are.</p>
+            <p className="hint">The sample shops sit around the FIS office on Riverside Ave and the UNF campus in Jacksonville, Florida, so “Simulate a day” on Home shows the engine at work wherever you are.</p>
           </div>
         )}
 

@@ -89,7 +89,7 @@ const DOCS: Record<string, Doc> = {
         <h2>Location</h2>
         <p>
           Off unless you allow it. When it’s on, the app checks how far you are from shops where your points work, while the app is open. The
-          location is used for that check and isn’t stored. In the prototype, “Simulate a day” uses invented positions around a demo campus.
+          location is used for that check and isn’t stored. In the prototype, “Simulate a day” uses invented routes around the FIS office and the UNF campus in Jacksonville.
         </p>
         <h2>How we use it</h2>
         <ul>

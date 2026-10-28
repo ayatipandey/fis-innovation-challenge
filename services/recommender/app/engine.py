@@ -118,7 +118,11 @@ def evaluate(req: MomentRequest) -> MomentResponse:
         return "online" in s["c"].channels
 
     # Net value: a minimum spend above the member's usual order eats into what they really gain.
-    ranked = sorted(scored, key=lambda s: s["uplift"] * max(0.0, s["c"].value - s["extra"]), reverse=True)
+    # Rewards that fit what the member usually buys at this hour rank higher: up to 2.5x for a strong habit.
+    def fit(s):
+        return 1.0 + min(1.5, s["hour_share"] * 24 / 4)
+
+    ranked = sorted(scored, key=lambda s: s["uplift"] * max(0.0, s["c"].value - s["extra"]) * fit(s), reverse=True)
     considered = [
         Scored(
             optionId=s["c"].optionId,

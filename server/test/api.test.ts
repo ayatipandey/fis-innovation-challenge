@@ -136,7 +136,7 @@ describe('holds', () => {
   it('confirming spends the points, soonest-expiring first', async () => {
     const agent = await demoAgent();
     const h = (await agent.post('/api/me/holds').set(H).send({ optionId: 'cc-latte', channel: 'in_store', idempotencyKey: 'confirm-123456' })).body.hold;
-    assert.match(h.code, /^CC-[0-9A-F]{8}$/);
+    assert.match(h.code, /^SM-[0-9A-F]{8}$/);
     const twoHours = new Date(h.expiresAt).getTime() - new Date(h.createdAt).getTime();
     assert.equal(twoHours, 120 * 60_000);
     const c = await agent.post(`/api/me/holds/${h.id}/confirm`).set(H);
@@ -179,7 +179,7 @@ describe('moments and ratings', () => {
     assert.equal(res.status, 200);
     assert.equal(res.body.fallback, true);
     assert.ok(res.body.moment);
-    assert.match(res.body.moment.body, /ft from Campus Coffee/);
+    assert.match(res.body.moment.body, /ft from Starmucks/);
     assert.equal(res.body.moment.ratingKey, 'coffee:morning');
   });
 

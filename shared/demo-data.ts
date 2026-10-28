@@ -22,56 +22,56 @@ export const categoryLabel = (id: CategoryId) => CATEGORIES.find((c) => c.id ===
 export const PROGRAMS: Program[] = [
   {
     id: 'campus-coffee',
-    name: 'Campus Coffee Rewards',
-    issuer: 'Campus Coffee',
+    name: 'Starmucks Rewards',
+    issuer: 'Starmucks Coffee',
     kind: 'stamp_card',
     unit: 'points',
     category: 'coffee',
-    monogram: 'CC',
-    earnRule: '1 point per $1 spent at Campus Coffee.',
+    monogram: 'SM',
+    earnRule: '1 point per $1 spent at Starmucks.',
     expiryRule: 'Points expire 90 days after they are earned.',
   },
   {
     id: 'northline-card',
-    name: 'Northline Rewards Card',
-    issuer: 'Northline Bank',
+    name: 'Chaste Freedom Card',
+    issuer: 'Chaste Bank',
     kind: 'bank_card',
     unit: 'points',
     category: null,
-    monogram: 'NB',
+    monogram: 'CF',
     earnRule: '2 points per $1 on dining and coffee, 1 point per $1 on everything else.',
     expiryRule: 'Points expire 12 months after they are earned.',
   },
   {
     id: 'pageturn-books',
-    name: 'Pageturn Books Membership',
-    issuer: 'Pageturn Books',
+    name: 'Barns & Novel Membership',
+    issuer: 'Barns & Novel',
     kind: 'store_membership',
     unit: 'points',
     category: 'books',
-    monogram: 'PB',
-    earnRule: '10 points per $1 spent at Pageturn Books.',
-    expiryRule: 'Points expire at the end of each semester.',
+    monogram: 'BN',
+    earnRule: '10 points per $1 spent at Barns & Novel.',
+    expiryRule: 'Points expire 12 months after they are earned.',
   },
   {
     id: 'freshcart',
-    name: 'FreshCart Points',
-    issuer: 'FreshCart Market',
+    name: 'Pubmix Club Points',
+    issuer: 'Pubmix',
     kind: 'store_membership',
     unit: 'points',
     category: 'groceries',
-    monogram: 'FC',
-    earnRule: '10 points per $1 spent at FreshCart.',
+    monogram: 'PX',
+    earnRule: '10 points per $1 spent at Pubmix.',
     expiryRule: 'Points expire 6 months after they are earned.',
   },
   {
     id: 'reel-stars',
-    name: 'Reel Cinemas Stars',
-    issuer: 'Reel Cinemas',
+    name: 'AMZ Stubs Stars',
+    issuer: 'AMZ Theatres',
     kind: 'stamp_card',
     unit: 'stars',
     category: 'entertainment',
-    monogram: 'RC',
+    monogram: 'AM',
     earnRule: '1 star per ticket.',
     expiryRule: 'Stars expire 60 days after they are earned.',
   },
@@ -79,17 +79,26 @@ export const PROGRAMS: Program[] = [
 
 export const programById = (id: string) => PROGRAMS.find((p) => p.id === id);
 
-/** A fictional campus neighbourhood. Coordinates are only used for distance. */
-/** The demo campus: the University of North Florida area, Jacksonville. The shops around it are fictional. */
-export const CAMPUS = { lat: 30.2716, lng: -81.5076, label: 'Campus' };
+/** Demo locations. The brands are parodies of real local brands and the shops are fictional; only the places are real. */
+export const FIS = { lat: 30.3192, lng: -81.6707, label: 'FIS office, 347 Riverside Ave' };
+/** The second demo area: the University of North Florida campus, Jacksonville. */
+export const CAMPUS = { lat: 30.2716, lng: -81.5076, label: 'UNF campus' };
 
 export const MERCHANTS: Merchant[] = [
-  { id: 'cc-union', name: 'Campus Coffee, Student Union', category: 'coffee', subcategory: 'Coffee shops', address: 'Student Union, ground floor', lat: 30.2722, lng: -81.5079, opens: 7, closes: 20, website: 'https://campus-coffee.example' },
-  { id: 'cc-library', name: 'Campus Coffee, Library', category: 'coffee', subcategory: 'Coffee shops', address: 'Main Library, level 1', lat: 30.2697, lng: -81.5098, opens: 8, closes: 22, website: 'https://campus-coffee.example' },
-  { id: 'olive-ash', name: 'Olive & Ash Kitchen', category: 'food', subcategory: 'Dinner', address: '12 College Row', lat: 30.278, lng: -81.5005, opens: 11, closes: 22, website: 'https://olive-ash.example' },
-  { id: 'pageturn', name: 'Pageturn Books', category: 'books', subcategory: 'Textbooks', address: '4 Campus Walk', lat: 30.2745, lng: -81.504, opens: 9, closes: 20, website: 'https://pageturn-books.example' },
-  { id: 'freshcart', name: 'FreshCart Market', category: 'groceries', subcategory: 'Supermarket', address: '220 Beach Parkway', lat: 30.2808, lng: -81.4987, opens: 7, closes: 23, website: 'https://freshcart.example' },
-  { id: 'reel', name: 'Reel Cinemas', category: 'entertainment', subcategory: 'Cinema', address: '300 Beach Parkway', lat: 30.284, lng: -81.495, opens: 12, closes: 24, website: 'https://reel-cinemas.example' },
+  // Around the FIS office (Riverside / Brooklyn, Jacksonville).
+  { id: 'cc-riverside', name: 'Starmucks, Riverside Ave', category: 'coffee', subcategory: 'Coffee shops', address: 'Riverside Ave, Brooklyn', lat: 30.3186, lng: -81.6714, opens: 6, closes: 19, website: 'https://starmucks.example' },
+  { id: 'cc-brooklyn', name: 'Starmucks, Brooklyn Station', category: 'coffee', subcategory: 'Coffee shops', address: 'Brooklyn Station, Riverside Ave', lat: 30.316, lng: -81.6733, opens: 6, closes: 21, website: 'https://starmucks.example' },
+  { id: 'cfb-riverside', name: 'Chick-fil-B, Riverside', category: 'food', subcategory: 'Quick service', address: 'Riverside Ave', lat: 30.3166, lng: -81.6748, opens: 7, closes: 22, website: 'https://chick-fil-b.example' },
+  { id: 'px-brooklyn', name: 'Pubmix, Brooklyn Station', category: 'groceries', subcategory: 'Supermarket', address: 'Brooklyn Station, Riverside Ave', lat: 30.3134, lng: -81.675, opens: 7, closes: 22, website: 'https://pubmix.example' },
+  { id: 'bn-fivepoints', name: 'Barns & Novel, Five Points', category: 'books', subcategory: 'Bookstore', address: 'Park St, Five Points', lat: 30.3108, lng: -81.6799, opens: 9, closes: 21, website: 'https://barns-and-novel.example' },
+  { id: 'amz-downtown', name: 'AMZ Theatres, Downtown', category: 'entertainment', subcategory: 'Cinema', address: 'Bay St, Downtown', lat: 30.3262, lng: -81.6612, opens: 11, closes: 24, website: 'https://amz-theatres.example' },
+  // Around the UNF campus.
+  { id: 'cc-union', name: 'Starmucks, UNF Student Union', category: 'coffee', subcategory: 'Coffee shops', address: 'Student Union, ground floor', lat: 30.2722, lng: -81.5079, opens: 7, closes: 20, website: 'https://starmucks.example' },
+  { id: 'cc-library', name: 'Starmucks, UNF Library', category: 'coffee', subcategory: 'Coffee shops', address: 'Library, level 1', lat: 30.2697, lng: -81.5098, opens: 8, closes: 22, website: 'https://starmucks.example' },
+  { id: 'olive-ash', name: 'Chick-fil-B, St. Johns Bluff', category: 'food', subcategory: 'Quick service', address: 'St. Johns Bluff Rd', lat: 30.278, lng: -81.5005, opens: 7, closes: 22, website: 'https://chick-fil-b.example' },
+  { id: 'pageturn', name: 'Barns & Novel, UNF Bookstore', category: 'books', subcategory: 'Bookstore', address: 'UNF Bookstore', lat: 30.2745, lng: -81.504, opens: 9, closes: 20, website: 'https://barns-and-novel.example' },
+  { id: 'freshcart', name: 'Pubmix, Beach Blvd', category: 'groceries', subcategory: 'Supermarket', address: 'Beach Blvd', lat: 30.2808, lng: -81.4987, opens: 7, closes: 22, website: 'https://pubmix.example' },
+  { id: 'reel', name: 'AMZ Theatres, Southside', category: 'entertainment', subcategory: 'Cinema', address: 'Southside Blvd', lat: 30.284, lng: -81.495, opens: 12, closes: 24, website: 'https://amz-theatres.example' },
 ];
 
 export const merchantById = (id: string | null) => (id ? MERCHANTS.find((m) => m.id === id) : undefined);
@@ -97,105 +106,113 @@ export const merchantById = (id: string | null) => (id ? MERCHANTS.find((m) => m
 const both: RewardOption['channels'] = ['in_store', 'online'];
 
 export const OPTIONS: RewardOption[] = [
-  // Campus Coffee: the 70-point example. Small, frequent rewards vs one big one with a minimum.
+  // Starmucks: the 70-point example. Small, frequent rewards vs one big one with a minimum.
   {
-    id: 'cc-2off', programId: 'campus-coffee', merchantIds: ['cc-union', 'cc-library'], title: '$2 off any drink', cost: 10, value: 2,
+    id: 'cc-2off', programId: 'campus-coffee', merchantIds: ['cc-riverside', 'cc-brooklyn', 'cc-union', 'cc-library'], title: '$2 off any drink', cost: 10, value: 2,
     valueBasis: 'Fixed $2.00 discount.', minSpend: null, channels: both,
-    valid: ['Any drink, any size', 'All Campus Coffee locations and the order-ahead site'],
+    valid: ['Any drink, any size', 'All Starmucks locations and the mobile-order app'],
     notValid: ['Bags of coffee beans and merchandise', 'Gift cards'], stacking: 'One reward per order.',
-    howToUse: { online: 'Order ahead on Campus Coffee’s site with the points already applied.', inStore: 'Show your code at the counter before you pay.' },
-    url: 'https://campus-coffee.example/order',
+    howToUse: { online: 'Order ahead in the Starmucks app with the points already applied.', inStore: 'Show your code at the counter before you pay.' },
+    url: 'https://starmucks.example/order',
   },
   {
-    id: 'cc-latte', programId: 'campus-coffee', merchantIds: ['cc-union', 'cc-library'], title: 'A free latte', cost: 25, value: 5,
+    id: 'cc-latte', programId: 'campus-coffee', merchantIds: ['cc-riverside', 'cc-brooklyn', 'cc-union', 'cc-library'], title: 'A free latte', cost: 25, value: 5,
     valueBasis: 'Menu price of a regular latte.', minSpend: null, channels: both,
-    valid: ['Regular latte, any milk', 'All Campus Coffee locations'],
+    valid: ['Regular latte, any milk', 'All Starmucks locations'],
     notValid: ['Large size upgrades are charged', 'Gift cards'], stacking: 'One reward per order.',
     howToUse: { online: 'Order ahead with the points already applied.', inStore: 'Show your code at the counter.' },
-    url: 'https://campus-coffee.example/order',
+    url: 'https://starmucks.example/order',
   },
   {
-    id: 'cc-15off', programId: 'campus-coffee', merchantIds: ['cc-union', 'cc-library'], title: '$15 off an order of $20 or more', cost: 70, value: 15,
+    id: 'cc-15off', programId: 'campus-coffee', merchantIds: ['cc-riverside', 'cc-brooklyn', 'cc-union', 'cc-library'], title: '$15 off an order of $20 or more', cost: 70, value: 15,
     valueBasis: 'Fixed $15.00 discount on orders of $20.00 or more.', minSpend: 20, channels: both,
     valid: ['Drinks, food and catering trays'],
     notValid: ['Gift cards', 'Merchandise'], stacking: 'One reward per order.',
     howToUse: { online: 'Order ahead with the points already applied.', inStore: 'Show your code at the counter.' },
-    url: 'https://campus-coffee.example/order',
+    url: 'https://starmucks.example/order',
   },
 
-  // Northline bank card points, spendable at participating merchants.
+  // Chaste Freedom card points, spendable at participating merchants.
   {
-    id: 'nl-latte', programId: 'northline-card', merchantIds: ['cc-union', 'cc-library'], title: 'A free latte at Campus Coffee', cost: 800, value: 5,
+    id: 'nl-latte', programId: 'northline-card', merchantIds: ['cc-riverside', 'cc-brooklyn', 'cc-union', 'cc-library'], title: 'A free latte at Starmucks', cost: 800, value: 5,
     valueBasis: 'Menu price of a regular latte.', minSpend: null, channels: ['in_store'],
-    valid: ['Regular latte at any Campus Coffee'],
-    notValid: ['Order-ahead orders'], stacking: 'Can’t be combined with Campus Coffee Rewards on the same order.',
-    howToUse: { online: null, inStore: 'Show your code at the counter, then pay with your Northline card.' },
+    valid: ['Regular latte at any Starmucks'],
+    notValid: ['Order-ahead orders'], stacking: 'Can’t be combined with Starmucks Rewards on the same order.',
+    howToUse: { online: null, inStore: 'Show your code at the counter, then pay with your Chaste Freedom card.' },
     url: null,
   },
   {
-    id: 'nl-dinner', programId: 'northline-card', merchantIds: ['olive-ash'], title: '$24 off dinner at Olive & Ash', cost: 2400, value: 24,
-    valueBasis: 'Fixed $24.00 discount on a dinner bill of $40.00 or more.', minSpend: 40, channels: ['in_store'],
-    valid: ['Dinner menu, from 5 pm', 'Olive & Ash Kitchen'],
-    notValid: ['Alcohol', 'Lunch menu'], stacking: 'One per table.',
-    howToUse: { online: null, inStore: 'Show your code when you ask for the bill.' },
+    id: 'nl-dinner', programId: 'northline-card', merchantIds: ['cfb-riverside', 'olive-ash'], title: '$24 off a Chick-fil-B catering order', cost: 2400, value: 24,
+    valueBasis: 'Fixed $24.00 discount on catering orders of $40.00 or more.', minSpend: 40, channels: ['in_store'],
+    valid: ['Catering trays and family meals', 'Any Chick-fil-B'],
+    notValid: ['Delivery fees', 'Gift cards'], stacking: 'One per order.',
+    howToUse: { online: null, inStore: 'Show your code when you order at the counter.' },
     url: null,
   },
   {
-    id: 'nl-books', programId: 'northline-card', merchantIds: ['pageturn'], title: '$5 off at Pageturn Books', cost: 500, value: 5,
+    id: 'nl-sandwich', programId: 'northline-card', merchantIds: ['cfb-riverside', 'olive-ash'], title: 'A free chicken sandwich at Chick-fil-B', cost: 900, value: 6.5,
+    valueBasis: 'Menu price of a chicken sandwich.', minSpend: null, channels: ['in_store'],
+    valid: ['Original or spicy chicken sandwich', 'Any Chick-fil-B'],
+    notValid: ['Meals and sides', 'Catering'], stacking: 'One per order.',
+    howToUse: { online: null, inStore: 'Show your code at the counter, then pay with your Chaste Freedom card.' },
+    url: null,
+  },
+  {
+    id: 'nl-books', programId: 'northline-card', merchantIds: ['bn-fivepoints', 'pageturn'], title: '$5 off at Barns & Novel', cost: 500, value: 5,
     valueBasis: 'Fixed $5.00 discount.', minSpend: null, channels: both,
-    valid: ['Any purchase at Pageturn Books'],
-    notValid: ['Gift cards'], stacking: 'Combines with Pageturn membership rewards.',
-    howToUse: { online: 'Shop on Pageturn’s site with the points already applied.', inStore: 'Show your code at the register.' },
-    url: 'https://pageturn-books.example/shop',
+    valid: ['Any purchase at Barns & Novel'],
+    notValid: ['Gift cards'], stacking: 'Combines with Barns & Novel membership rewards.',
+    howToUse: { online: 'Shop on Barns & Novel’s site with the points already applied.', inStore: 'Show your code at the register.' },
+    url: 'https://barns-and-novel.example/shop',
   },
   {
     id: 'nl-credit', programId: 'northline-card', merchantIds: [], title: '$10 statement credit', cost: 1000, value: 10,
     valueBasis: '1 cent per point, credited to your card.', minSpend: null, channels: ['online'],
-    valid: ['Any Northline Rewards Card account'],
+    valid: ['Any Chaste Freedom Card account'],
     notValid: [], stacking: 'Not applicable.',
-    howToUse: { online: 'Northline applies the credit to your next statement.', inStore: null },
-    url: 'https://northline-bank.example/rewards',
+    howToUse: { online: 'Chaste applies the credit to your next statement.', inStore: null },
+    url: 'https://chaste-bank.example/rewards',
   },
 
-  // Pageturn Books membership.
+  // Barns & Novel membership.
   {
-    id: 'pt-5off', programId: 'pageturn-books', merchantIds: ['pageturn'], title: '$5 off any purchase', cost: 250, value: 5,
+    id: 'pt-5off', programId: 'pageturn-books', merchantIds: ['bn-fivepoints', 'pageturn'], title: '$5 off any purchase', cost: 250, value: 5,
     valueBasis: 'Fixed $5.00 discount.', minSpend: null, channels: both,
-    valid: ['Books, stationery and campus merchandise'],
+    valid: ['Books, stationery and gifts'],
     notValid: ['Gift cards', 'Textbook rentals'], stacking: 'One reward per order.',
-    howToUse: { online: 'Shop on Pageturn’s site with the points already applied.', inStore: 'Show your code at the register.' },
-    url: 'https://pageturn-books.example/shop',
+    howToUse: { online: 'Shop on Barns & Novel’s site with the points already applied.', inStore: 'Show your code at the register.' },
+    url: 'https://barns-and-novel.example/shop',
   },
   {
-    id: 'pt-15off', programId: 'pageturn-books', merchantIds: ['pageturn'], title: '$15 off textbooks over $50', cost: 600, value: 15,
+    id: 'pt-15off', programId: 'pageturn-books', merchantIds: ['bn-fivepoints', 'pageturn'], title: '$15 off textbooks over $50', cost: 600, value: 15,
     valueBasis: 'Fixed $15.00 discount on textbooks totalling $50.00 or more.', minSpend: 50, channels: both,
     valid: ['New and used textbooks'],
     notValid: ['Textbook rentals', 'Digital access codes'], stacking: 'One reward per order.',
-    howToUse: { online: 'Shop on Pageturn’s site with the points already applied.', inStore: 'Show your code at the register.' },
-    url: 'https://pageturn-books.example/textbooks',
+    howToUse: { online: 'Shop on Barns & Novel’s site with the points already applied.', inStore: 'Show your code at the register.' },
+    url: 'https://barns-and-novel.example/textbooks',
   },
 
-  // FreshCart grocery points.
+  // Pubmix grocery points.
   {
-    id: 'fc-5off', programId: 'freshcart', merchantIds: ['freshcart'], title: '$5 off your shop', cost: 500, value: 5,
+    id: 'fc-5off', programId: 'freshcart', merchantIds: ['px-brooklyn', 'freshcart'], title: '$5 off your shop', cost: 500, value: 5,
     valueBasis: 'Fixed $5.00 discount.', minSpend: null, channels: both,
     valid: ['Groceries and household items'],
     notValid: ['Alcohol and tobacco', 'Gift cards'], stacking: 'One reward per shop.',
-    howToUse: { online: 'Shop on FreshCart’s site with the points already applied.', inStore: 'Scan your code at the register.' },
-    url: 'https://freshcart.example/shop',
+    howToUse: { online: 'Shop on Pubmix’s site with the points already applied.', inStore: 'Scan your code at the register.' },
+    url: 'https://pubmix.example/shop',
   },
   {
-    id: 'fc-12off', programId: 'freshcart', merchantIds: ['freshcart'], title: '$12 off a shop of $40 or more', cost: 1000, value: 12,
+    id: 'fc-12off', programId: 'freshcart', merchantIds: ['px-brooklyn', 'freshcart'], title: '$12 off a shop of $40 or more', cost: 1000, value: 12,
     valueBasis: 'Fixed $12.00 discount on shops of $40.00 or more.', minSpend: 40, channels: both,
     valid: ['Groceries and household items'],
     notValid: ['Alcohol and tobacco', 'Gift cards', 'Delivery fees'], stacking: 'One reward per shop.',
-    howToUse: { online: 'Shop on FreshCart’s site with the points already applied.', inStore: 'Scan your code at the register.' },
-    url: 'https://freshcart.example/shop',
+    howToUse: { online: 'Shop on Pubmix’s site with the points already applied.', inStore: 'Scan your code at the register.' },
+    url: 'https://pubmix.example/shop',
   },
 
-  // Reel Cinemas stars.
+  // AMZ Theatres stars.
   {
-    id: 'rc-popcorn', programId: 'reel-stars', merchantIds: ['reel'], title: 'Free medium popcorn', cost: 5, value: 6.5,
+    id: 'rc-popcorn', programId: 'reel-stars', merchantIds: ['amz-downtown', 'reel'], title: 'Free medium popcorn', cost: 5, value: 6.5,
     valueBasis: 'Menu price of a medium popcorn.', minSpend: null, channels: ['in_store'],
     valid: ['Medium popcorn, any flavor'],
     notValid: ['Combo meals'], stacking: 'One per visit.',
@@ -203,12 +220,12 @@ export const OPTIONS: RewardOption[] = [
     url: null,
   },
   {
-    id: 'rc-ticket', programId: 'reel-stars', merchantIds: ['reel'], title: 'A free standard ticket', cost: 12, value: 13,
+    id: 'rc-ticket', programId: 'reel-stars', merchantIds: ['amz-downtown', 'reel'], title: 'A free standard ticket', cost: 12, value: 13,
     valueBasis: 'Price of a standard evening ticket.', minSpend: null, channels: both,
     valid: ['Standard 2D screenings'],
     notValid: ['IMAX, 3D and special events'], stacking: 'One per booking.',
-    howToUse: { online: 'Book on Reel’s site with the stars already applied.', inStore: 'Show your code at the box office.' },
-    url: 'https://reel-cinemas.example/book',
+    howToUse: { online: 'Book on AMZ’s site with the stars already applied.', inStore: 'Show your code at the box office.' },
+    url: 'https://amz-theatres.example/book',
   },
 ];
 
@@ -224,21 +241,25 @@ export const DEMO_BALANCES: Record<string, { balance: number; expiring: { points
   'reel-stars': { balance: 9, expiring: [{ points: 9, inDays: 4 }] },
 };
 
-/** The fictional student behind "Try the Demo". */
+/** The fictional member behind "Try the demo". */
 export const DEMO_PERSON = {
-  displayName: 'Maya',
+  displayName: 'John',
+  fullName: 'John Doe',
   categories: ['coffee', 'food', 'groceries', 'books'] as CategoryId[],
   linked: ['campus-coffee', 'northline-card', 'pageturn-books', 'freshcart', 'reel-stars'],
 };
 
-/** Habit profile used to generate a believable synthetic purchase history. */
+/** Habit profile used to generate a believable synthetic purchase history: workdays near FIS, evening classes at UNF. */
 const ROUTINE: { merchantId: string; perWeek: number; spend: [number, number]; hours: [number, number]; days: number[] }[] = [
-  { merchantId: 'cc-union', perWeek: 4, spend: [4.5, 8.5], hours: [7, 10], days: [0, 1, 2, 3, 4] },
-  { merchantId: 'cc-library', perWeek: 1.5, spend: [4, 7], hours: [14, 21], days: [0, 1, 2, 3, 6] },
-  { merchantId: 'olive-ash', perWeek: 1, spend: [12, 36], hours: [12, 20], days: [3, 4, 5] },
-  { merchantId: 'freshcart', perWeek: 1.2, spend: [28, 58], hours: [16, 20], days: [2, 5, 6] },
-  { merchantId: 'pageturn', perWeek: 0.35, spend: [12, 45], hours: [13, 17], days: [0, 1, 2, 3, 4] },
-  { merchantId: 'reel', perWeek: 0.5, spend: [11, 22], hours: [18, 22], days: [4, 5] },
+  { merchantId: 'cc-riverside', perWeek: 3.5, spend: [4.5, 8.5], hours: [7, 9], days: [0, 1, 2, 3, 4] },
+  { merchantId: 'cc-brooklyn', perWeek: 1, spend: [4, 7], hours: [14, 16], days: [0, 1, 2, 3, 4] },
+  { merchantId: 'cc-library', perWeek: 1, spend: [4, 7], hours: [17, 20], days: [1, 3] },
+  { merchantId: 'cfb-riverside', perWeek: 1.2, spend: [9, 16], hours: [11, 13], days: [0, 1, 2, 3, 4] },
+  { merchantId: 'px-brooklyn', perWeek: 1.2, spend: [28, 58], hours: [17, 19], days: [1, 3, 4] },
+  { merchantId: 'freshcart', perWeek: 0.4, spend: [30, 55], hours: [10, 14], days: [5, 6] },
+  { merchantId: 'pageturn', perWeek: 0.25, spend: [12, 45], hours: [17, 19], days: [1, 3] },
+  { merchantId: 'bn-fivepoints', perWeek: 0.2, spend: [12, 30], hours: [12, 16], days: [5, 6] },
+  { merchantId: 'amz-downtown', perWeek: 0.5, spend: [11, 22], hours: [18, 22], days: [4, 5] },
 ];
 
 /** Which merchants a program can see purchases from. A bank card sees all of them. */
@@ -296,6 +317,8 @@ export interface DayStop {
 
 export interface DayRoute {
   id: string;
+  /** Which demo area the route is in. */
+  place: 'fis' | 'unf';
   name: string;
   blurb: string;
   /** 0 = Monday. */
@@ -303,11 +326,39 @@ export interface DayRoute {
   stops: DayStop[];
 }
 
-/** Routes for "Simulate a day": invented days past the sample shops, each in a different part of town. */
+/** Routes for "Simulate a day": invented days past the sample shops, around the FIS office first, then the UNF campus. */
 export const DAY_ROUTES: DayRoute[] = [
   {
+    id: 'fis-workday',
+    place: 'fis',
+    name: 'Workday at FIS',
+    blurb: 'Morning coffee, lunch on Riverside Ave, groceries on the way home.',
+    weekday: 1,
+    stops: [
+      { id: 'arrive', time: '08:20', label: 'Arriving at the FIS office', lat: 30.3192, lng: -81.6707 },
+      { id: 'lunch', time: '12:10', label: 'Lunch walk down Riverside Ave', lat: 30.3169, lng: -81.6744 },
+      { id: 'break', time: '15:30', label: 'Afternoon break at Brooklyn Station', lat: 30.3163, lng: -81.673 },
+      { id: 'home', time: '17:50', label: 'Heading home through Brooklyn Station', lat: 30.3137, lng: -81.6747 },
+      { id: 'late', time: '21:40', label: 'Leaving a late film downtown', lat: 30.3258, lng: -81.6616 },
+    ],
+  },
+  {
+    id: 'fis-friday',
+    place: 'fis',
+    name: 'Friday near FIS',
+    blurb: 'A short Friday: lunch, a Five Points browse, then a film downtown.',
+    weekday: 4,
+    stops: [
+      { id: 'arrive', time: '08:25', label: 'Walking into the FIS office', lat: 30.319, lng: -81.6709 },
+      { id: 'lunch', time: '12:20', label: 'Team lunch on Riverside Ave', lat: 30.3168, lng: -81.6745 },
+      { id: 'browse', time: '18:15', label: 'Browsing in Five Points', lat: 30.3111, lng: -81.6795 },
+      { id: 'film', time: '20:20', label: 'Walking to the cinema downtown', lat: 30.3259, lng: -81.6615 },
+    ],
+  },
+  {
     id: 'campus',
-    name: 'Tuesday on campus',
+    place: 'unf',
+    name: 'Tuesday at UNF',
     blurb: 'Classes, a coffee habit and a late study group.',
     weekday: 1,
     stops: [
@@ -320,7 +371,8 @@ export const DAY_ROUTES: DayRoute[] = [
   },
   {
     id: 'errands',
-    name: 'Saturday errands',
+    place: 'unf',
+    name: 'Saturday near UNF',
     blurb: 'Groceries, a bookshop browse and a movie, no classes.',
     weekday: 5,
     stops: [
@@ -332,7 +384,8 @@ export const DAY_ROUTES: DayRoute[] = [
   },
   {
     id: 'exams',
-    name: 'Exam week',
+    place: 'unf',
+    name: 'Exam week at UNF',
     blurb: 'Early starts and long library hours.',
     weekday: 3,
     stops: [
@@ -344,8 +397,9 @@ export const DAY_ROUTES: DayRoute[] = [
   },
   {
     id: 'friday',
-    name: 'Friday night out',
-    blurb: 'Dinner on College Row, then a late film.',
+    place: 'unf',
+    name: 'Friday night near UNF',
+    blurb: 'A Chick-fil-B stop, then a late film.',
     weekday: 4,
     stops: [
       { id: 'after-class', time: '16:45', label: 'Leaving the last class', lat: 30.2719, lng: -81.5072 },
@@ -355,17 +409,23 @@ export const DAY_ROUTES: DayRoute[] = [
   },
 ];
 
-/** The default route's stops. */
+/** The default route's stops (FIS). */
 export const DAY_STOPS = DAY_ROUTES[0].stops;
 
+/** Where Perkly's Pilot stands in each demo area. */
+export const DEMO_SPOTS = {
+  fis: { id: 'fis', name: 'FIS office', detail: '347 Riverside Ave', lat: 30.3192, lng: -81.6707 },
+  unf: { id: 'unf', name: 'UNF campus', detail: 'Student Union', lat: 30.2723, lng: -81.5081 },
+} as const;
+
 /**
- * For testing with a real device far from the demo campus: treat the first
- * place the member checked from as the Student Union, and measure movement
- * from there. Returns the position in demo-campus coordinates.
+ * For testing with a real device far from both demo areas: treat the first
+ * place the member checked from as the FIS office, and measure movement from
+ * there. Returns the position in demo coordinates.
  */
 export function toCampusSpace(here: { lat: number; lng: number }, anchor: { lat: number; lng: number }) {
-  const union = DAY_STOPS[0];
-  return { lat: union.lat + (here.lat - anchor.lat), lng: union.lng + (here.lng - anchor.lng) };
+  const office = DEMO_SPOTS.fis;
+  return { lat: office.lat + (here.lat - anchor.lat), lng: office.lng + (here.lng - anchor.lng) };
 }
 
 /** US units for display: feet when close, miles otherwise. */

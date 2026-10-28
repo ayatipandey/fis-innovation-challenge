@@ -1,5 +1,5 @@
-import { DAY_STOPS, optionById, programById } from '@shared/demo-data';
-import { AlertTriangle, ArrowUp, Info, MapPin, RotateCcw } from 'lucide-react';
+import { DEMO_SPOTS, optionById, programById } from '@shared/demo-data';
+import { AlertTriangle, ArrowUp, MapPin, RotateCcw } from 'lucide-react';
 import { Fragment, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { ProgramMark } from '../../components/bits';
 import { api, localTime } from '../../lib/api';
@@ -19,8 +19,7 @@ const SUGGESTED = [
   'How much are all my points worth?',
 ];
 
-/** The web preview can't assume you're near the sample shops, so the Pilot stands at the demo campus. */
-const DEMO_SPOT = DAY_STOPS[0];
+type SpotId = keyof typeof DEMO_SPOTS;
 
 /** Renders **bold** and "- " bullet lines. Nothing else is interpreted. */
 function RichText({ text }: { text: string }) {
@@ -54,6 +53,9 @@ export function Pilot() {
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const idRef = useRef(0);
+  // The web preview can't assume you're near the sample shops, so the Pilot stands at a demo location: FIS by default.
+  const [spotId, setSpotId] = useState<SpotId>('fis');
+  const spot = DEMO_SPOTS[spotId];
 
   useEffect(() => {
     document.title = 'Perkly’s Pilot · Perkly';
@@ -69,7 +71,7 @@ export function Pilot() {
     setMsgs((m) => [...m, { id: ++idRef.current, role: 'user', text: message }]);
     setBusy(true);
     try {
-      const context = { ...localTime(), lat: DEMO_SPOT.lat, lng: DEMO_SPOT.lng, source: 'simulated' as const, session: 'pilot' };
+      const context = { ...localTime(), lat: spot.lat, lng: spot.lng, source: 'simulated' as const, session: `pilot-${spotId}` };
       const data = await api<CopilotReply>('/me/pilot', { method: 'POST', body: { message, context }, timeoutMs: 8000 });
       setMsgs((m) => [...m, { id: ++idRef.current, role: 'assistant', data }]);
     } catch (e) {
@@ -92,9 +94,16 @@ export function Pilot() {
           <h1 className="display page-h">Perkly’s Pilot</h1>
           <p className="page-lede">Ask how to get the most out of your points. The Pilot uses your linked balances, expiry dates, spending habits, the time and where you are.</p>
         </div>
-        <div className="cp-engine">
-          <p><Info aria-hidden /> No language model is connected. The Pilot matches your question to a set of points questions, and every number comes from your linked programs, the planner and the moment engine.</p>
-          <p><MapPin aria-hidden /> {located ? `Location: demo campus near UNF, Jacksonville (${DEMO_SPOT.label.replace('Walking into the ', '')})` : 'Location is off, so answers skip distance.'}</p>
+        <div className="cp-spot">
+          <span className="cp-spot-label" id="cp-spot-l">Ask from</span>
+          <div className="seg" role="group" aria-labelledby="cp-spot-l">
+            {(Object.keys(DEMO_SPOTS) as SpotId[]).map((id) => (
+              <button key={id} type="button" aria-pressed={spotId === id} onClick={() => setSpotId(id)}>
+                <MapPin aria-hidden /> {DEMO_SPOTS[id].name}
+              </button>
+            ))}
+          </div>
+          <p className="hint">{located ? `${spot.name}, ${spot.detail}, Jacksonville.` : 'Location is off in Privacy settings, so answers skip distance.'}</p>
         </div>
       </header>
 

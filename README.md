@@ -4,13 +4,13 @@
 
 Perkly links, read-only, to the points programs people already have: a bank rewards card, a coffee stamp card, a bookstore membership and so on. It never issues or holds points. It reads balances, expiry dates and (with permission) purchase history, turns each balance into specific rewards with a dollar value, and decides when a notification would actually change what the member does.
 
-> **Student prototype.** The programs, shops, balances and purchases are invented sample data, labeled as such throughout. Program sign-in screens and seller checkouts are mock pages. In real life they would connect through each bank's or brand's API. The web app is a preview of the planned phone app.
+> **Student prototype.** The programs, shops, balances and purchases are invented sample data, labeled as such throughout. Brand names are parodies of real local brands (Starmucks, Chaste, Pubmix, Barns & Novel, AMZ Theatres, Chick-fil-B); only the locations are real: around the FIS office at 347 Riverside Ave (the default demo area) and the UNF campus in Jacksonville. Program sign-in screens and seller checkouts are mock pages. In real life they would connect through each bank's or brand's API. The web app is a preview of the planned phone app.
 
 ## The five steps
 
 1. **Link, read-only.** A mock consent screen for each sample program: balance and expiry dates are always shared; purchase history and store visits are checkboxes.
-2. **Turn points into rewards.** The planner (`shared/planner.ts`) ranks every way to spend a balance. For 70 coffee points, "7 × $2 off" ($14, no minimum) ranks above "$15 off a $20 order" when the member usually spends about $6. Score = value − 25% of the extra spend a minimum forces − $0.15 per visit − the value of points that would expire before they're used.
-3. **Pick the moment.** The moment engine (`services/recommender/app/engine.py`) weighs distance, opening hours, the member's habit at this hour, visit rate, spend velocity, expiry and ratings. It respects quiet hours and a daily limit, for example "You're 400 ft from Campus Coffee and have a free latte worth $5 that expires in 6 days."
+2. **Turn points into rewards.** The planner (`shared/planner.ts`) ranks every way to spend a balance. For 70 Starmucks points, "7 × $2 off" ($14, no minimum) ranks above "$15 off a $20 order" when the member usually spends about $6. Score = value − 25% of the extra spend a minimum forces − $0.15 per visit − the value of points that would expire before they're used.
+3. **Pick the moment.** The moment engine (`services/recommender/app/engine.py`) weighs distance, opening hours, the member's habit at this hour, visit rate, spend velocity, expiry and ratings. It respects quiet hours and a daily limit, for example "You're 400 ft from Starmucks and have a free latte worth $5 that expires in 6 days."
 4. **Redeem in one tap.** Show a QR code in store, or go to the seller's (mock) site with the points applied. Points are held for 2 hours and only spent when the program confirms. Holds run in a database write transaction with an idempotency key, so the same points can't be spent twice.
 5. **Learn and prove.** Good/Fine/Bad ratings feed the model ("Got it, fewer coffee reminders in the evening."). An uplift model only notifies members it would change. The partner insights page compares redemption rate against a 10% control group.
 
@@ -43,7 +43,7 @@ python3 -m pip install -r services/recommender/requirements-dev.txt
 npm run dev
 ```
 
-This starts the AI service on 8001, the API on 4000 and the web app on 5173. Open http://localhost:5173 and use **Try the demo**. The partner insights page, at http://localhost:5173/insights, isn't linked from the site.
+This starts the AI service on 8001, the API on 4000 and the web app on 5173. Open http://localhost:5173 and use **Try the demo**, which opens John Doe, a fictional member. The partner insights page, at http://localhost:5173/insights, isn't linked from the site.
 
 Retrain the model with `cd services/recommender && python3 training/train_uplift.py`.
 

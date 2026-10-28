@@ -1,5 +1,5 @@
-import { optionById } from '@shared/demo-data';
-import { AlertTriangle, Check, Trophy } from 'lucide-react';
+import { OPTIONS, categoryLabel, merchantById, optionById, programById } from '@shared/demo-data';
+import { AlertTriangle, Check, Search, Trophy, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DemoTag, ErrorState, PageHead, ProgramMark, SkeletonRows } from '../../components/bits';
@@ -7,8 +7,9 @@ import { daysUntil, money, points } from '../../lib/format';
 import { useApp } from '../../state/app';
 
 export function Explore() {
-  const { summary, error, loading, reload, redeem } = useApp();
+  const { summary, error, loading, reload, redeem, available } = useApp();
   const [filter, setFilter] = useState<string>('all');
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     document.title = 'Explore · Perkly';
@@ -37,7 +38,29 @@ export function Explore() {
         </div>
       )}
 
-      {programs.length > 1 && (
+      {programs.length > 0 && (
+        <div className="explore-search" role="search">
+          <label htmlFor="ex-q" className="visually-hidden">Search rewards</label>
+          <Search aria-hidden className="explore-search-icon" />
+          <input
+            id="ex-q"
+            type="search"
+            placeholder="Search rewards: latte, Pubmix, popcorn, Riverside…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            autoComplete="off"
+          />
+          {query && (
+            <button type="button" className="icon-btn" aria-label="Clear search" onClick={() => setQuery('')}>
+              <X aria-hidden />
+            </button>
+          )}
+        </div>
+      )}
+
+      {query.trim() && <SearchResults query={query} available={available} onUse={redeem} linked={new Set(programs.map((p) => p.program.id))} />}
+
+      {!query.trim() && programs.length > 1 && (
         <div className="chips-scroll filter" role="group" aria-label="Show program">
           <button type="button" className="chip" aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>All programs</button>
           {programs.map((p) => (
@@ -48,6 +71,7 @@ export function Explore() {
         </div>
       )}
 
+      {!query.trim() && (
       <div className="explore">
         {shown.map(({ program, link, plans, nextReward }) => {
           const soon = link.expiries[0];
@@ -111,6 +135,55 @@ export function Explore() {
           );
         })}
       </div>
+      )}
     </div>
+  );
+}
+
+/** Every reward, matched on its name, brand, shops, what it covers and category. */
+function SearchResults({ query, available, onUse, linked }: { query: string; available: (programId: string) => number; onUse: (optionId: string) => void; linked: Set<string> }) {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const results = OPTIONS.filter((o) => linked.has(o.programId)).filter((o) => {
+    const p = programById(o.programId);
+    const shops = o.merchantIds.map((id) => merchantById(id));
+    const text = [o.title, o.valueBasis, ...o.valid, p?.name, p?.issuer, ...shops.map((m) => `${m?.name} ${m?.address}`), ...shops.map((m) => (m ? categoryLabel(m.category) : '')), p?.category ? categoryLabel(p.category) : '']
+      .join(' ')
+      .toLowerCase();
+    return words.every((w) => text.includes(w));
+  });
+  return (
+    <section className="glass panel" aria-labelledby="sr-h">
+      <h2 className="h2" id="sr-h" aria-live="polite">
+        {results.length ? `${results.length} ${results.length === 1 ? 'reward matches' : 'rewards match'} “${query.trim()}”` : `No rewards match “${query.trim()}”`}
+      </h2>
+      {results.length === 0 && <p className="hint">Try a brand (Starmucks, Pubmix), a reward (latte, popcorn) or a place (Riverside, UNF).</p>}
+      <ul className="search-results">
+        {results.map((o) => {
+          const p = programById(o.programId)!;
+          const have = available(o.programId);
+          const short = Math.max(0, o.cost - have);
+          return (
+            <li key={o.id} className="search-result">
+              <ProgramMark programId={p.id} />
+              <div className="search-main">
+                <p className="plan-tag">{p.name}</p>
+                <h3 className="plan-label">{o.title}</h3>
+                <p className="hint tabular">
+                  {money(o.value)} for {points(o.cost, p.unit)} · {o.minSpend != null ? `min. spend ${money(o.minSpend)}` : 'no minimum spend'} ·{' '}
+                  {o.merchantIds.length ? o.merchantIds.map((id) => merchantById(id)?.name.split(', ')[1]).join(', ') : 'online'}
+                </p>
+              </div>
+              <div className="plan-use">
+                {short > 0 ? (
+                  <span className="hint tabular">{points(short, p.unit)} more needed</span>
+                ) : (
+                  <button type="button" className="btn btn-sm btn-primary" onClick={() => onUse(o.id)} aria-label={`Use ${o.title}`}>Use</button>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }

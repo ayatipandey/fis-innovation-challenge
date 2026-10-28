@@ -358,7 +358,7 @@ export async function seedDemoUser(db: DB, userId: string) {
   prefs.categories = DEMO_PERSON.categories;
   prefs.onboarding = { completed: true, skipped: [] };
   await savePreferences(db, userId, prefs);
-  for (const id of DEMO_PERSON.linked) await linkProgram(db, userId, id, { history: true, visits: true }, 'maya-demo');
+  for (const id of DEMO_PERSON.linked) await linkProgram(db, userId, id, { history: true, visits: true }, 'john-doe-demo');
   const d = (days: number) => new Date(Date.now() - days * 86400_000).toISOString();
   await addActivity(db, userId, { kind: 'redeemed', label: 'A free latte', amount: '−25 ($5.00)', date: d(3) });
   await addActivity(db, userId, { kind: 'redeemed', label: '$5 off your shop', amount: '−500 ($5.00)', date: d(8) });

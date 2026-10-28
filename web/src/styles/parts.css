@@ -20,7 +20,7 @@
   border: 1px solid var(--glass-edge);
   box-shadow: var(--shadow-lift);
 }
-.moment.is-held .notif { opacity: 0.72; box-shadow: none; border-style: dashed; border-color: var(--border-strong); }
+.moment.is-held .notif { background: var(--surface-2); box-shadow: none; border-style: dashed; border-color: var(--border-strong); }
 .notif-app { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); font-weight: 700; color: var(--text-3); }
 .notif-now { margin-left: auto; font-weight: 500; }
 .notif-main { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s-3); align-items: start; }

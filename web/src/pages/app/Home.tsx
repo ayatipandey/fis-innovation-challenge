@@ -1,4 +1,4 @@
-import { CAMPUS, DAY_ROUTES, distanceM, distanceText, merchantById, optionById, toCampusSpace, type DayStop } from '@shared/demo-data';
+import { CAMPUS, DAY_ROUTES, FIS, distanceM, distanceText, merchantById, optionById, toCampusSpace, type DayStop } from '@shared/demo-data';
 import type { Moment } from '@shared/types';
 import { AlertTriangle, ArrowRight, Clock, LocateFixed, MapPin, Play, QrCode } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -104,6 +104,8 @@ export function Home() {
             </section>
           )}
 
+          <RecentMoments onUse={redeem} />
+
           <section className="glass panel programs-panel" aria-labelledby="progs-h">
             <div className="section-row">
               <h2 className="h2" id="progs-h">Linked programs</h2>
@@ -127,8 +129,6 @@ export function Home() {
               ))}
             </ul>
           </section>
-
-          <RecentMoments onUse={redeem} />
         </div>
       )}
     </div>
@@ -173,6 +173,7 @@ function RightNow({ onUse, onSent }: { onUse: (id: string) => void; onSent: () =
   const [busy, setBusy] = useState(false);
   const [watching, setWatching] = useState(false);
   const [time, setTime] = useState('now');
+  const [area, setArea] = useState<'fis' | 'unf'>('fis');
   const [routeId, setRouteId] = useState(DAY_ROUTES[0].id);
   const [results, setResults] = useState<StopResult[]>([]);
   const [playing, setPlaying] = useState(false);
@@ -184,9 +185,9 @@ function RightNow({ onUse, onSent }: { onUse: (id: string) => void; onSent: () =
   async function evaluateAt(lat: number, lng: number) {
     const here = { lat, lng };
     let pos = here;
-    const away = distanceM(here, CAMPUS);
+    const away = Math.min(distanceM(here, FIS), distanceM(here, CAMPUS));
     if (away > FAR_M) {
-      // Far from the demo campus: place the sample shops around the member instead.
+      // Far from both demo areas: place the sample shops around the member instead, as if they were at the FIS office.
       if (!anchor.current) {
         anchor.current = here;
         writeAnchor(here);
@@ -194,7 +195,7 @@ function RightNow({ onUse, onSent }: { onUse: (id: string) => void; onSent: () =
       pos = toCampusSpace(here, anchor.current);
       const moved = distanceM(here, anchor.current);
       setDeviceNote(
-        `You’re ${Math.round(away / 1609.344).toLocaleString('en-US')} miles from the demo campus (the UNF area in Jacksonville, Florida), so Perkly placed the sample shops around you. Where you first checked counts as the Student Union${moved > 20 ? `; you’ve moved ${distanceText(moved)} since` : ''}. Campus Coffee is about 70 ft away, the library café about 0.2 mi, the bookshop about 0.3 mi and Olive & Ash about 0.6 mi.`,
+        `You’re ${Math.round(away / 1609.344).toLocaleString('en-US')} miles from the demo areas in Jacksonville, Florida, so Perkly placed the sample shops around you. Where you first checked counts as the FIS office on Riverside Ave${moved > 20 ? `; you’ve moved ${distanceText(moved)} since` : ''}. Starmucks is about 310 ft away, Chick-fil-B and the Brooklyn Station Starmucks about 0.3 mi, and Pubmix about 0.4 mi.`,
       );
     } else {
       setDeviceNote(null);
@@ -292,8 +293,25 @@ function RightNow({ onUse, onSent }: { onUse: (id: string) => void; onSent: () =
 
       <div className="now-block">
         <h3 className="h3">Simulate a day</h3>
+        <div className="seg" role="group" aria-label="Demo location">
+          {([['fis', 'FIS office'], ['unf', 'UNF campus']] as const).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={area === id}
+              disabled={playing}
+              onClick={() => {
+                setArea(id);
+                setRouteId(DAY_ROUTES.find((r) => r.place === id)!.id);
+                setResults([]);
+              }}
+            >
+              <MapPin aria-hidden /> {label}
+            </button>
+          ))}
+        </div>
         <div className="chips" role="group" aria-label="Choose a day">
-          {DAY_ROUTES.map((r) => (
+          {DAY_ROUTES.filter((r) => r.place === area).map((r) => (
             <button
               key={r.id}
               type="button"
@@ -312,7 +330,7 @@ function RightNow({ onUse, onSent }: { onUse: (id: string) => void; onSent: () =
         <p className="hint">{route.blurb} {route.stops.length} stops.</p>
         <div className="now-actions">
           <button type="button" className="btn btn-primary" onClick={playDay} disabled={playing}>
-            <Play aria-hidden /> {playing ? 'Walking the route…' : results.length ? 'Replay this day' : `Play ${route.name.toLowerCase()}`}
+            <Play aria-hidden /> {playing ? 'Walking the route…' : results.length ? 'Replay this day' : 'Play this day'}
           </button>
         </div>
       </div>
