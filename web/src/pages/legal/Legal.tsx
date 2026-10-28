@@ -3,13 +3,13 @@ import { Link, useParams } from 'react-router-dom';
 import { Logo } from '../../components/bits';
 import { SiteFooter } from '../landing/Landing';
 
-// Placeholders the project group fills in before sharing the prototype.
 export const TEAM = ['Ayati', 'Pablo', 'Pedro', 'Claudia', 'Elena'];
 const ORG = 'the Perkly student team';
-const CONTACT = '[contact link or form]';
-const PROGRAM = '[Course or competition name]';
-const STATE = '[State]';
-const UPDATED = '[Date of last update]';
+const EMAIL = 'n01511358@unf.edu';
+const CONTACT = <a href={`mailto:${EMAIL}`}>{EMAIL}</a>;
+const PROGRAM = 'the UNF Innovation Challenge';
+const STATE = 'Florida';
+const UPDATED = 'October 28, 2026';
 const HOST = 'Vercel (hosting) and Turso (database)';
 
 interface Doc {
@@ -198,8 +198,8 @@ const DOCS: Record<string, Doc> = {
       <>
         <dl className="legal-dl">
           <div><dt>Team</dt><dd>{TEAM.join(', ')}</dd></div>
-          <div><dt>Program</dt><dd>{PROGRAM}</dd></div>
-          <div><dt>Reach us</dt><dd>{CONTACT}</dd></div>
+          <div><dt>Program</dt><dd>UNF Innovation Challenge</dd></div>
+          <div><dt>Email</dt><dd>{CONTACT}</dd></div>
         </dl>
         <p>For privacy requests, say “Privacy request”. For accessibility problems, include the page you were on.</p>
         <p>Perkly has no support line and can’t help with accounts at the fictional programs in the demo.</p>

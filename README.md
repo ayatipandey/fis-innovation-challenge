@@ -64,9 +64,9 @@ npm test
 
 bcrypt passwords; random session tokens stored hashed in an HttpOnly, SameSite=Lax, Secure cookie; a custom header on every state-changing request (CSRF); rate limits; Helmet CSP; no card numbers; request logs without bodies or emails; location used per check and not stored; unlinking a program deletes its data; export and account deletion in Profile.
 
-## Placeholders to fill in
+## Legal pages
 
-`[contact link or form]`, `[Course or competition name]`, `[State]` and `[Date of last update]`, at the top of `web/src/pages/legal/Legal.tsx`. The team is listed by first name only.
+Drafts written for the United States (governing law: Florida), for the UNF Innovation Challenge. Contact: n01511358@unf.edu. The details are set at the top of `web/src/pages/legal/Legal.tsx`. They aren't legal advice; have them reviewed before Perkly handles real users, money or data.
 
 ## Web preview vs the phone app
 
