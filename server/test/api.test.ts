@@ -167,7 +167,7 @@ describe('holds', () => {
 
   it('refuses a channel the reward does not support', async () => {
     const agent = await demoAgent();
-    const res = await agent.post('/api/me/holds').set(H).send({ optionId: 'nl-credit', channel: 'in_store', idempotencyKey: 'channel-123456' });
+    const res = await agent.post('/api/me/holds').set(H).send({ optionId: 'rc-popcorn', channel: 'online', idempotencyKey: 'channel-123456' });
     assert.equal(res.status, 409);
   });
 });
@@ -217,7 +217,7 @@ describe('pilot, insights and data rights', () => {
   it('exports and deletes everything', async () => {
     const agent = await demoAgent();
     const exp = await agent.get('/api/me/export');
-    assert.equal(exp.body.linkedPrograms.length, 5);
+    assert.equal(exp.body.linkedPrograms.length, 6);
     assert.equal((await agent.delete('/api/me/account').set(H)).status, 200);
     assert.equal((await agent.get('/api/me/summary')).status, 401);
   });

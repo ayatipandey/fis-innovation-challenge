@@ -148,7 +148,7 @@ def test_service_key_is_enforced(monkeypatch):
 
 
 def test_online_only_rewards_need_expiring_points_to_be_a_moment():
-    credit = {"optionId": "nl-credit", "programId": "northline-card", "programName": "Northline Rewards Card", "title": "$10 statement credit",
+    credit = {"optionId": "nl-credit", "programId": "sephorra", "programName": "Sephorra Beauty Insider", "title": "$10 off any purchase",
               "cost": 1000, "value": 10, "channels": ["online"], "available": 3150, "expiringPoints": 1200, "daysToExpiry": 21, "category": "shopping", "merchants": []}
     d = moment([credit, latte()])["decision"]
     assert d["optionId"] == "cc-latte"

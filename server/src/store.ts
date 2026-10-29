@@ -217,6 +217,8 @@ export async function listLinks(db: DB, userId: string): Promise<LinkedProgram[]
   const links = await db.all<{ program_id: string; balance: number; shares: string; linked_at: string }>('SELECT program_id, balance, shares, linked_at FROM links WHERE user_id = ?', [userId]);
   const out: LinkedProgram[] = [];
   for (const l of links) {
+    // Skip programs that were removed from the sample catalog (older demo accounts may still have them).
+    if (!programById(l.program_id)) continue;
     const held = await heldPoints(db, userId, l.program_id);
     const expiries = await db.all<{ points: number; expires_at: string }>(
       'SELECT points, expires_at FROM expiries WHERE user_id = ? AND program_id = ? AND points > 0 AND expires_at > ? ORDER BY expires_at',

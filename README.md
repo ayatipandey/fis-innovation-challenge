@@ -2,9 +2,9 @@
 
 **Other apps show you your points. Perkly spends them for you at the right moment.**
 
-Perkly links, read-only, to the points programs people already have: a bank rewards card, a coffee stamp card, a bookstore membership and so on. It never issues or holds points. It reads balances, expiry dates and (with permission) purchase history, turns each balance into specific rewards with a dollar value, and decides when a notification would actually change what the member does.
+Perkly links, read-only, to the points programs people already have: a coffee card, a restaurant app, a beauty membership and so on. It never issues or holds points. It reads balances, expiry dates and (with permission) purchase history, turns each balance into specific rewards with a dollar value, and decides when a notification would actually change what the member does.
 
-> **Student prototype.** The programs, shops, balances and purchases are invented sample data, labeled as such throughout. Brand names are parodies of real local brands (Starmucks, Chaste, Pubmix, Barns & Novel, AMZ Theatres, Chick-fil-B); only the locations are real: around the FIS office at 347 Riverside Ave (the default demo area) and the UNF campus in Jacksonville. Program sign-in screens and seller checkouts are mock pages. In real life they would connect through each bank's or brand's API. The web app is a preview of the planned phone app.
+> **Student prototype.** The programs, shops, balances and purchases are invented sample data, labeled as such throughout. Brand names are parodies of real local brands (Starmucks, Chick-fil-B, Sephorra, Pubmix, Barns & Novel, AMZ Theatres); only the locations are real: around the FIS office at 347 Riverside Ave (the default demo area) and the UNF campus in Jacksonville. Program sign-in screens and seller checkouts are mock pages. In real life they would connect through each bank's or brand's API. The web app is a preview of the planned phone app.
 
 ## The five steps
 

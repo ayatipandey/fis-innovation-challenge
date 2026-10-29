@@ -12,7 +12,7 @@ React + TypeScript + Vite frontend; Node + Express API on libSQL (Turso when dep
 
 ## Users
 
-Everyone with points they never get around to using: bank card rewards, coffee stamp cards, store memberships. The demo persona is John Doe, who works near the FIS office and takes evening classes at UNF. Secondary audience: innovation-challenge judges and partner programs, who see the /insights page.
+Everyone with points they never get around to using: coffee stamp cards, restaurant apps, store and beauty memberships. The demo persona is John Doe, who works near the FIS office and takes evening classes at UNF. Secondary audience: innovation-challenge judges and partner programs, who see the /insights page.
 
 ## Product Purpose
 

@@ -110,7 +110,7 @@ function Hero() {
           Other apps show you your points. <span className="hero-accent">Perkly spends them for you at the right moment.</span>
         </h1>
         <p className="hero-sub">
-          Link the bank card, coffee card and memberships you already have. Perkly turns each balance into real rewards with a dollar value, and
+          Link the coffee card, store memberships and rewards apps you already have. Perkly turns each balance into real rewards with a dollar value, and
           tells you when and where to use them, before they expire.
         </p>
         <div className="hero-ctas">
@@ -153,7 +153,7 @@ function HeroPhone() {
 
 const STEPS = [
   { icon: Link2, title: 'Link, read-only', body: 'Connect the programs you have. Perkly reads balances, expiry dates and, if you allow it, purchase history. It never issues or holds points. Samples here; in real life, through each bank’s or brand’s API.' },
-  { icon: Sparkles, title: 'Turn points into rewards', body: '800 points covers a free latte. 2,400 covers $24 off dinner. Perkly ranks every way to spend a balance by what you actually get.' },
+  { icon: Sparkles, title: 'Turn points into rewards', body: '600 Chick-fil-B points cover a free sandwich. 500 Sephorra points cover $10 off. Perkly ranks every way to spend a balance by what you actually get.' },
   { icon: BellRing, title: 'Pick the moment', body: 'A moment engine weighs where you are, the time of day, your habits and what’s about to expire, then decides whether a notification is worth sending.' },
   { icon: MousePointerClick, title: 'Redeem in one tap', body: 'Show a code in store or jump to the seller’s site with the points applied. Points stay on hold for 2 hours until the purchase is confirmed, so they can’t be spent twice.' },
   { icon: Brain, title: 'Learn and prove it', body: 'Rate a notification Good, Fine or Bad and the next one changes. An uplift model only notifies people it would actually change, and a 10% control group measures the lift.' },
@@ -237,7 +237,7 @@ function FinalCta() {
   return (
     <section className="wrap section final" aria-labelledby="final-h">
       <h2 id="final-h" className="display final-h">See it with a sample member.</h2>
-      <p>John Doe has a bank card, a coffee card, a bookstore membership, grocery points and cinema stars. Walk through his workday near the FIS office.</p>
+      <p>John Doe has a coffee card, Chick-fil-B and Sephorra points, a bookstore membership, grocery points and cinema stars. Walk through his workday near the FIS office.</p>
       <div className="hero-ctas">
         <TryDemo big />
       </div>

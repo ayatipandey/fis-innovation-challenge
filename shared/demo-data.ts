@@ -12,7 +12,7 @@ export const CATEGORIES: Category[] = [
   { id: 'groceries', label: 'Groceries', subcategories: ['Supermarket', 'Snacks', 'Produce'] },
   { id: 'books', label: 'Books and supplies', subcategories: ['Textbooks', 'Fiction', 'Stationery'] },
   { id: 'entertainment', label: 'Entertainment', subcategories: ['Cinema', 'Live events', 'Games'] },
-  { id: 'shopping', label: 'Shopping', subcategories: ['Clothing', 'Tech', 'Gifts'] },
+  { id: 'shopping', label: 'Shopping and beauty', subcategories: ['Clothing', 'Beauty', 'Tech', 'Gifts'] },
   { id: 'transport', label: 'Transport', subcategories: ['Rideshare', 'Transit', 'Fuel'] },
   { id: 'wellness', label: 'Health and fitness', subcategories: ['Gym', 'Pharmacy', 'Yoga'] },
 ];
@@ -32,15 +32,26 @@ export const PROGRAMS: Program[] = [
     expiryRule: 'Points expire 90 days after they are earned.',
   },
   {
-    id: 'northline-card',
-    name: 'Chaste Freedom Card',
-    issuer: 'Chaste Bank',
-    kind: 'bank_card',
+    id: 'chick-fil-b',
+    name: 'Chick-fil-B One',
+    issuer: 'Chick-fil-B',
+    kind: 'store_membership',
     unit: 'points',
-    category: null,
-    monogram: 'CF',
-    earnRule: '2 points per $1 on dining and coffee, 1 point per $1 on everything else.',
-    expiryRule: 'Points expire 12 months after they are earned.',
+    category: 'food',
+    monogram: 'CB',
+    earnRule: '10 points per $1 spent at Chick-fil-B.',
+    expiryRule: 'Points expire 180 days after they are earned.',
+  },
+  {
+    id: 'sephorra',
+    name: 'Sephorra Beauty Insider',
+    issuer: 'Sephorra',
+    kind: 'store_membership',
+    unit: 'points',
+    category: 'shopping',
+    monogram: 'SP',
+    earnRule: '1 point per $1 spent at Sephorra.',
+    expiryRule: 'Points expire 12 months after your last purchase.',
   },
   {
     id: 'pageturn-books',
@@ -92,12 +103,14 @@ export const MERCHANTS: Merchant[] = [
   { id: 'px-brooklyn', name: 'Pubmix, Brooklyn Station', category: 'groceries', subcategory: 'Supermarket', address: 'Brooklyn Station, Riverside Ave', lat: 30.3134, lng: -81.675, opens: 7, closes: 22, website: 'https://pubmix.example' },
   { id: 'bn-fivepoints', name: 'Barns & Novel, Five Points', category: 'books', subcategory: 'Bookstore', address: 'Park St, Five Points', lat: 30.3108, lng: -81.6799, opens: 9, closes: 21, website: 'https://barns-and-novel.example' },
   { id: 'amz-downtown', name: 'AMZ Theatres, Downtown', category: 'entertainment', subcategory: 'Cinema', address: 'Bay St, Downtown', lat: 30.3262, lng: -81.6612, opens: 11, closes: 24, website: 'https://amz-theatres.example' },
+  { id: 'sp-sanmarco', name: 'Sephorra, San Marco', category: 'shopping', subcategory: 'Beauty', address: 'San Marco Square', lat: 30.3046, lng: -81.6553, opens: 10, closes: 21, website: 'https://sephorra.example' },
   // Around the UNF campus.
   { id: 'cc-union', name: 'Starmucks, UNF Student Union', category: 'coffee', subcategory: 'Coffee shops', address: 'Student Union, ground floor', lat: 30.2722, lng: -81.5079, opens: 7, closes: 20, website: 'https://starmucks.example' },
   { id: 'cc-library', name: 'Starmucks, UNF Library', category: 'coffee', subcategory: 'Coffee shops', address: 'Library, level 1', lat: 30.2697, lng: -81.5098, opens: 8, closes: 22, website: 'https://starmucks.example' },
   { id: 'olive-ash', name: 'Chick-fil-B, St. Johns Bluff', category: 'food', subcategory: 'Quick service', address: 'St. Johns Bluff Rd', lat: 30.278, lng: -81.5005, opens: 7, closes: 22, website: 'https://chick-fil-b.example' },
   { id: 'pageturn', name: 'Barns & Novel, UNF Bookstore', category: 'books', subcategory: 'Bookstore', address: 'UNF Bookstore', lat: 30.2745, lng: -81.504, opens: 9, closes: 20, website: 'https://barns-and-novel.example' },
   { id: 'freshcart', name: 'Pubmix, Beach Blvd', category: 'groceries', subcategory: 'Supermarket', address: 'Beach Blvd', lat: 30.2808, lng: -81.4987, opens: 7, closes: 22, website: 'https://pubmix.example' },
+  { id: 'sp-towncenter', name: 'Sephorra, St. Johns Town Center', category: 'shopping', subcategory: 'Beauty', address: 'St. Johns Town Center', lat: 30.2566, lng: -81.5268, opens: 10, closes: 21, website: 'https://sephorra.example' },
   { id: 'reel', name: 'AMZ Theatres, Southside', category: 'entertainment', subcategory: 'Cinema', address: 'Southside Blvd', lat: 30.284, lng: -81.495, opens: 12, closes: 24, website: 'https://amz-theatres.example' },
 ];
 
@@ -132,46 +145,56 @@ export const OPTIONS: RewardOption[] = [
     url: 'https://starmucks.example/order',
   },
 
-  // Chaste Freedom card points, spendable at participating merchants.
+  // Chick-fil-B One points.
   {
-    id: 'nl-latte', programId: 'northline-card', merchantIds: ['cc-riverside', 'cc-brooklyn', 'cc-union', 'cc-library'], title: 'A free latte at Starmucks', cost: 800, value: 5,
-    valueBasis: 'Menu price of a regular latte.', minSpend: null, channels: ['in_store'],
-    valid: ['Regular latte at any Starmucks'],
-    notValid: ['Order-ahead orders'], stacking: 'Can’t be combined with Starmucks Rewards on the same order.',
-    howToUse: { online: null, inStore: 'Show your code at the counter, then pay with your Chaste Freedom card.' },
-    url: null,
-  },
-  {
-    id: 'nl-dinner', programId: 'northline-card', merchantIds: ['cfb-riverside', 'olive-ash'], title: '$24 off a Chick-fil-B catering order', cost: 2400, value: 24,
-    valueBasis: 'Fixed $24.00 discount on catering orders of $40.00 or more.', minSpend: 40, channels: ['in_store'],
-    valid: ['Catering trays and family meals', 'Any Chick-fil-B'],
-    notValid: ['Delivery fees', 'Gift cards'], stacking: 'One per order.',
-    howToUse: { online: null, inStore: 'Show your code when you order at the counter.' },
-    url: null,
-  },
-  {
-    id: 'nl-sandwich', programId: 'northline-card', merchantIds: ['cfb-riverside', 'olive-ash'], title: 'A free chicken sandwich at Chick-fil-B', cost: 900, value: 6.5,
-    valueBasis: 'Menu price of a chicken sandwich.', minSpend: null, channels: ['in_store'],
+    id: 'cfb-sandwich', programId: 'chick-fil-b', merchantIds: ['cfb-riverside', 'olive-ash'], title: 'A free chicken sandwich', cost: 600, value: 6.5,
+    valueBasis: 'Menu price of a chicken sandwich.', minSpend: null, channels: both,
     valid: ['Original or spicy chicken sandwich', 'Any Chick-fil-B'],
-    notValid: ['Meals and sides', 'Catering'], stacking: 'One per order.',
-    howToUse: { online: null, inStore: 'Show your code at the counter, then pay with your Chaste Freedom card.' },
-    url: null,
+    notValid: ['Meals and sides', 'Catering'], stacking: 'One reward per order.',
+    howToUse: { online: 'Order ahead in the Chick-fil-B app with the points already applied.', inStore: 'Show your code at the counter.' },
+    url: 'https://chick-fil-b.example/order',
   },
   {
-    id: 'nl-books', programId: 'northline-card', merchantIds: ['bn-fivepoints', 'pageturn'], title: '$5 off at Barns & Novel', cost: 500, value: 5,
-    valueBasis: 'Fixed $5.00 discount.', minSpend: null, channels: both,
-    valid: ['Any purchase at Barns & Novel'],
-    notValid: ['Gift cards'], stacking: 'Combines with Barns & Novel membership rewards.',
-    howToUse: { online: 'Shop on Barns & Novel’s site with the points already applied.', inStore: 'Show your code at the register.' },
-    url: 'https://barns-and-novel.example/shop',
+    id: 'cfb-nuggets', programId: 'chick-fil-b', merchantIds: ['cfb-riverside', 'olive-ash'], title: 'Free 8-count nuggets', cost: 500, value: 5.25,
+    valueBasis: 'Menu price of an 8-count nuggets.', minSpend: null, channels: both,
+    valid: ['Grilled or breaded nuggets'],
+    notValid: ['Meals and sides', 'Catering'], stacking: 'One reward per order.',
+    howToUse: { online: 'Order ahead in the Chick-fil-B app with the points already applied.', inStore: 'Show your code at the counter.' },
+    url: 'https://chick-fil-b.example/order',
   },
   {
-    id: 'nl-credit', programId: 'northline-card', merchantIds: [], title: '$10 statement credit', cost: 1000, value: 10,
-    valueBasis: '1 cent per point, credited to your card.', minSpend: null, channels: ['online'],
-    valid: ['Any Chaste Freedom Card account'],
-    notValid: [], stacking: 'Not applicable.',
-    howToUse: { online: 'Chaste applies the credit to your next statement.', inStore: null },
-    url: 'https://chaste-bank.example/rewards',
+    id: 'cfb-catering', programId: 'chick-fil-b', merchantIds: ['cfb-riverside', 'olive-ash'], title: '$10 off a catering order of $40 or more', cost: 1200, value: 10,
+    valueBasis: 'Fixed $10.00 discount on catering orders of $40.00 or more.', minSpend: 40, channels: both,
+    valid: ['Catering trays and family meals'],
+    notValid: ['Delivery fees', 'Gift cards'], stacking: 'One reward per order.',
+    howToUse: { online: 'Order catering in the Chick-fil-B app with the points already applied.', inStore: 'Show your code when you order at the counter.' },
+    url: 'https://chick-fil-b.example/catering',
+  },
+
+  // Sephorra Beauty Insider points.
+  {
+    id: 'sp-sample', programId: 'sephorra', merchantIds: ['sp-sanmarco', 'sp-towncenter'], title: 'A free deluxe sample', cost: 250, value: 4,
+    valueBasis: 'Typical retail value of a deluxe sample.', minSpend: null, channels: both,
+    valid: ['Skincare, makeup and fragrance samples, while stocks last'],
+    notValid: ['Full-size products'], stacking: 'Up to 3 samples per order.',
+    howToUse: { online: 'Add it at checkout on Sephorra’s site with the points already applied.', inStore: 'Show your code at the register.' },
+    url: 'https://sephorra.example/rewards',
+  },
+  {
+    id: 'sp-10off', programId: 'sephorra', merchantIds: ['sp-sanmarco', 'sp-towncenter'], title: '$10 off any purchase', cost: 500, value: 10,
+    valueBasis: 'Fixed $10.00 discount.', minSpend: null, channels: both,
+    valid: ['Makeup, skincare, fragrance and hair'],
+    notValid: ['Gift cards', 'Services'], stacking: 'One reward per order.',
+    howToUse: { online: 'Shop on Sephorra’s site with the points already applied.', inStore: 'Show your code at the register.' },
+    url: 'https://sephorra.example/shop',
+  },
+  {
+    id: 'sp-20off', programId: 'sephorra', merchantIds: ['sp-sanmarco', 'sp-towncenter'], title: '$20 off an order of $50 or more', cost: 750, value: 20,
+    valueBasis: 'Fixed $20.00 discount on orders of $50.00 or more.', minSpend: 50, channels: both,
+    valid: ['Makeup, skincare, fragrance and hair'],
+    notValid: ['Gift cards', 'Services'], stacking: 'One reward per order.',
+    howToUse: { online: 'Shop on Sephorra’s site with the points already applied.', inStore: 'Show your code at the register.' },
+    url: 'https://sephorra.example/shop',
   },
 
   // Barns & Novel membership.
@@ -235,7 +258,8 @@ export const optionsFor = (programId: string) => OPTIONS.filter((o) => o.program
 /** Starting balances and expiring batches granted when a sample program is linked. */
 export const DEMO_BALANCES: Record<string, { balance: number; expiring: { points: number; inDays: number }[] }> = {
   'campus-coffee': { balance: 70, expiring: [{ points: 30, inDays: 6 }, { points: 40, inDays: 52 }] },
-  'northline-card': { balance: 3150, expiring: [{ points: 1200, inDays: 21 }, { points: 1950, inDays: 240 }] },
+  'chick-fil-b': { balance: 1450, expiring: [{ points: 500, inDays: 15 }, { points: 950, inDays: 160 }] },
+  sephorra: { balance: 820, expiring: [{ points: 300, inDays: 9 }, { points: 520, inDays: 300 }] },
   'pageturn-books': { balance: 420, expiring: [{ points: 200, inDays: 12 }, { points: 220, inDays: 95 }] },
   freshcart: { balance: 1350, expiring: [{ points: 1350, inDays: 140 }] },
   'reel-stars': { balance: 9, expiring: [{ points: 9, inDays: 4 }] },
@@ -245,8 +269,8 @@ export const DEMO_BALANCES: Record<string, { balance: number; expiring: { points
 export const DEMO_PERSON = {
   displayName: 'John',
   fullName: 'John Doe',
-  categories: ['coffee', 'food', 'groceries', 'books'] as CategoryId[],
-  linked: ['campus-coffee', 'northline-card', 'pageturn-books', 'freshcart', 'reel-stars'],
+  categories: ['coffee', 'food', 'groceries', 'shopping'] as CategoryId[],
+  linked: ['campus-coffee', 'chick-fil-b', 'sephorra', 'pageturn-books', 'freshcart', 'reel-stars'],
 };
 
 /** Habit profile used to generate a believable synthetic purchase history: workdays near FIS, evening classes at UNF. */
@@ -259,12 +283,13 @@ const ROUTINE: { merchantId: string; perWeek: number; spend: [number, number]; h
   { merchantId: 'freshcart', perWeek: 0.4, spend: [30, 55], hours: [10, 14], days: [5, 6] },
   { merchantId: 'pageturn', perWeek: 0.25, spend: [12, 45], hours: [17, 19], days: [1, 3] },
   { merchantId: 'bn-fivepoints', perWeek: 0.2, spend: [12, 30], hours: [12, 16], days: [5, 6] },
+  { merchantId: 'sp-towncenter', perWeek: 0.3, spend: [25, 70], hours: [13, 17], days: [5, 6] },
+  { merchantId: 'sp-sanmarco', perWeek: 0.2, spend: [20, 60], hours: [17, 19], days: [2, 4] },
   { merchantId: 'amz-downtown', perWeek: 0.5, spend: [11, 22], hours: [18, 22], days: [4, 5] },
 ];
 
-/** Which merchants a program can see purchases from. A bank card sees all of them. */
+/** Which merchants a program can see purchases from: its own shops. */
 export function programSeesMerchant(programId: string, merchantId: string) {
-  if (programId === 'northline-card') return true;
   const p = programById(programId);
   const m = merchantById(merchantId);
   return !!p && !!m && p.category === m.category;
@@ -365,7 +390,7 @@ export const DAY_ROUTES: DayRoute[] = [
       { id: 'morning', time: '08:10', label: 'Walking into the Student Union', lat: 30.2723, lng: -81.5081 },
       { id: 'lunch', time: '12:30', label: 'Lunch break on College Row', lat: 30.2778, lng: -81.5008 },
       { id: 'afternoon', time: '15:40', label: 'Between classes on Campus Walk', lat: 30.2743, lng: -81.5043 },
-      { id: 'evening', time: '18:20', label: 'Heading home past Beach Parkway', lat: 30.2806, lng: -81.4991 },
+      { id: 'evening', time: '18:20', label: 'Heading home along Beach Blvd', lat: 30.2806, lng: -81.4991 },
       { id: 'late', time: '22:40', label: 'Leaving a late study group', lat: 30.2836, lng: -81.4956 },
     ],
   },
@@ -373,11 +398,11 @@ export const DAY_ROUTES: DayRoute[] = [
     id: 'errands',
     place: 'unf',
     name: 'Saturday near UNF',
-    blurb: 'Groceries, a bookshop browse and a movie, no classes.',
+    blurb: 'Groceries, a Town Center trip, the library and a movie.',
     weekday: 5,
     stops: [
-      { id: 'groceries', time: '10:15', label: 'Parking at the Beach Parkway shops', lat: 30.2811, lng: -81.4983 },
-      { id: 'books', time: '13:05', label: 'Walking down Campus Walk', lat: 30.2748, lng: -81.5036 },
+      { id: 'groceries', time: '10:15', label: 'Parking at the Beach Blvd shops', lat: 30.2811, lng: -81.4983 },
+      { id: 'beauty', time: '13:40', label: 'Walking through St. Johns Town Center', lat: 30.2569, lng: -81.5263 },
       { id: 'coffee', time: '15:30', label: 'Studying at the library', lat: 30.2699, lng: -81.5095 },
       { id: 'movie', time: '19:45', label: 'Meeting friends by the cinema', lat: 30.2843, lng: -81.4954 },
     ],

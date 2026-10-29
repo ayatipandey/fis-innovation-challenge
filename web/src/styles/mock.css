@@ -2,7 +2,8 @@
 .mock-page { min-height: 100dvh; background: #f3f4f6; color: #111827; --brand: #1f2937; padding-bottom: var(--s-8); }
 :root[data-contrast='high'] .mock-page { background: #fff; }
 .mock-page.brand-campus-coffee { --brand: #6f4e37; }
-.mock-page.brand-northline-card { --brand: #1e3a8a; }
+.mock-page.brand-chick-fil-b { --brand: #b3122e; }
+.mock-page.brand-sephorra { --brand: #111111; }
 .mock-page.brand-pageturn-books { --brand: #7c2d12; }
 .mock-page.brand-freshcart { --brand: #166534; }
 .mock-page.brand-reel-stars { --brand: #6b21a8; }

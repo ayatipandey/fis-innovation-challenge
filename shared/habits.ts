@@ -5,7 +5,7 @@ const DAY = 86400_000;
 /** Derives visit rate, typical spend, time-of-day pattern and spend velocity from purchases. */
 export function computeHabits(purchases: Purchase[], now = new Date()): Habits {
   if (!purchases.length) return { visitsPerWeek: {}, typicalSpend: {}, hourShare: {}, spendVelocity: {}, source: 'none' };
-  // Several programs can report the same visit (a coffee bought with the bank card).
+  // Several programs could report the same visit, so visits are de-duplicated.
   const seen = new Set<string>();
   const unique = purchases.filter((p) => {
     const key = `${p.merchantId}|${p.at}`;
