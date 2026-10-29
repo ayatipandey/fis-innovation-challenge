@@ -110,8 +110,7 @@ function Hero() {
           Other apps show you your points. <span className="hero-accent">Perkly spends them for you at the right moment.</span>
         </h1>
         <p className="hero-sub">
-          Link the coffee card, store memberships and rewards apps you already have. Perkly turns each balance into real rewards with a dollar value, and
-          tells you when and where to use them, before they expire.
+          Perkly turns each balance into real rewards with a dollar value, and tells you when and where to use them, before they expire.
         </p>
         <div className="hero-ctas">
           <TryDemo big />
